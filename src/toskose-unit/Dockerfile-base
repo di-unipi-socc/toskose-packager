@@ -18,10 +18,6 @@ RUN apk update > /dev/null && \
 WORKDIR $TMP_PATH
 COPY base/ .
 
-WORKDIR $TMP_PATH/scripts
-RUN chmod +x fetcher.sh && \
-    ./fetcher.sh
-
 ### START TESTING ###
 FROM toskose-init as toskose-init-test
 
