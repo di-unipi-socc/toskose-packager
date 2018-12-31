@@ -1,2 +1,0 @@
-setuptools==40.6.3
-meld3==1.0.2
