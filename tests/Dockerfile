@@ -54,11 +54,55 @@ ARG TOSKERISER_RESULT=node:6
 # as further layers.
 # may be carefull if other python interpreters already exists (conflicts?)
 #########################################
-FROM $TOSKERISER_RESULT as toskosed
+ARG PYTHON_REPO=https://www.python.org/ftp/python/3.3.4/Python-3.3.4.tgz
+ARG SUPERVISOR_REPO=https://github.com/Supervisor/supervisor/archive/3.3.4.tar.gz
 
-COPY ./install.sh install.sh
+#
+FROM $TOSKERISER_RESULT as toskosed-init
+
+ENV APP_PATH=/toskose
+ENV INSTALL_DIR=/install
+ENV PYTHON_REPOSITORY=$PYTHON_REPO
+ENV SUPERVISOR_REPOSITORY=$SUPERVISOR_REPO
+
+RUN mkdir -p $APP_PATH/$INSTALL_DIR
+WORKDIR $APP_PATH/$INSTALL_DIR
+COPY scripts/base-install.sh .
+
+#
+FROM toskosed-pre-install as toskosed-python
+
+RUN mkdir -p $APP_PATH/$INSTALL_DIR/python
+WORKDIR $APP_PATH/$INSTALL_DIR/python
+COPY scripts/python-install.sh .
+
+RUN
+
+FROM toskosed-python as toskosed-python-test
+
+
+
+
+
+
+
+
+
+
+RUN mkdir -p $APP_PATH/{python,supervisor}
+
+WORKDIR $APP_PATH/install
+
+COPY  ./scripts/ /scripts/
+      ./config/supervisord.conf /supervisord/config/supervisord.conf
+
 RUN chmod +x install.sh && \
     ./install.sh
+
+
+
+FROM toskosed as testing
+# TODO
 
 FROM toskosed as release
 

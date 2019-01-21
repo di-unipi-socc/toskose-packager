@@ -1,0 +1,117 @@
+ARG APP_VERSION
+
+# TEST - remove the default
+ARG TOSKERISER_RESULT=node:8
+
+ARG ALPINE_VERSION=3.8
+ARG PYTHON_VERSION=2.7.15
+ARG SUPERVISOR_VERSION=3.3.4
+
+# toskose base image
+# add dependencies (including supervisord)
+# adds supervisord configuration (generated according to toskose parser results)
+FROM alpine:$ALPINE_VERSION as toskose-init
+
+ARG SUPERVISOR_VERSION
+ENV SUPERVISOR_VERSION=$SUPERVISOR_VERSION
+ENV TMP_PATH=/tmp
+
+# add CA certificates for HTTPS + Bash
+RUN apk update > /dev/null && \
+    apk add --no-cache ca-certificates bash tree > /dev/null && \
+    update-ca-certificates > /dev/null && \
+    mkdir -p $TMP_PATH
+
+WORKDIR $TMP_PATH
+COPY ../../toskose-unit .
+
+### START TESTING ###
+FROM toskose-init as toskose-init-test
+
+WORKDIR $TMP_PATH
+RUN tree -a
+### END TESTING ###
+
+FROM $TOSKERISER_RESULT as toskose-build-base
+
+ARG PYTHON_VERSION=2.7.15
+
+# https://github.com/pyenv/pyenv
+# -- Understanding PATH and Shims
+ENV PYENV_ROOT=/toskose/.pyenv
+ENV PATH=$PYENV_ROOT/shims:$PYENV_ROOT/bin:$PATH
+
+# install pyenv
+# https://github.com/pyenv/pyenv-installer (alternative to git clone, installs all plugins)
+RUN apt-get update > /dev/null && \
+    apt-get install -y --no-install-recommends git ca-certificates > /dev/null && \
+    mkdir -p /toskose/.pyenv && \
+    git clone https://github.com/pyenv/pyenv.git /toskose/.pyenv && \
+#    find /toskose/.pyenv -name "*.md" -o -name ".png" -type f -exec rm -r {} \; && \
+#    find /toskose/.pyenv -name "test" -type d -exec rm -r {} \; && \
+    apt-get purge -y --auto-remove git ca-certificates > /dev/null && \
+    apt-get clean > /dev/null && \
+    rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+
+# pyenv-virtualenv (plugin)
+# https://github.com/pyenv/pyenv-virtualenv
+RUN apt-get update > /dev/null && \
+    apt-get install -y --no-install-recommends git ca-certificates > /dev/null && \
+    git clone https://github.com/pyenv/pyenv-virtualenv.git /toskose/.pyenv/plugins/pyenv-virtualenv && \
+    apt-get purge -y --auto-remove git ca-certificates > /dev/null && \
+    apt-get clean > /dev/null && \
+    rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+
+# https://github.com/pyenv/pyenv
+# install pyenv's dependencies and python
+RUN apt-get update > /dev/null && \
+    apt-get install -y --no-install-recommends \
+    make build-essential libssl-dev zlib1g-dev libbz2-dev libreadline-dev \
+    libsqlite3-dev wget curl llvm libncurses5-dev xz-utils tk-dev \
+    libxml2-dev libxmlsec1-dev libffi-dev \
+    ca-certificates > /dev/null && \
+    pyenv install $PYTHON_VERSION && \
+    pyenv rehash && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+
+# fetch dependencies list
+COPY --from=toskose-init /tmp/requirements.txt /toskose/requirements.txt
+
+WORKDIR /toskose/supervisor
+
+# activate pyenv-virtualenv
+# install supervisord and its dependencies
+# http://supervisord.org/
+RUN pyenv virtualenv $PYTHON_VERSION toskose-venv && \
+    pyenv local toskose-venv && \
+    pip install -r /toskose/requirements.txt
+
+# fetch supervisord configuration
+COPY --from=toskose-init /tmp/configs/supervisor/ /toskose/supervisor/
+
+### TEST ###
+FROM toskose-build-base as toskose-build-test
+
+# Check pyenv + pyenv-virtualenv
+WORKDIR /toskose
+RUN pyenv local toskose-venv && \
+    echo "Python Versions installed with Pyenv:" && \
+    pyenv versions && \
+    echo "Currently active Python Version with Pyenv and how it was set:" && \
+    pyenv version && \
+    echo "The full path to the executable called by Pyenv when the cmd <python> is invoked:" && \
+    pyenv which python && \
+    echo "Currently active virtualenvs:" && \
+    pyenv virtualenvs
+
+### END TEST ###
+
+FROM toskose-build-test as release
+
+WORKDIR /toskose
+RUN chmod +x ./supervisor/start.sh
+
+ENTRYPOINT ["/bin/bash", "-c", "/toskose/supervisor/start.sh"]
+
+

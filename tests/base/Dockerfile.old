@@ -1,0 +1,213 @@
+# TosKose - single unit orchestration logic
+
+# remove defaults according to toskose
+ARG TOSKERISER_RESULT=node:8
+
+ARG ALPINE_VERSION=3.8
+ARG PYTHON_VERSION=2.7.15
+ARG PYENV_VERSION=1.2.8
+ARG SUPERVISOR_VERSION=3.3.4
+
+# toskose base image
+FROM alpine:$ALPINE_VERSION as toskose-init
+
+ARG SUPERVISOR_VERSION
+ENV SUPERVISOR_VERSION=$SUPERVISOR_VERSION
+ENV TMP_PATH=/tmp
+
+# add CA certificates for HTTPS + Bash
+RUN apk update > /dev/null && \
+    apk add --no-cache ca-certificates bash tree > /dev/null && \
+    update-ca-certificates > /dev/null
+
+WORKDIR $TMP_PATH
+COPY . .
+
+WORKDIR $TMP_PATH/scripts
+RUN chmod +x fetcher.sh && \
+    ./fetcher.sh
+
+### START TESTING ###
+FROM toskose-init as toskose-init-test
+
+WORKDIR $TMP_PATH
+RUN tree -a
+### END TESTING ###
+
+# build base stage
+FROM $TOSKERISER_RESULT as toskose-build-base
+
+ARG SUPERVISOR_VERSION
+ENV SUPERVISOR_VERSION=$SUPERVISOR_VERSION
+ENV APP_PATH=/toskose
+
+RUN mkdir -p $APP_PATH/Supervisor-$SUPERVISOR_VERSION
+
+#
+FROM toskose-build-base as toskose-build-run
+
+ARG PYTHON_VERSION
+ARG PYENV_VERSION
+ENV PYTHON_VERSION=$PYTHON_VERSION
+ENV PYENV_VERSION=$PYENV_VERSION
+
+RUN curl -s -L https://github.com/pyenv/pyenv-installer/raw/master/bin/pyenv-installer | bash && \
+
+
+#
+ENV PYENV_ROOT=$APP_PATH/.pyenv
+ENV PATH $PYENV_ROOT/shims:$PYENV_ROOT/bin:$PATH
+
+#
+RUN pyenv install $PYTHON_VERSION &&
+
+
+
+
+
+
+
+
+
+# # https://github.com/docker/docker/issues/684
+# # https://stackoverflow.com/questions/33379393/docker-env-vs-run-export
+# # EXPORT won't persist across images
+#
+# ENV PYENV_BIN=/root/.pyenv/bin/pyenv
+# ENV PYENV_PYTHON=/root/.pyenv/shims/python
+# ENV PYENV_PIP=/root/.pyenv/shims/pip
+#
+# # ENV PYENV_REPO=https://github.com/pyenv/pyenv/archive/v${PYENV_VERSION}.tar.gz
+# # RUN wget -q -O - $PYENV_REPO | tar xz --strip-components=1 && \
+# #     echo 'export PYENV_ROOT="$HOME/$APP_PATH/pyenv"' >> ~/.bash_profile && \
+# #     echo 'export PATH="$PYENV_ROOT/bin:$PATH"' >> ~/.bash_profile && \
+# #     echo -e 'if command -v pyenv 1>/dev/null 2>&1; then\n  eval "$(pyenv init -)"\nfi' >> ~/.bash_profile && \
+# #     exec "$SHELL" && \
+#
+# # https://github.com/pyenv/pyenv
+# # https://github.com/pyenv/pyenv-installer
+# RUN curl -s -L https://github.com/pyenv/pyenv-installer/raw/master/bin/pyenv-installer | bash && \
+#     pyenv update && \
+#     $PYENV_BIN install $PYTHON_VERSION
+#
+# #
+# WORKDIR $APP_PATH
+#
+# COPY --from=toskose-init \
+#       /tmp/dependencies/requirements.txt requirements.txt
+#
+# # https://github.com/pyenv/pyenv-virtualenv
+# RUN $PYENV_BIN local $PYTHON_VERSION && \
+#     $PYENV_BIN virtualenv $PYTHON_VERSION toskose-venv && \
+#     $PYENV_BIN virtualenvs && \
+#     $PYENV_BIN activate toskose-venv
+#
+#
+#
+#
+#
+# # Note: pip need to be dl separately
+# # https://stackoverflow.com/questions/36803857/pyenv-pip-command-not-found
+# RUN $PYENV_BIN local $PYTHON_VERSION && \
+#     python -m pip install
+#     # $PYENV_PIP install -r requirements.txt && \
+#     # rm requirements.txt
+#
+# WORKDIR $APP_PATH/Supervisor-$SUPERVISOR_VERSION
+# COPY --from=toskose-init \
+#       /tmp/Supervisor-$SUPERVISOR_VERSION \
+#       /$SUPERVISOR_VERSION.tar.gz $SUPERVISOR_VERSION.tar.gz
+#
+# RUN tar xf $SUPERVISOR_VERSION.tar.gz --strip-components=1 && \
+#     find . -name "*.tar.gz" -type f -delete && \
+#     python setup.py install
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# # Fetching Stage
+# FROM alpine:$ALPINE_VERSION as fetcher
+#
+# # after the FROM instruction all the build args are reset and aren't available
+# # just renew them
+# ARG PYTHON_VERSION
+# ARG SUPERVISOR_VERSION
+#
+#
+# WORKDIR /data
+#
+# # Setup CA for HTTPS, download and uncompress the tarballs
+# RUN mkdir -p python/ supervisor/ && \
+#     wget -q https://github.com/Supervisor/supervisor/archive/${SUPERVISOR_VERSION}.tar.gz \
+#             > /dev/null && \
+#     tar zxf ${SUPERVISOR_VERSION}.tar.gz -C supervisor/ --strip-components=1
+#
+# # Python Base Stage
+# FROM python:$PYTHON_VERSION-alpine as supervisor-base
+# ENV APP_PATH=/supervisor
+#
+# # Dependencies Stage - install dependencies
+# FROM supervisor-base as supervisor-dependencies
+# COPY dependencies/requirements.txt $APP_PATH/dependencies/requirements.txt
+# WORKDIR $APP_PATH/dependencies
+# RUN pip install -r requirements.txt
+#
+# # Building Stage - install supervisor
+# FROM supervisor-dependencies as supervisor-builder
+# COPY --from=fetcher /data/supervisor $APP_PATH/source
+# WORKDIR $APP_PATH/source
+# RUN python setup.py install
+#
+# # Configuration Stage - configure supervisord
+# FROM supervisor-builder as supervisor-configuration
+# WORKDIR $APP_PATH
+#
+# COPY supervisor/supervisord.conf /etc/supervisord.conf
+# RUN rm -rf dependencies/ source/
+#
+# ##################################################
+# # Testing Stage
+# FROM supervisor-configuration as supervisor-testing
+#
+# COPY --from=fetcher /data /test/fetcher/data
+#
+# COPY tests /tests
+# WORKDIR /tests
+# RUN apk update > /dev/null && \
+#     apk add bash > /dev/null && \
+#     chmod +x integrity_test.sh supervisor_test.sh && \
+#     ./integrity_test.sh
+#
+# # RUN echo "Testing Supervisor installation.." && \
+# #     echo_supervisord_conf
+#
+# ##################################################
+#
+# # Release Stage
+# FROM supervisor-configuration as toskose-release
+# ARG APP_VERSION
+# LABEL organization="di-unipi-socc" \
+#       developer="Matteo Bogo" \
+#       description="Orchestrating multiple services in a single unit of execution" \
+#       version=$APP_VERSION
+#
+# EXPOSE 9001/tcp
+# ENTRYPOINT ["/usr/local/bin/supervisord", "-c", "/etc/supervisord.conf"]
