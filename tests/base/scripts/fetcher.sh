@@ -6,34 +6,21 @@ REPOS=(
   https://github.com/Supervisor/supervisor/archive/${SUPERVISOR_VERSION}.tar.gz
 )
 
-DIRS=(
-  Supervisor-$SUPERVISOR_VERSION
+REPOS_NAMES=(
+  "Supervisor-${SUPERVISOR_VERSION}"
 )
 
-# prepare the environment
-echo "Initialization.."
-for dir in "${DIRS[@]}"
-do
-  path=${TMP_PATH}/$dir
-  isDirExist $path
-
-  if [ "$retval" == 0 ]; then
-    echo -e "${path}  ${COLOR_GREEN}already exist${COLOR_RESET}"
-  else
-    mkdir -p $path
-    echo -e "${path}  ${COLOR_GREEN}created${COLOR_RESET}"
-  fi
-done
+PATHS=(
+  "${TMP_PATH}/supervisor"
+)
 
 # check if repositories are available
 echo "Fetching repositories.."
 for i in "${!REPOS[@]}" # ! variable indirection
 do
   repo=${REPOS[$i]}
-  dir=${DIRS[$i]}
-  path=${TMP_PATH}/$dir
 
-  retval=$(isOnlineURL $repo)
+  retval=$(isOnlineURL ${repo})
   if [ "$retval" == 1 ]; then
     echo -e "$repo  ${COLOR_RED}offline${COLOR_RESET}"
     echo -e "${COLOR_RED}Error - Repository cannot be fetched${COLOR_RESET}"
@@ -41,17 +28,18 @@ do
   fi
 
   echo -e "$repo  ${COLOR_GREEN}online${COLOR_RESET}"
-  $fetcher -P $path $repo
+  echo "Start downloading ${REPOS_NAMES[$i]}.."
+  ${fetcher} -P ${PATHS[$i]} ${repo}
 
-  if [ $(find $path \
+  if [ $(find ${PATHS[$i]} \
               -type f \
               -name "*.tgz" -o \
               -name "*.tar.gz" \
               | wc -l) == 1 ]; then
 
-    echo -e "$dir  ${COLOR_GREEN}fetched${COLOR_RESET}"
+    echo -e "${REPOS_NAMES[$i]} ${COLOR_GREEN}fetched${COLOR_RESET}"
   else
-    echo -e "${COLOR_RED}Error - $dir not fetched${COLOR_RESET}"
+    echo -e "${COLOR_RED}Error - ${REPOS_NAMES[$i]} not fetched${COLOR_RESET}"
     exit 1
   fi
 done

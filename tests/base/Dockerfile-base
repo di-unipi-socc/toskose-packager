@@ -16,7 +16,7 @@ RUN apk update > /dev/null && \
     mkdir -p $TMP_PATH
 
 WORKDIR $TMP_PATH
-COPY base/ .
+COPY ../../toskose-unit .
 
 ### START TESTING ###
 FROM toskose-init as toskose-init-test

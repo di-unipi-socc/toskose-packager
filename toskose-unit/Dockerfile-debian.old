@@ -3,22 +3,27 @@
 #
 
 ARG TOSKERISER_IMAGE
-ARG SUPERVISOR_VERSION
 
-FROM TOSKERISER_IMAGE as toskosed
+FROM ${TOSKERISER_IMAGE} as toskosed
 
 # https://github.com/docker/docker/issues/4032#issuecomment-34597177
 ARG DEBIAN_FRONTEND=noninteractive
+
+# TODO considering dl and manually install supervisord and its dependencies
 
 RUN set -eux \
     && apt-get -qq update \
     && apt-get -qq install -y --no-install-recommends \
     supervisor \
-    && apt-get clean \
+    && apt-get -qq clean \
     && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* \
-    mkdir -p /toskose/{config,logs}
+    && mkdir -p /toskose/{config,scripts} /var/log/supervisor \
+    && touch /var/log/supervisor.log
 
-# copy the supervisord's configuration
-COPY base/configs/supervisor/supervisord.conf /toskose/config/supervisord.conf
+COPY . /toskose/
 
+<<<<<<< HEAD:toskose-unit/Dockerfile-debian.old
 ENTRYPOINT ["/usr/bin/supervisord","-c","/etc/supervisor/conf.d/supervisord.conf","-l","/logs/supervisor.logs"]
+=======
+ENTRYPOINT ["/toskose/scripts/entrypoint.sh"]
+>>>>>>> cd565fe06b4b7303704e77062f75e472baacb692:toskose-unit/Dockerfile-debian
