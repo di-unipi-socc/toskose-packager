@@ -53,7 +53,7 @@ checkStringIsEmptyOrNull $name $err_msg
 
 # check output path
 out_path=$3
-err_msg="output ppath not supplied"
+err_msg="output path not supplied"
 checkStringIsEmptyOrNull $name $err_msg
 
 # searching archive
