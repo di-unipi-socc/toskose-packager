@@ -1,87 +1,95 @@
 # toskose-unit - base image
 
 ARG APP_VERSION
-ARG PYTHON_VERSION
-
-ARG SUPERVISORD_VERSION
+ARG PYTHON_VERSION=2.7.15
+ARG SUPERVISORD_VERSION=3.3.5
 ARG SUPERVISORD_REPOSITORY=https://github.com/Supervisor/supervisor/archive/${SUPERVISORD_VERSION}.tar.gz
-ARG SUPERVISORD_PATH=/toskose/supervisord
 
-#
-FROM python:${PYTHON_VERSION}-alpine as base
+# BASE IMAGE
+FROM alpine as base
 
-ENV SCRIPTS_PATH=/toskose/scripts
-
-WORKDIR /toskose/scripts
+WORKDIR /tmp/scripts
 COPY base/scripts/ .
 
 RUN apk update > /dev/null \
     && apk add --no-cache \
     ca-certificates \
-    bash \
-    tree \
     && update-ca-certificates > /dev/null \
-    && python -m ensurepip \
     && chmod -R +x .
 
-#
+# FETCHER STAGE
+# - check availabity of supervisord
+# - fetch supervisord source code
+# - manage the tarball
 FROM base as fetcher
 
 ARG SUPERVISORD_REPOSITORY
 ARG SUPERVISORD_VERSION
-ARG SUPERVISORD_PATH
 
-WORKDIR /toskose/scripts
-RUN mkdir -p ${SUPERVISORD_PATH} \
-    && ./fetcher.sh \
-    ${SUPERVISORD_REPOSITORY} \
-    ${SUPERVISORD_PATH} \
-    && ./archiver.sh \
-    ${SUPERVISORD_PATH} \
-    ${SUPERVISORD_VERSION}.tar.gz \
-    ${SUPERVISORD_PATH} \
-    && rm ${SUPERVISORD_PATH}/${SUPERVISORD_VERSION}.tar.gz
+WORKDIR /tmp/scripts
+RUN mkdir -p /tmp/src/supervisord \
+    && ./fetcher.sh ${SUPERVISORD_REPOSITORY} /tmp/src/supervisord \
+    && ./archiver.sh /tmp/src/supervisord ${SUPERVISORD_VERSION}.tar.gz /tmp/src/supervisord \
+    && rm /tmp/src/supervisord/${SUPERVISORD_VERSION}.tar.gz
 
+### TESTING STAGE ###
 FROM fetcher as source-tester
 
 WORKDIR /toskose
-RUN tree -a
+RUN apk add --no-cache \
+    tree \
+    && tree -a \
+    && apk del tree
+### ------------- ###
 
-# https://github.com/six8/pyinstaller-alpine
+# - Pyinstaller Issue with Alpine OS -
+# (https://github.com/six8/pyinstaller-alpine)
 # Alpine uses musl instead of glibc. The PyInstaller bootloader for Linux 64
-# that comes with PyInstaller is made for glibc. This Docker image builds a
-# bootloader with musl.
-FROM python:${PYTHON_VERSION} as installer
+# that comes with PyInstaller is made for glibc.
+# This Docker image builds a bootloader with musl. (Not Working atm!)
 
-ARG SUPERVISORD_PATH
+# BUNDLER STAGE
+# Bundling Supervisord (package freezing) into a standalone executable,
+# including its dependencies (meld3) and the Python interpreter.
+FROM python:${PYTHON_VERSION} as bundler
 
-WORKDIR ${SUPERVISORD_PATH}
-COPY --from=fetcher ${SUPERVISORD_PATH} .
+WORKDIR /supervisord
+RUN mkdir -p src/ dist/ temp/
 
-RUN ls -l && \
-    && pip install pyinstaller > /dev/null \
+COPY --from=fetcher /tmp/src ./src/
+COPY base/configs/pyinstaller/supervisord.spec /supervisord/supervisord.spec
+
+RUN python -m ensurepip \
+    && pip install --quiet \
+    pyinstaller \
+    meld3 \
     && pyinstaller \
-    --distpath ${SUPERVISORD_PATH} \
-    --workpath ${SUPERVISORD_PATH}/temp \
+    --distpath /supervisord/dist \
+    --workpath /supervisord/temp \
     --noconfirm \
     --clean \
-    --onefile \
-    --nowindow \
-    --name supervisord \
-    supervisor/supervisord.py
+    supervisord.spec
 
+# RELEASE STAGE
+# Supervisord with a base configuration
+FROM debian as release
 
-#
-# FROM base as installer
-#
-# WORKDIR /pyinstaller
-# RUN
-#
-# RUN pip install pyinstaller \
-#     && pyinstaller --version >&2
-#
-# #
-# FROM base as release
-# LABEL maintainer.name="Matteo Bogo" \
-#       maitainer.email="matteo.bogo@gmail.com" \
-#       version=$APP_VERSION
+LABEL maintainer.name="Matteo Bogo" \
+      maintainer.email="matteo.bogo@gmail.com" \
+      version=${APP_VERSION}
+
+WORKDIR /toskose/supervisord
+COPY base/scripts/entrypoint.sh /toskose/supervisord/entrypoint.sh
+
+RUN mkdir -p bundle/ config/ logs/ \
+    && touch logs/supervisord.log \
+    && chmod +x entrypoint.sh
+
+COPY --from=bundler /supervisord/dist/supervisord /toskose/supervisord/bundle
+COPY base/configs/supervisord/supervisord.conf /toskose/supervisord/config/supervisord.conf
+
+VOLUME /toskose/supervisord/logs
+
+EXPOSE 9001/tcp
+
+ENTRYPOINT ["/bin/sh", "-c", "/toskose/supervisord/entrypoint.sh"]
