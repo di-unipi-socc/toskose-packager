@@ -11,10 +11,11 @@ FROM alpine as base
 WORKDIR /tmp/scripts
 COPY base/scripts/ .
 
-RUN apk update > /dev/null \
-    && apk add --no-cache \
+RUN apk update --quiet \
+    && apk add --no-cache --quiet \
     ca-certificates \
     && update-ca-certificates > /dev/null \
+    && rm -rf /var/cache/apk/* \
     && chmod -R +x .
 
 # FETCHER STAGE
@@ -35,11 +36,13 @@ RUN mkdir -p /tmp/src/supervisord \
 ### TESTING STAGE ###
 FROM fetcher as source-tester
 
-WORKDIR /toskose
-RUN apk add --no-cache \
+WORKDIR /tmp
+RUN apk add --no-cache --quiet \
     tree \
     && tree -a \
-    && apk del tree
+    && apk del --quiet \
+    tree \
+    && rm -rf /var/cache/apk/*
 ### ------------- ###
 
 # - Pyinstaller Issue with Alpine OS -
@@ -71,7 +74,7 @@ RUN python -m ensurepip \
     supervisord.spec
 
 # RELEASE STAGE
-# Supervisord with a base configuration
+# Supervisord with a minimal configuration
 FROM debian as release
 
 LABEL maintainer.name="Matteo Bogo" \
@@ -84,7 +87,7 @@ ARG DEBIAN_FRONTEND=noninteractive
 WORKDIR /toskose/supervisord
 COPY base/scripts/entrypoint.sh /toskose/supervisord/entrypoint.sh
 
-RUN set -eux \
+RUN set -eu \
     && apt-get -qq update \
     && mkdir -p bundle/ config/ logs/ \
     && touch logs/supervisord.log \
