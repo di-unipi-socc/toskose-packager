@@ -78,12 +78,19 @@ LABEL maintainer.name="Matteo Bogo" \
       maintainer.email="matteo.bogo@gmail.com" \
       version=${APP_VERSION}
 
+# https://github.com/docker/docker/issues/4032#issuecomment-34597177
+ARG DEBIAN_FRONTEND=noninteractive
+
 WORKDIR /toskose/supervisord
 COPY base/scripts/entrypoint.sh /toskose/supervisord/entrypoint.sh
 
-RUN mkdir -p bundle/ config/ logs/ \
+RUN set -eux \
+    && apt-get -qq update \
+    && mkdir -p bundle/ config/ logs/ \
     && touch logs/supervisord.log \
-    && chmod +x entrypoint.sh
+    && chmod +x entrypoint.sh \
+    && apt-get -qq clean \
+    && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
 COPY --from=bundler /supervisord/dist/supervisord /toskose/supervisord/bundle
 COPY base/configs/supervisord/supervisord.conf /toskose/supervisord/config/supervisord.conf
