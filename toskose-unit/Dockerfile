@@ -1,6 +1,7 @@
 # toskose-unit - base image
 
 ARG APP_VERSION
+ARG DEBIAN_VERSION=stretch
 ARG PYTHON_VERSION=2.7.15
 ARG SUPERVISORD_VERSION=3.3.5
 ARG SUPERVISORD_REPOSITORY=https://github.com/Supervisor/supervisor/archive/${SUPERVISORD_VERSION}.tar.gz
@@ -75,7 +76,7 @@ RUN python -m ensurepip \
 
 # RELEASE STAGE
 # Supervisord with a minimal configuration
-FROM debian as release
+FROM debian:${DEBIAN_VERSION}-slim as release
 
 LABEL maintainer.name="Matteo Bogo" \
       maintainer.email="matteo.bogo@gmail.com" \
@@ -89,7 +90,7 @@ COPY base/scripts/entrypoint.sh /toskose/supervisord/entrypoint.sh
 
 RUN set -eu \
     && apt-get -qq update \
-    && mkdir -p bundle/ config/ logs/ \
+    && mkdir -p bundle/ config/ logs/ tmp/ \
     && touch logs/supervisord.log \
     && chmod +x entrypoint.sh \
     && apt-get -qq clean \
@@ -98,7 +99,11 @@ RUN set -eu \
 COPY --from=bundler /supervisord/dist/supervisord /toskose/supervisord/bundle
 COPY base/configs/supervisord/supervisord.conf /toskose/supervisord/config/supervisord.conf
 
-VOLUME /toskose/supervisord/logs
+# DEV ONLY
+ENV SUPERVISORD_HTTP_PORT=9001 \
+    SUPERVISORD_HTTP_USER=admin \
+    SUPERVISORD_HTTP_PASSWORD=admin \
+    SUPERVISORD_LOG_LEVEL=info
 
 EXPOSE 9001/tcp
 
