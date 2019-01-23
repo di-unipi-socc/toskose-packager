@@ -78,6 +78,8 @@ RUN python -m ensurepip \
 # Supervisord with a minimal configuration
 FROM debian:${DEBIAN_VERSION}-slim as release
 
+ARG APP_VERSION
+
 LABEL maintainer.name="Matteo Bogo" \
       maintainer.email="matteo.bogo@gmail.com" \
       version=${APP_VERSION}
@@ -86,11 +88,11 @@ LABEL maintainer.name="Matteo Bogo" \
 ARG DEBIAN_FRONTEND=noninteractive
 
 WORKDIR /toskose/supervisord
-COPY base/scripts/entrypoint.sh /toskose/supervisord/entrypoint.sh
+COPY base/scripts/entrypoint.sh ./entrypoint.sh
 
 RUN set -eu \
     && apt-get -qq update \
-    && mkdir -p bundle/ config/ logs/ tmp/ \
+    && mkdir -p bundle/ config/ tmp/ logs/ \
     && touch logs/supervisord.log \
     && chmod +x entrypoint.sh \
     && apt-get -qq clean \
@@ -99,12 +101,24 @@ RUN set -eu \
 COPY --from=bundler /supervisord/dist/supervisord /toskose/supervisord/bundle
 COPY base/configs/supervisord/supervisord.conf /toskose/supervisord/config/supervisord.conf
 
+# Create Apps structure (lifecycle scripts + logs)
+# A test program is included
+WORKDIR /toskose/apps/test
+COPY base/scripts/test/ lifecycle/
+
+RUN set -eu \
+    && mkdir -p logs/ \
+    && touch logs/test-1.log \
+    && chmod -R 777 lifecycle/
+
 # DEV ONLY
+# !! overwrite ENVs in production !!
+WORKDIR /toskose
 ENV SUPERVISORD_HTTP_PORT=9001 \
     SUPERVISORD_HTTP_USER=admin \
     SUPERVISORD_HTTP_PASSWORD=admin \
     SUPERVISORD_LOG_LEVEL=info
 
-EXPOSE 9001/tcp
+VOLUME /toskose/apps /toskose/supervisord/logs
 
 ENTRYPOINT ["/bin/sh", "-c", "/toskose/supervisord/entrypoint.sh"]
