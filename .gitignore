@@ -1,6 +1,3 @@
-# Created by https://www.gitignore.io/api/flask,python,pycharm
-# Edit at https://www.gitignore.io/?templates=flask,python,pycharm
-
 ### Flask ###
 instance/*
 !instance/.gitignore
@@ -252,5 +249,3 @@ fabric.properties
 
 ### Python Patch ###
 .venv/
-
-# End of https://www.gitignore.io/api/flask,python,pycharm
