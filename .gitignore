@@ -1,3 +1,11 @@
+### SQLAlchemy ###
+
+### Alembic ###
+alembic.ini
+
+### Testing Database ###
+toskose-manager-test.db
+
 ### Flask ###
 instance/*
 !instance/.gitignore
