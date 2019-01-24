@@ -1,13 +1,23 @@
-from flask import render_template
-from flask import request
+from flask import render_template, url_for, redirect, request, flash
 from flask_login import current_user, login_user, logout_user, login_required
 
-from api import app
+from api import app, db
 from api.models import User
 from api.auth.forms import LoginForm, RegistrationForm
 
 from werkzeug.urls import url_parse
 
+@app.before_request
+def before_request():
+    if current_user.is_authenticated:
+        current_user.last_seen = datetime.utcnow
+        db.session.commit()
+
+@app.route('/user/<username>')
+@login_required
+def user(username):
+    user = User.query.filter_by(username=username).first_or_404()
+    return render_template('auth/user.html', user=user)
 
 @app.route('/')
 @app.route('/index')
