@@ -6,5 +6,5 @@ class Config(object):
 
     # SQLite Configuration
     SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL') or \
-        'sqlite:///' + os.path.join(basedir, 'toskose-manager.db')
+        'sqlite:///' + os.path.join(basedir, 'toskose-manager-test.db')
     SQLALCHEMY_TRACK_MODIFICATIONS = False
