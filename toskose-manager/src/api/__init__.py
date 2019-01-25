@@ -1,4 +1,4 @@
-from flask import Flask
+from flask import Flask, request
 from api.config import Config
 
 from flask_sqlalchemy import SQLAlchemy
@@ -7,6 +7,7 @@ from flask_login import LoginManager
 from flask_mail import Mail
 from flask_bootstrap import Bootstrap
 from flask_moment import Moment
+from flask_babel import Babel
 
 import logging
 from logging.handlers import RotatingFileHandler
@@ -20,20 +21,27 @@ app.config.from_object(Config)
 db = SQLAlchemy(app)
 migrate = Migrate(app,db)
 
-# Login Manager
+# Login
 login = LoginManager(app)
 login.login_view = 'login' #force users to log in
 
-# Mail Manager
+# Mail
 mail = Mail(app)
 
-# Style Manager
+# Style
 bootstrap = Bootstrap(app)
 
-# Datetime/Timezone Manager
+# Datetime/Timezone
 moment = Moment(app)
 
-# logging
+# Language Translations
+babel = Babel(app)
+
+@babel.localeselector
+def get_locale():
+    return request.accept_languages.best_match(app.config['LANGUAGES'])
+
+# Logging
 if not app.debug:
     if Config.TOSKOSE_LOGS_PATH is None:
         if not os.path.exists('logs'):

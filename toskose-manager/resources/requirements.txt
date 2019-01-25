@@ -6,5 +6,6 @@ flask-login==0.4.1
 flask-mail==0.9.1
 flask-bootstrap==3.3.7.1
 flask-moment==0.6.0
+flask-babel==0.12.2
 pyjwt==1.7.1
 gunicorn==19.9.0
