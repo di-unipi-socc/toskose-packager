@@ -4,6 +4,7 @@ from api.config import Config
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 from flask_login import LoginManager
+from flask_mail import Mail
 
 import logging
 from logging.handlers import RotatingFileHandler
@@ -17,6 +18,8 @@ migrate = Migrate(app,db)
 
 login = LoginManager(app)
 login.login_view = 'login' #force users to log in
+
+mail = Mail(app)
 
 # logging
 if not app.debug:

@@ -3,7 +3,9 @@ from flask_login import current_user, login_user, logout_user, login_required
 
 from api import app, db
 from api.models import User
-from api.forms import LoginForm, RegistrationForm, EditProfileForm
+from api.forms import LoginForm, RegistrationForm, EditProfileForm,
+    ResetPasswordRequestForm, ResetPasswordForm
+from api.email import send_password_reset
 
 from datetime import datetime
 
@@ -85,3 +87,34 @@ def register():
 
         return redirect(url_for('login'))
     return render_template('auth/register.html', title='Register', form=form)
+
+@app.route('/reset_password_request', methods=['GET', 'POST'])
+def reset_password_request():
+
+    if current_user.is_authenticated:
+        return redirect(url_for('index'))
+
+    form = ResetPasswordForm()
+    if form.validate_on_submit():
+        user = User.query.filter_by(email=form.email.data).first()
+        if user:
+            send_password_reset(user)
+        return redirect(url_for('login'))
+    return render_template('auth/reset_password_request.html', title='Reset password request', form=form)
+
+@app.route('/reset_password/<token>', methods=['GET', 'POST'])
+def reset_password(token):
+
+    if current_user.is_authenticated:
+        return redirect(url_for('index'))
+
+    user = User.verify_reset_password_jwt(token)
+    if not user:
+        return redirect(url_for('index'))
+
+    form = ResetPasswordForm()
+    if form.validate_on_submit():
+        user.set_password(form.password.data)
+        db.session.commit()
+        return redirect(url_for('login'))
+    return render_template('reset_password.html', form=form)
