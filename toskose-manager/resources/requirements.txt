@@ -3,4 +3,6 @@ flask-wtf==0.14
 flask-sqlalchemy==2.3.2
 flask-migrate==2.3.1
 flask-login==0.4.1
+flask-mail==0.9.1
+pyjwt==1.7.1
 gunicorn==19.9.0
