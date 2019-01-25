@@ -1,5 +1,5 @@
 from flask_mail import Message
-from app import mail
+from api import mail
 
 from threading import Thread
 
@@ -20,6 +20,6 @@ def send_password_reset(user):
         '[Toskose Manager]: Reset your password',
         sender=app.config['ADMINS_EMAIL'][0],
         recipients=[user.email],
-        text_body=render_template('email/reset_password_msg', user=user, token=token)
+        text_body=render_template('email/reset_password_msg', user=user, token=token),
         html_body=render_template('email/reset_password_msg.html', user=user, token=token)
     )

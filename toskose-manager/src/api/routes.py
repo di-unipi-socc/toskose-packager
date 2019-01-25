@@ -3,8 +3,7 @@ from flask_login import current_user, login_user, logout_user, login_required
 
 from api import app, db
 from api.models import User
-from api.forms import LoginForm, RegistrationForm, EditProfileForm,
-    ResetPasswordRequestForm, ResetPasswordForm
+from api.forms import LoginForm, RegistrationForm, EditProfileForm, ResetPasswordRequestForm, ResetPasswordForm
 from api.email import send_password_reset
 
 from datetime import datetime
