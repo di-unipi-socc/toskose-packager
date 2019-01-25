@@ -6,6 +6,7 @@ from flask_migrate import Migrate
 from flask_login import LoginManager
 from flask_mail import Mail
 from flask_bootstrap import Bootstrap
+from flask_moment import Moment
 
 import logging
 from logging.handlers import RotatingFileHandler
@@ -28,6 +29,9 @@ mail = Mail(app)
 
 # Style Manager
 bootstrap = Bootstrap(app)
+
+# Datetime/Timezone Manager
+moment = Moment(app)
 
 # logging
 if not app.debug:
