@@ -93,13 +93,13 @@ def reset_password_request():
     if current_user.is_authenticated:
         return redirect(url_for('index'))
 
-    form = ResetPasswordForm()
+    form = ResetPasswordRequestForm()
     if form.validate_on_submit():
         user = User.query.filter_by(email=form.email.data).first()
         if user:
             send_password_reset(user)
         return redirect(url_for('login'))
-    return render_template('auth/reset_password_request.html', title='Reset password request', form=form)
+    return render_template('auth/reset_password_request.html', title='Reset password', form=form)
 
 @app.route('/reset_password/<token>', methods=['GET', 'POST'])
 def reset_password(token):
@@ -116,4 +116,4 @@ def reset_password(token):
         user.set_password(form.password.data)
         db.session.commit()
         return redirect(url_for('login'))
-    return render_template('reset_password.html', form=form)
+    return render_template('auth/reset_password.html', title='Reset password', form=form)
