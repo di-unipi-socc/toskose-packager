@@ -3,21 +3,37 @@ from flask_login import current_user, login_user, logout_user, login_required
 
 from api import app, db
 from api.models import User
-from api.auth.forms import LoginForm, RegistrationForm
+from api.forms import LoginForm, RegistrationForm, EditProfileForm
+
+from datetime import datetime
 
 from werkzeug.urls import url_parse
 
 @app.before_request
 def before_request():
     if current_user.is_authenticated:
-        current_user.last_seen = datetime.utcnow
+        current_user.last_seen = datetime.utcnow()
         db.session.commit()
 
 @app.route('/user/<username>')
 @login_required
 def user(username):
     user = User.query.filter_by(username=username).first_or_404()
-    return render_template('auth/user.html', user=user)
+    return render_template('user/user.html', user=user)
+
+@app.route('/edit_profile', methods=['GET', 'POST'])
+@login_required
+def edit_profile():
+    form = EditProfileForm(current_user.username)
+    if form.validate_on_submit():
+        current_user.username = form.username.data
+        current_user.about_me = form.about_me.data
+        db.session.commit()
+        return redirect(url_for('edit_profile'))
+    elif request.method is 'GET':
+        form.username.data = current_user.username
+        form.about_me.data = current_user.about_me
+    return render_template('user/edit_profile.html', title='Edit Profile', form=form)
 
 @app.route('/')
 @app.route('/index')
