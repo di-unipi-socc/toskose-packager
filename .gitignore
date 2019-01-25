@@ -6,6 +6,9 @@ alembic.ini
 ### Testing Database ###
 toskose-manager-test.db
 
+### Logs - Testing ###
+logs/
+
 ### Flask ###
 instance/*
 !instance/.gitignore
