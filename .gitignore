@@ -1,7 +1,7 @@
 ### SQLAlchemy ###
 
 ### Alembic ###
-alembic.ini
+migrations/
 
 ### Testing Database ###
 toskose-manager-test.db
