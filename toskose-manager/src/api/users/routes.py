@@ -1,10 +1,12 @@
-from flask import render_template, url_for, redirect, request
+from flask import render_template, url_for, redirect, request, flash
 from flask_login import current_user, login_required
+from flask_babel import _
 
 from api import db
 from api.main.models import User
 from api.users import bp
 from api.users.forms import EditProfileForm
+
 
 @bp.route('/user/<username>')
 @login_required
@@ -20,6 +22,7 @@ def edit_profile():
         current_user.username = form.username.data
         current_user.about_me = form.about_me.data
         db.session.commit()
+        flash(_('username updated'))
         return redirect(url_for('users.edit_profile'))
     elif request.method is 'GET':
         form.username.data = current_user.username
