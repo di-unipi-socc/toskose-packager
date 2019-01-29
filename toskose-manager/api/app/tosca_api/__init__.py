@@ -1,8 +1,8 @@
 from flask import Blueprint
 from flask_restplus import Api
 
-from app.tosca_api.controllers.container_nodes import ns as ns_container_nodes
-from app.tosca_api.controllers.software_nodes import ns as ns_software_nodes
+from .dto import ToskoseNodeDTO
+from .dto import SoftwareNodeDTO
 
 
 bp = Blueprint('tosca_api', __name__, url_prefix='/api/v1')
@@ -14,5 +14,5 @@ api = Api(
     description='API for managing TOSCA-based multi-component cloud applications'
 )
 
-api.add_namespace(ns_container_nodes, path='/container-nodes')
-api.add_namespace(ns_software_nodes, path='/software-nodes')
+api.add_namespace(ToskoseNodeDTO.api, path='/toskose-node')
+api.add_namespace(SoftwareNodeDTO.api, path='/software-node')

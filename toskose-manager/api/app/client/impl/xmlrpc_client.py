@@ -1,6 +1,6 @@
-from xmlrpc.client import ServerProxy, ProtocolError
+from xmlrpc.client import ServerProxy, ProtocolError, Fault
 from .base_client import BaseClient
-from exceptions import SupervisordClientOperationError
+from ..exceptions import SupervisordClientOperationError
 import logging
 
 
@@ -14,9 +14,7 @@ class ToskoseXMLRPCclient(BaseClient):
                 try:
                     func(self, *args, **kwargs)
                 except ConnectionRefusedError as err:
-                    self.logger.error(
-                    'Cannot establish a connection to http://{0}:{1}'
-                    .format(self._host, self._port))
+                    self.logger.error('Cannot establish a connection to http://{0}:{1}'.format(self._host, self._port))
                     raise
                 except (ProtocolError, Fault) as err:
                     self.logger.error('TODO: Protocol or Fault error')

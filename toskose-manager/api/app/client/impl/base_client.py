@@ -8,16 +8,16 @@ Most of the documentation is derived from http://supervisord.org/api.html
 
 class BaseClient(ABC):
 
-    def __init__(self, node_id, host, port, username=None, password=None):
-        self._node_id = node_id
+    def __init__(self, id, host, port, username=None, password=None):
+        self._id = id
         self._host = host
         self._port = port
         self._username = username
         self._password = password
 
     @property
-    def node_id(self):
-        return self._node_id
+    def id(self):
+        return self._id
 
     @property
     def host(self):
@@ -38,7 +38,7 @@ class BaseClient(ABC):
     # Supervisord process Management
     #
     # @abstractmethod
-    # def getAPIVersion(self) -> str:
+    # def get_api_version(self) -> str:
     #     """ The version of the RPC API used by supervisord.
     #
     #     Returns:
@@ -48,7 +48,7 @@ class BaseClient(ABC):
     #     pass
     #
     # @abstractmethod
-    # def getSupervisorVersion(self) -> str:
+    # def get_supervisor_version(self) -> str:
     #     """ The version of the Supervisor package runned by the supervisord process.
     #
     #     Returns:
@@ -58,7 +58,7 @@ class BaseClient(ABC):
     #     pass
     #
     # @abstractmethod
-    # def getIdentification(self) -> str:
+    # def get_identification(self) -> str:
     #     """ The identifying string of Supervisor.
     #
     #     This allows the client to identify the Supervisor instance with
@@ -71,7 +71,7 @@ class BaseClient(ABC):
     #     pass
 
     @abstractmethod
-    def getState(self) -> Dict:
+    def get_state(self) -> Dict:
         """ The current state of Supervisor.
 
         Returns:
