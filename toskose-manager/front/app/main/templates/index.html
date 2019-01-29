@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+
+{% block app_content %}
+    <h1>{{ _('Hi') }}, {{ current_user.username }}!</h1>
+    <br>
+    <h1>Dashboard</h1>
+    LOGGING_WITH_PAGINATION
+
+{% endblock %}
