@@ -1,53 +1,93 @@
-from flask_restplus import Resource, Namespace, fields
+from flask_restplus import Resource, Namespace, fields, reqparse
+
 from app.tosca.services.toskose_node_service import ToskoseNodeService
 from app.tosca.services.toskose_node_service import nodes_id
 
+from app.tosca.models import node_codes
+from app.tosca.models import ns_toskose_node as ns
+from app.tosca.models import toskose_node_info
+from app.tosca.models import toskose_node_log
 
-ns = Namespace('toskose/node', description='operations for managing a toskose node')
 
-node_state = ns.model('node-state', {
-    'name': fields.String(required=True, description='the name of the current state'),
-    'code': fields.String(required=True, description="the code of the current state")
-})
-nodes = ns.model('nodes', {
-    'id': fields.String(required=True, description='the toskose node identifier')
-})
-
-node_codes = {
-    200: 'Success',
-    400: 'Validation Error',
-    401: 'Unauthorized',
-    404: 'Not found',
-    500: 'Internal Server Error'
-}
-
+@ns.header('Content-Type', 'application/json')
+class ToskoseNodeOperation(Resource):
+    """ Base class for common configurations """
+    pass
 
 @ns.route('/')
-@ns.doc(
-    headers={'Content-Type': 'application/json'},
-    responses={401: 'Unauthorized', 500: 'Internal Server Error'}
-)
-class ToskoseNodeList(Resource):
-    @ns.marshal_list_with(nodes)
+class ToskoseNodeInfoList(ToskoseNodeOperation):
+    @ns.marshal_list_with(toskose_node_info)
+    @ns.response(500, 'Failed to retrieve nodes list')
     def get(self):
         """ The list of toskose nodes identifiers """
         return {'id': '1'}
 
 
-@ns.route('/<node_id>')
-@ns.doc(
-    params={'node_id': 'The node identifier'},
-    responses=node_codes
-)
-class ToskoseNodeState(Resource):
-    @ns.marshal_with(node_state)
+@ns.route('/<string:node_id>')
+@ns.param('node_id', 'the node identifier')
+class ToskoseNodeInfo(ToskoseNodeOperation):
+    @ns.marshal_with(toskose_node_info)
+    @ns.response(404, 'Node not found')
+    @ns.response(400, 'Node identifier not valid')
     def get(self, node_id):
         """ The current state of a node """
-        state = ToskoseNodeService(node_id).get_state()
-        if not state:
+        # TODO validate the node_id
+        info = ToskoseNodeService(node_id).get_node_info()
+        if not info:
             ns.abort(404)
         else:
-            return state
+            return info
 
-    # if node is None:
-    #     # abort
+@ns.route('/<string:node_id>/log')
+@ns.param('node_id', 'the node identifier')
+class ToskoseNodeLog(ToskoseNodeOperation):
+
+    parser = reqparse.RequestParser()
+    parser.add_argument('offset', type=int, required=True)
+    parser.add_argument('length', type=int, required=True)
+
+    @ns.marshal_with(toskose_node_log)
+    @ns.expect(parser, validate=True)
+    @ns.response(404, 'Log not found')
+    @ns.response(400, 'Node identifier not valid')
+    def get(self, node_id):
+        """ The log of a node """
+        # TODO validate the node_id
+        args = ToskoseNodeLog.parser.parse_args()
+        log = ToskoseNodeService(node_id).get_node_log(
+            args['offset'],
+            args['length'])
+        if not log:
+            ns.abort(404, message='No log for Toskose Node #{0}'.format(node_id))
+        else:
+            return log
+
+@ns.route('/<string:node_id>/shutdown')
+@ns.param('node_id', 'the node identifier')
+class ToskoseNodeShutdown(ToskoseNodeOperation):
+
+    @ns.response(500, 'Failed to shutdown')
+    @ns.response(400, 'Node identifier not valid')
+    def post(self, node_id):
+        """ Shutdown the node """
+        # TODO validate the node_id
+        res = ToskoseNodeService(node_id).shutdown()
+        if not res:
+            ns.abort(500, message='Failed to shutdown the node #{0}'.format(node_id))
+        else:
+            return {'message': 'OK'}
+
+@ns.route('/<string:node_id>/restart')
+@ns.param('node_id', 'the node identifier')
+class ToskoseNodeRestart(ToskoseNodeOperation):
+
+    @ns.response(500, 'Failed to restart')
+    @ns.response(400, 'Node identifier not valid')
+    def post(self, node_id):
+        """ Restart the node """
+        # TODO validate the node_id
+        res = ToskoseNodeService(node_id).restart()
+        if not res:
+            ns.abort(500, message='Failed to restart the node #{0}'.format(node_id))
+        else:
+            return {'message': 'OK'}
