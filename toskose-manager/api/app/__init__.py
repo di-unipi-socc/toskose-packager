@@ -18,7 +18,7 @@ def create_app(config_name):
     bcrypt.init_app(app)
 
     # Blueprints
-    from .tosca_api import bp as bp_tosca_api
+    from .tosca import bp as bp_tosca_api
     app.register_blueprint(bp_tosca_api)
 
     # Logging
