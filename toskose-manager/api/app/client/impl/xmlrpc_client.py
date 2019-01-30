@@ -1,6 +1,6 @@
 from xmlrpc.client import ServerProxy, ProtocolError, Fault
-from .base_client import BaseClient
-from ..exceptions import SupervisordClientOperationError
+from app.client.impl.base_client import BaseClient
+from app.client.exceptions import SupervisordClientOperationError
 import logging
 
 
@@ -12,7 +12,7 @@ class ToskoseXMLRPCclient(BaseClient):
         def wrapper(self, *args, **kwargs):
             try:
                 try:
-                    func(self, *args, **kwargs)
+                    return func(self, *args, **kwargs)
                 except ConnectionRefusedError as err:
                     self.logger.error('Cannot establish a connection to http://{0}:{1}'.format(self._host, self._port))
                     raise
@@ -34,12 +34,11 @@ class ToskoseXMLRPCclient(BaseClient):
 
         return wrapper
 
-    def __init__(self, node_id, **kwargs):
-        super(ToskoseXMLRPCclient, self).__init__(node_id, **kwargs)
+    def __init__(self, **kwargs):
+        super(ToskoseXMLRPCclient, self).__init__(**kwargs)
         self._rpc_endpoint = \
             ToskoseXMLRPCclient.build_rpc_endpoint(**kwargs)
         self._instance = self.build()
-        self._node_id = node_id
 
         self.logger = logging.getLogger(__class__.__name__)
         self.logger.info(__class__.__name__ + "logger started")
@@ -60,9 +59,9 @@ class ToskoseXMLRPCclient(BaseClient):
         return ServerProxy(self._rpc_endpoint)
 
     @_handling_failures
-    def getState(self):
+    def get_state(self):
         return self._instance.supervisor.getState()
 
     @_handling_failures
-    def getProcessInfo(self, name):
+    def get_process_info(self, name):
         return self._instance.supervisor.getProcessInfo(name)

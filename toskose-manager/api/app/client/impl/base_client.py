@@ -8,16 +8,11 @@ Most of the documentation is derived from http://supervisord.org/api.html
 
 class BaseClient(ABC):
 
-    def __init__(self, id, host, port, username=None, password=None):
-        self._id = id
+    def __init__(self, host, port, username=None, password=None):
         self._host = host
         self._port = port
         self._username = username
         self._password = password
-
-    @property
-    def id(self):
-        return self._id
 
     @property
     def host(self):
@@ -71,7 +66,7 @@ class BaseClient(ABC):
     #     pass
 
     @abstractmethod
-    def get_state(self) -> Dict:
+    def get_state(self) -> dict:
         """ The current state of Supervisor.
 
         Returns:
@@ -173,7 +168,7 @@ class BaseClient(ABC):
     # Process Control
 
     @abstractmethod
-    def getProcessInfo(self, name: str) -> Dict:
+    def get_process_info(self, name: str) -> Dict:
         """ Get info about a process by its name.
 
         Args:
