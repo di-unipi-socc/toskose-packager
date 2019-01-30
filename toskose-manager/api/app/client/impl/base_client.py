@@ -30,40 +30,40 @@ class BaseClient(ABC):
     def password(self):
         return self._password
 
-    # Supervisord process Management
-    #
-    # @abstractmethod
-    # def get_api_version(self) -> str:
-    #     """ The version of the RPC API used by supervisord.
-    #
-    #     Returns:
-    #         api_vid: the string version identifier.
-    #
-    #     """
-    #     pass
-    #
-    # @abstractmethod
-    # def get_supervisor_version(self) -> str:
-    #     """ The version of the Supervisor package runned by the supervisord process.
-    #
-    #     Returns:
-    #         vid: the string version identifier.
-    #
-    #     """
-    #     pass
-    #
-    # @abstractmethod
-    # def get_identification(self) -> str:
-    #     """ The identifying string of Supervisor.
-    #
-    #     This allows the client to identify the Supervisor instance with
-    #     which it is communicating in the case of multiple instances.
-    #
-    #     Returns:
-    #         id: the string identifier.
-    #
-    #     """
-    #     pass
+    """ Supervisord Process Management """
+
+    @abstractmethod
+    def get_api_version(self) -> str:
+        """ The version of the RPC API used by supervisord.
+
+        Returns:
+            api_vid: the string version identifier.
+
+        """
+        pass
+
+    @abstractmethod
+    def get_supervisor_version(self) -> str:
+        """ The version of the Supervisor package runned by the supervisord process.
+
+        Returns:
+            vid: the string version identifier.
+
+        """
+        pass
+
+    @abstractmethod
+    def get_identification(self) -> str:
+        """ The identifying string of Supervisor.
+
+        This allows the client to identify the Supervisor instance with
+        which it is communicating in the case of multiple instances.
+
+        Returns:
+            id: the string identifier.
+
+        """
+        pass
 
     @abstractmethod
     def get_state(self) -> dict:
@@ -84,88 +84,88 @@ class BaseClient(ABC):
 
         """
         raise NotImplementedError("not implemented yet")
-    #
-    # @abstractmethod
-    # def getPid(self) -> int:
-    #     """ The PID of the supervisord process.
-    #
-    #     Returns:
-    #         pid: the PID of supervisord.
-    #
-    #     """
-    #     pass
-    #
-    # @abstractmethod
-    # def readLog(self, offset: int, length: int) -> str:
-    #     """ Read length bytes from the main log starting at offset.
-    #
-    #     Args:
-    #         offset (int): the offset to start reading from.
-    #         length (int): the number of bytes to read from the log.
-    #
-    #     Returns:
-    #         log: It can either return the entire log, a number of characters
-    #         from the tail of the log, or a slice of the log specified by the
-    #         offset and length parameters.
-    #
-    #     If the log is empty and the entire log is requested, an empty string
-    #     is returned.
-    #     If either offset or length is out of range, the fault BAD_ARGUMENTS
-    #     will be returned.
-    #     If the log cannot be read, this method will raise either the NO_FILE
-    #     error if the file does not exist or the FAILED error if any other
-    #     problem was encountered.
-    #
-    #     """
-    #     pass
-    #
-    # @abstractmethod
-    # def clearLog(self) -> bool:
-    #     """ Clear the main log.
-    #
-    #     Returns:
-    #         bool: always return True unless error.
-    #
-    #     If the log cannot be cleared because the log file does not exist, the
-    #     fault NO_FILE will be raised. If the log cannot be cleared for any
-    #     other reason, the fault FAILED will be raised.
-    #
-    #     """
-    #     pass
-    #
-    # @abstractmethod
-    # def shutdown(self) -> bool:
-    #     """ Shut down the supervisor process.
-    #
-    #     Returns:
-    #         bool: always return True unless error.
-    #
-    #     This method shuts down the Supervisor daemon. If any processes are
-    #     running, they are automatically killed without warning. Unlike most
-    #     other methods, if Supervisor is in the FATAL state, this method will
-    #     still function.
-    #
-    #     """
-    #     pass
-    #
-    # @abstractmethod
-    # def restart(self) -> bool:
-    #     """ Restart the supervisor process.
-    #
-    #     Returns:
-    #         bool: always return True unless error.
-    #
-    #     This method soft restarts the Supervisor daemon. If any processes are
-    #     running, they are automatically killed without warning. Note that the
-    #     actual UNIX process for Supervisor cannot restart; only Supervisor’s
-    #     main program loop. This has the effect of resetting the internal states
-    #     of Supervisor. Unlike most other methods, if Supervisor is in the FATAL
-    #     state, this method will still function.
-    #
-    #     """
-    #     pass
 
-    # Process Control
+    @abstractmethod
+    def get_pid(self) -> int:
+        """ The PID of the supervisord process.
+
+        Returns:
+            pid: the PID of supervisord.
+
+        """
+        pass
+
+    @abstractmethod
+    def read_log(self, offset: int, length: int) -> str:
+        """ Read length bytes from the main log starting at offset.
+
+        Args:
+            offset (int): the offset to start reading from.
+            length (int): the number of bytes to read from the log.
+
+        Returns:
+            log: It can either return the entire log, a number of characters
+            from the tail of the log, or a slice of the log specified by the
+            offset and length parameters.
+
+        If the log is empty and the entire log is requested, an empty string
+        is returned.
+        If either offset or length is out of range, the fault BAD_ARGUMENTS
+        will be returned.
+        If the log cannot be read, this method will raise either the NO_FILE
+        error if the file does not exist or the FAILED error if any other
+        problem was encountered.
+
+        """
+        pass
+
+    @abstractmethod
+    def clear_log(self) -> bool:
+        """ Clear the main log.
+
+        Returns:
+            bool: always return True unless error.
+
+        If the log cannot be cleared because the log file does not exist, the
+        fault NO_FILE will be raised. If the log cannot be cleared for any
+        other reason, the fault FAILED will be raised.
+
+        """
+        pass
+
+    @abstractmethod
+    def shutdown(self) -> bool:
+        """ Shut down the supervisor process.
+
+        Returns:
+            bool: always return True unless error.
+
+        This method shuts down the Supervisor daemon. If any processes are
+        running, they are automatically killed without warning. Unlike most
+        other methods, if Supervisor is in the FATAL state, this method will
+        still function.
+
+        """
+        pass
+
+    @abstractmethod
+    def restart(self) -> bool:
+        """ Restart the supervisor process.
+
+        Returns:
+            bool: always return True unless error.
+
+        This method soft restarts the Supervisor daemon. If any processes are
+        running, they are automatically killed without warning. Note that the
+        actual UNIX process for Supervisor cannot restart; only Supervisor’s
+        main program loop. This has the effect of resetting the internal states
+        of Supervisor. Unlike most other methods, if Supervisor is in the FATAL
+        state, this method will still function.
+
+        """
+        pass
+
+    """ Supervisord Subprocesses Management """
 
     @abstractmethod
     def get_process_info(self, name: str) -> Dict:

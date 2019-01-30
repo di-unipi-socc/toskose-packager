@@ -13,11 +13,31 @@ class ToskoseXMLRPCclient(BaseClient):
             try:
                 try:
                     return func(self, *args, **kwargs)
-                except ConnectionRefusedError as err:
-                    self.logger.error('Cannot establish a connection to http://{0}:{1}'.format(self._host, self._port))
+                except ConnectionRefusedError as conn_err:
+                    self.logger.error(
+                        'Cannot establish a connection to http://{0}:{1}\n \
+                        Error: {2}'.format(
+                            self._host,
+                            self._port,
+                            conn_err))
                     raise
-                except (ProtocolError, Fault) as err:
-                    self.logger.error('TODO: Protocol or Fault error')
+                except Fault as ferr:
+                    self.logger.error('-- a Fault Error occurred -- \n \
+                        - Error Code: {0}\n \
+                        - Error Message: {1}'.format(
+                            ferr.faultCode,
+                            ferr.faultString))
+                    raise
+                except ProtocolError as perr:
+                    self.logger.error('-- A Protocol Error occurred -- \n \
+                        - URL: {0}\n \
+                        - HTTP/HTTPS headers: {1}\n \
+                        - Error Code: {2}\n \
+                        - Error Message: {3}'.format(
+                            perr.url,
+                            perr.headers,
+                            perr.errcode,
+                            perr.errmsg))
                     raise
                 except OSError as err:
                     self.logger.error('OS error: {0}'.format(err))
@@ -30,7 +50,9 @@ class ToskoseXMLRPCclient(BaseClient):
                     raise
             except:
                 raise SupervisordClientOperationError(
-                "A problem occurred while contacting the node {0}".format(self._node_id))
+                    "A problem occurred while contacting the node {0}:{1}".format(
+                        self._host, self._port)
+                )
 
         return wrapper
 
@@ -58,9 +80,45 @@ class ToskoseXMLRPCclient(BaseClient):
 
         return ServerProxy(self._rpc_endpoint)
 
+    """ Supervisord Process Management """
+
+    @_handling_failures
+    def get_api_version(self):
+        return self._instance.supervisor.getAPIVersion()
+
+    @_handling_failures
+    def get_supervisor_version(self):
+        return self._instance.supervisor.getSupervisorVersion()
+
+    @_handling_failures
+    def get_identification(self):
+        return self._instance.supervisor.getIdentification()
+
     @_handling_failures
     def get_state(self):
         return self._instance.supervisor.getState()
+
+    @_handling_failures
+    def get_pid(self):
+        return self._instance.supervisor.getPID()
+
+    @_handling_failures
+    def read_log(self, offset, length):
+        return self._instance.supervisor.readLog(offset,length)
+
+    @_handling_failures
+    def clear_log(self):
+        return self._instance.supervisor.clearLog()
+
+    @_handling_failures
+    def shutdown(self):
+        return self._instance.supervisor.shutdown()
+
+    @_handling_failures
+    def restart(self):
+        return self._instance.supervisor.restart()
+
+    """ Supervisord Subprocesses Management """
 
     @_handling_failures
     def get_process_info(self, name):
