@@ -1,4 +1,5 @@
 import unittest
+import json
 from app.client.impl.xmlrpc_client import ToskoseXMLRPCclient
 
 
@@ -60,10 +61,11 @@ class TestXMLRPCclient(unittest.TestCase):
 
     def test_get_process_info(self):
         process_info = self.client.get_process_info(self.process_name)
+        print(json.dumps(process_info, indent=2))
 
     def test_get_all_process_info(self):
         processes_info = self.client.get_all_process_info()
-        print(processes_info)
+        print(json.dumps(processes_info, indent=2))
 
 
 
