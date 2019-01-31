@@ -48,3 +48,43 @@ class NodeService(BaseService):
     @client_handling_failures
     def restart(self):
         return self.client.restart()
+
+    @client_handling_failures
+    def send_remote_comm_event(self, type, data):
+        """ not implemented yet """
+        pass
+
+    @client_handling_failures
+    def reload_config(self):
+        """ not implemented yet """
+        pass
+
+    @client_handling_failures
+    def add_process_group(self, name):
+        """ not implemented yet """
+        pass
+
+    @client_handling_failures
+    def remove_process_group(self, name):
+        """ not implemented yet """
+        pass
+
+    @client_handling_failures
+    def list_methods(self):
+        """ not implemented yet """
+        pass
+
+    @client_handling_failures
+    def method_help(self, name):
+        """ not implemented yet """
+        pass
+
+    @client_handling_failures
+    def method_signature(self, name):
+        """ not implemented yet """
+        pass
+
+    @client_handling_failures
+    def multicall(self, calls):
+        """ not implemented yet """
+        pass
