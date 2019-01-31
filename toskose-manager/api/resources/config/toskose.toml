@@ -1,0 +1,10 @@
+title = "Toskose Manager Test Configuration"
+
+[nodes]
+  [nodes.node-test-1]
+    name = "node-test-1"
+    description = "a test node"
+    hostname = "localhost"
+    port = 9001
+    username = "admin"
+    password = "admin"

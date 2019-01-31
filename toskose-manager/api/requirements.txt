@@ -5,3 +5,4 @@ flask-bcrypt==0.7.1
 flask-Script==2.0.6
 pyjwt==1.7.1
 gunicorn==19.9.0
+toml==0.10.0
