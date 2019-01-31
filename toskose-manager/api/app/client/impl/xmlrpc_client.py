@@ -127,3 +127,103 @@ class ToskoseXMLRPCclient(BaseClient):
     @_handling_failures
     def get_all_process_info(self):
         return self._instance.supervisor.getAllProcessInfo()
+
+    @_handling_failures
+    def start_process(self, name, wait):
+        return self._instance.supervisor.startProcess(name,wait)
+
+    @_handling_failures
+    def start_all_processes(self, wait):
+        return self._instance.supervisor.startAllProcesses(wait)
+
+    @_handling_failures
+    def start_process_group(self, name, wait):
+        return self._instance.supervisor.startProcessGroup(name,wait)
+
+    @_handling_failures
+    def stop_process(self, name, wait):
+        return self._instance.supervisor.stopProcess(name,wait)
+
+    @_handling_failures
+    def stop_process_group(self, name, wait):
+        return self._instance.supervisor.stopProcessGroup(name,wait)
+
+    @_handling_failures
+    def stop_all_processes(self, wait):
+        return self._instance.supervisor.stopAllProcesses(wait)
+
+    @_handling_failures
+    def signal_process(self, name, signal):
+        return self._instance.supervisor.signalProcess(name,signal)
+
+    @_handling_failures
+    def signal_process_group(self, name, signal):
+        return self._instance.supervisor.signalProcessGroup(name,signal)
+
+    @_handling_failures
+    def signal_all_processes(self, signal):
+        return self._instance.supervisor.signalAllProcesses(signal)
+
+    def send_process_stdin(self, name, chars):
+        """ not implemented yet """
+        pass
+
+    def send_remote_comm_event(self, type, data):
+        """ not implemented yet """
+        pass
+
+    @_handling_failures
+    def reload_config(self):
+        return self._instance.supervisor.reloadConfig()
+
+    @_handling_failures
+    def add_process_group(self, name):
+        return self._instance.supervisor.addProcessGroup(name)
+
+    @_handling_failures
+    def remove_process_group(self, name):
+        return self._instance.supervisor.removeProcessGroup(name)
+
+    """ Supervisord Subprocesses Logging Management """
+
+    @_handling_failures
+    def read_process_stdout_log(self, name, offset, length):
+        return self._instance.supervisor.readProcessStdoutLog(name,offset,length)
+
+    @_handling_failures
+    def read_process_stderr_log(self, name, offset, length):
+        return self._instance.supervisor.readProcessStderrLog(name,offset,length)
+
+    @_handling_failures
+    def tail_process_stdout_log(self, name, offset, length):
+        return self._instance.supervisor.tailProcessStdoutLog(name,offset,length)
+
+    @_handling_failures
+    def tail_process_stderr_log(self, name, offset, length):
+        return self._instance.supervisor.tailProcessStderrLog(name,offset,length)
+
+    @_handling_failures
+    def clear_process_log(self, name):
+        return self._instance.supervisor.clearProcessLogs(name)
+
+    @_handling_failures
+    def clear_all_process_logs(self):
+        return self._instance.supervisor.clearAllProcessLogs()
+
+    """ Supervisord System Methods Management """
+
+    def list_methods(self):
+        """ not implemented yet """
+        pass
+
+    def method_help(self, name):
+        """ not implemented yet """
+        pass
+
+    def method_signature(self, name):
+        """ not implemented yet """
+        pass
+
+    def multicall(self, calls):
+        """ not implemented yet """
+        pass
