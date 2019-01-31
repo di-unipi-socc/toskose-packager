@@ -2,7 +2,7 @@ from xmlrpc.client import ServerProxy, ProtocolError, Fault
 from app.client.impl.base_client import BaseClient
 from app.client.exceptions import SupervisordClientFatalError
 from app.client.exceptions import SupervisordClientConnectionError
-from app.client.exceptions import SupervisordClientOperationError
+from app.client.exceptions import SupervisordClientProtocolError
 from app.client.exceptions import SupervisordClientFaultError
 
 import logging
@@ -21,9 +21,12 @@ def error_messages_builder(type, error, *args):
         if error.faultCode == 70:
             """ NOT RUNNING """
             err += 'Process {0} not running'.format(args[0])
+        elif error.faultCode == 60:
+            """ ALREADY STARTED """
+            err += 'Process {0} is already started'.format(args[0])
         else:
             """ UNKNOWN """
-            err =+ 'An Unknown error occurred'
+            err += 'An Unknown error occurred'
     return err
 
 class ToskoseXMLRPCclient(BaseClient):
