@@ -16,7 +16,7 @@ class ErrorType(Enum):
 def error_messages_builder(type, error, *args):
     """ Build error messages """
 
-    err = 'ERROR: '
+    err = 'ERROR - '
     if type == ErrorType.FAULT:
         if error.faultCode == 70:
             """ NOT RUNNING """
@@ -24,6 +24,9 @@ def error_messages_builder(type, error, *args):
         elif error.faultCode == 60:
             """ ALREADY STARTED """
             err += 'Process {0} is already started'.format(args[0])
+        elif error.faultCode == 10:
+            """ BAD NAME """
+            err += 'Process {0} not exist'.format(args[0])
         else:
             """ UNKNOWN """
             err += 'An Unknown error occurred'
