@@ -1,8 +1,30 @@
 from xmlrpc.client import ServerProxy, ProtocolError, Fault
 from app.client.impl.base_client import BaseClient
+from app.client.exceptions import SupervisordClientFatalError
+from app.client.exceptions import SupervisordClientConnectionError
 from app.client.exceptions import SupervisordClientOperationError
-import logging
+from app.client.exceptions import SupervisordClientFaultError
 
+import logging
+from enum import Enum, auto
+
+
+class ErrorType(Enum):
+    FAULT = auto()
+
+
+def error_messages_builder(type, error, *args):
+    """ Build error messages """
+
+    err = 'ERROR: '
+    if type == ErrorType.FAULT:
+        if error.faultCode == 70:
+            """ NOT RUNNING """
+            err += 'Process {0} not running'.format(args[0])
+        else:
+            """ UNKNOWN """
+            err =+ 'An Unknown error occurred'
+    return err
 
 class ToskoseXMLRPCclient(BaseClient):
 
@@ -11,48 +33,53 @@ class ToskoseXMLRPCclient(BaseClient):
 
         def wrapper(self, *args, **kwargs):
             try:
-                try:
-                    return func(self, *args, **kwargs)
-                except ConnectionRefusedError as conn_err:
-                    self.logger.error(
-                        'Cannot establish a connection to http://{0}:{1}\n \
-                        Error: {2}'.format(
-                            self._host,
-                            self._port,
-                            conn_err))
-                    raise
-                except Fault as ferr:
-                    self.logger.error('-- a Fault Error occurred -- \n \
-                        - Error Code: {0}\n \
-                        - Error Message: {1}'.format(
-                            ferr.faultCode,
-                            ferr.faultString))
-                    raise
-                except ProtocolError as perr:
-                    self.logger.error('-- A Protocol Error occurred -- \n \
-                        - URL: {0}\n \
-                        - HTTP/HTTPS headers: {1}\n \
-                        - Error Code: {2}\n \
-                        - Error Message: {3}'.format(
-                            perr.url,
-                            perr.headers,
-                            perr.errcode,
-                            perr.errmsg))
-                    raise
-                except OSError as err:
-                    self.logger.error('OS error: {0}'.format(err))
-                    raise
-                except ValueError as err:
-                    self.logger.error('Value error: {0}'.format(err))
-                    raise
-                except:
-                    self.logger.error('Unexpected Error: ')
-                    raise
-            except:
-                raise SupervisordClientOperationError(
+                return func(self, *args, **kwargs)
+            except ConnectionRefusedError as conn_err:
+                self.logger.error(
+                    'Cannot establish a connection to http://{0}:{1}\n \
+                    Error: {2}'.format(
+                        self._host,
+                        self._port,
+                        conn_err))
+                raise SupervisordClientConnectionError(
                     "A problem occurred while contacting the node {0}:{1}".format(
-                        self._host, self._port)
-                )
+                        self._host, self._port))
+
+            except Fault as ferr:
+                self.logger.error('-- a Fault Error occurred -- \n \
+                    - Error Code: {0}\n \
+                    - Error Message: {1}'.format(
+                        ferr.faultCode,
+                        ferr.faultString))
+                raise SupervisordClientFaultError(
+                    error_messages_builder(
+                        ErrorType.FAULT,
+                        ferr,
+                        *args
+                    ))
+
+            except ProtocolError as perr:
+                self.logger.error('-- A Protocol Error occurred -- \n \
+                    - URL: {0}\n \
+                    - HTTP/HTTPS headers: {1}\n \
+                    - Error Code: {2}\n \
+                    - Error Message: {3}'.format(
+                        perr.url,
+                        perr.headers,
+                        perr.errcode,
+                        perr.errmsg))
+                raise SupervisordClientProtocolError('A protocol error occurred')
+
+            except OSError as err:
+                self.logger.error('OS error: {0}'.format(err))
+                raise SupervisordClientFatalError('A fatal error occurred')
+
+            except ValueError as err:
+                self.logger.error('Value error: {0}'.format(err))
+                raise SupervisordClientFatalError('A fatal error occurred')
+            except:
+                self.logger.error('Unexpected Error: ')
+                raise SupervisordClientFatalError('A fatal error occurred')
 
         return wrapper
 
