@@ -230,6 +230,25 @@ subprocess_info = ns_subprocess.model('SubprocessInfo', {
     )
 })
 
+subprocess_operation_result = ns_subprocess.model('SubprocessOperationResult', {
+    'name': fields.String(
+        required=True,
+        description='The name of the subprocess.'
+    ),
+    'group': fields.String(
+        required=True,
+        description='The name of the subprocess\'s group.'
+    ),
+    'status_code': fields.String(
+        required=True,
+        description='The status code returned for the operation.'
+    ),
+    'description': fields.String(
+        required=True,
+        description='A description about the operation\' result.'
+    )
+})
+
 """
 Subprocess DTO
 """
@@ -249,3 +268,10 @@ class SubprocessInfoDTO:
     spawn_error: str
     exit_status: str
     pid: str
+
+@dataclass(frozen=True)
+class SubprocessOperationResultDTO:
+    name: str
+    group: str
+    status_code: str
+    description: str
