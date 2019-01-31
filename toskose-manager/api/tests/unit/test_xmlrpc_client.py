@@ -67,6 +67,31 @@ class TestXMLRPCclient(unittest.TestCase):
         processes_info = self.client.get_all_process_info()
         print(json.dumps(processes_info, indent=2))
 
+    def test_start_process(self):
+        res = self.client.start_process(self.process_name, True)
+        print(res)
+
+    def test_start_all_processes(self):
+        results = self.client.start_all_processes(True)
+        print(json.dumps(results, indent=2))
+
+    def test_start_process_group(self):
+        """ not implemented yet """
+        pass
+
+    def test_stop_process(self):
+        result = self.client.stop_process(self.process_name, True)
+        print(json.dumps(result, indent=2))
+
+    def test_stop_process_group(self):
+        """ not implemented yet """
+        pass
+
+    def test_stop_all_processes(self):
+        result = self.client.stop_all_processes(True)
+        print(json.dumps(result, indent=2))
+
+    
 
 
 if __name__ == '__main__':
