@@ -1,9 +1,7 @@
 from flask_restplus import Resource, Namespace, fields, reqparse
 
-from app.tosca.services.toskose_node_service import ToskoseNodeService
-from app.tosca.services.toskose_node_service import nodes_id
+from app.tosca.services.node_service import NodeService
 
-from app.tosca.models import node_codes
 from app.tosca.models import ns_toskose_node as ns
 from app.tosca.models import toskose_node_info
 from app.tosca.models import toskose_node_log
@@ -20,8 +18,7 @@ class ToskoseNodeInfoList(ToskoseNodeOperation):
     @ns.response(500, 'Failed to retrieve nodes list')
     def get(self):
         """ The list of toskose nodes identifiers """
-        return {'id': '1'}
-
+        return {'id': '1'} # TODO change
 
 @ns.route('/<string:node_id>')
 @ns.param('node_id', 'the node identifier')
