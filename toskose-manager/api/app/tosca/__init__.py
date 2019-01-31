@@ -15,7 +15,8 @@ api = Api(
 # TODO
 
 
-from app.tosca.controllers.toskose_node import ns as ns_toskose_node
+from app.tosca.controllers.node_controller import ns as ns_node
+api.add_namespace(ns_node, path='/node')
 
-api.add_namespace(ns_toskose_node, path='/node')
-#api.add_namespace(SoftwareNodeDTO.api, path='/software-node')
+from app.tosca.controllers.subprocess_controller import ns as ns_subprocess
+api.add_namespace(ns_subprocess, path='/subprocess')
