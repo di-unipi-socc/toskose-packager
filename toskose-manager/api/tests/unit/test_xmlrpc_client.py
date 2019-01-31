@@ -15,6 +15,7 @@ class TestXMLRPCclient(unittest.TestCase):
         self.log_offset = 0
         self.log_length = 0
         self.process_name = 'test-1'
+        self.fake_process_name = 'you-dont-know-nothing-jon-snow'
 
     """ Testing Supervisord Process Management """
 
@@ -91,7 +92,11 @@ class TestXMLRPCclient(unittest.TestCase):
         result = self.client.stop_all_processes(True)
         print(json.dumps(result, indent=2))
 
-    
+    def test_start_process_not_exist(self):
+        print(
+            json.dumps(
+                self.client.start_process(self.fake_process_name, True),
+                indent=2))
 
 
 if __name__ == '__main__':
