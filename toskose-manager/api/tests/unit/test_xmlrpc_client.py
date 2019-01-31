@@ -13,6 +13,9 @@ class TestXMLRPCclient(unittest.TestCase):
         )
         self.log_offset = 0
         self.log_length = 0
+        self.process_name = 'test-1'
+
+    """ Testing Supervisord Process Management """
 
     def test_api_version(self):
         print(self.client.get_api_version())
@@ -53,6 +56,14 @@ class TestXMLRPCclient(unittest.TestCase):
         else:
             print('failed')
 
+    """ Testing Supervisord Subprocesses Management """
+
+    def test_get_process_info(self):
+        process_info = self.client.get_process_info(self.process_name)
+
+    def test_get_all_process_info(self):
+        processes_info = self.client.get_all_process_info()
+        print(processes_info)
 
 
 

@@ -123,3 +123,7 @@ class ToskoseXMLRPCclient(BaseClient):
     @_handling_failures
     def get_process_info(self, name):
         return self._instance.supervisor.getProcessInfo(name)
+
+    @_handling_failures
+    def get_all_process_info(self):
+        return self._instance.supervisor.getAllProcessInfo()

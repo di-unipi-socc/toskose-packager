@@ -219,20 +219,20 @@ class BaseClient(ABC):
         """
         raise NotImplementedError("not implemented yet")
 
-    # @abstractmethod
-    # def getAllProcessInfo(self) -> List:
-    #     """ Get info about all processes.
-    #
-    #     Returns:
-    #         result: a list of process status results.
-    #
-    #     Each element contains a dict, and this dict contains the exact same
-    #     elements as the dict returned by getProcessInfo. If the process table
-    #     is empty, an empty array is returned.
-    #
-    #     """
-    #     pass
-    #
+    @abstractmethod
+    def get_all_process_info(self) -> List:
+        """ Get info about all processes.
+
+        Returns:
+            result: a list of process status results.
+
+        Each element contains a dict, and this dict contains the exact same
+        elements as the dict returned by getProcessInfo. If the process table
+        is empty, an empty array is returned.
+
+        """
+        pass
+
     # @abstractmethod
     # def startProcess(self, name: str, wait: bool = True) -> bool:
     #     """ Start a process.
