@@ -1,7 +1,5 @@
-from app.client.client import ToskoseClientFactory
-from app.client.exceptions import SupervisordClientOperationError
-from app.tosca.models import ToskoseNodeInfoDTO, ToskoseNodeLogDTO
 from app.tosca.services.base_service import BaseService
+from app.tosca.models import ToskoseNodeInfoDTO, ToskoseNodeLogDTO
 
 from app.tosca.utils.exception_handler import client_handling_failures
 

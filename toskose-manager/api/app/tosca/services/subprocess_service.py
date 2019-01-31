@@ -1,5 +1,4 @@
 from app.tosca.services.base_service import BaseService
-from app.client.client import ToskoseClientFactory
 
 from app.tosca.models import SubprocessInfoDTO
 from app.tosca.models import SubprocessOperationResultDTO
