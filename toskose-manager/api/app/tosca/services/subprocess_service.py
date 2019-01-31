@@ -2,9 +2,10 @@ from app.tosca.services.base_service import BaseService
 
 from app.tosca.models import SubprocessInfoDTO
 from app.tosca.models import SubprocessOperationResultDTO
+from app.tosca.models import SubprocessSingleOperationResultDTO
 
 from app.tosca.utils.utils import compute_uptime
-from app.tosca.utils.exception_handler import client_handling_failures
+from app.tosca.exception_handler import client_handling_failures
 
 from dataclasses import asdict
 
@@ -14,30 +15,35 @@ class SubProcessOperationService(BaseService):
     def __init__(self, node_id):
         super().__init__(node_id)
 
-    def __build_subprocess_info_dto(res):
+    def __build_subprocess_info_dto(self, res):
         return SubprocessInfoDTO(
-            name=info['name'],
-            group=info['group'],
-            description=info['description'],
-            time_start=str(info['start']),
-            time_end=str(info['stop']),
-            uptime=compute_uptime(info['start'], info['stop']),
-            state_code=str(info['state']),
-            state_name=info['statename'],
-            logfile_path=info['logfile'],
-            stdout_logfile_path=info['stdout_logfile'],
-            stderr_logfile_path=info['stderr_logfile'],
-            spawn_error=info['spawnerr'],
-            exit_status=str(info['exitstatus']),
-            pid=str(info['pid'])
+            name=res['name'],
+            group=res['group'],
+            description=res['description'],
+            time_start=str(res['start']),
+            time_end=str(res['stop']),
+            uptime=compute_uptime(res['start'], res['stop']),
+            state_code=str(res['state']),
+            state_name=res['statename'],
+            logfile_path=res['logfile'],
+            stdout_logfile_path=res['stdout_logfile'],
+            stderr_logfile_path=res['stderr_logfile'],
+            spawn_error=res['spawnerr'],
+            exit_status=str(res['exitstatus']),
+            pid=str(res['pid'])
         )
 
-    def __build_subprocess_operation_result_dto(res):
+    def __build_subprocess_multi_operation_result_dto(res):
         return SubprocessOperationResultDTO(
             name=res['name'],
             group=res['group'],
             status_code=res['status'],
             description=res['description']
+        )
+
+    def __build_subprocess_single_operation_result_dto(res):
+        return SubprocessSingleOperationResultDTO(
+            message=res['message']
         )
 
     @client_handling_failures
@@ -56,56 +62,52 @@ class SubProcessOperationService(BaseService):
     @client_handling_failures
     def start_subprocess(self, name, wait=True):
         res = self.client.start_process(name,wait)
-        return 'OK' if res else 'Failed'
+        return self.__build_subprocess_single_operation_result_dto(
+            {'message': 'OK'})
 
     @client_handling_failures
     def start_all_subprocesses(self, wait=True):
         results = self.client.start_all_subprocesses(wait)
         final_res = list()
         for res in results:
-            final_res.append(self.__build_subprocess_operation_result_dto(res))
+            final_res.append(self.__build_subprocess_multi_operation_result_dto(res))
 
     @client_handling_failures
     def start_subprocess_group(self, name, wait=True):
-        """ not implemented yet """
-        pass
+        return { 'message': 'not implemented yet'}
 
     @client_handling_failures
     def stop_subprocess(self, name, wait=True):
         res = self.client.stop_process(name,wait)
-        return 'OK' if res else 'Failed'
+        return self.__build_subprocess_single_operation_result_dto(
+            {'message': 'OK'})
 
     @client_handling_failures
     def stop_subprocess_group(self, name, wait=True):
-        """ not implemented yet """
-        pass
+        return { 'message': 'not implemented yet'}
 
     @client_handling_failures
     def stop_all_subprocesses(self, wait=True):
         results = self.client.stop_all_processes(wait)
         final_res = list()
         for res in results:
-            final_res.append(self.__build_subprocess_operation_result_dto(res))
+            final_res.append(self.__build_subprocess_multi_operation_result_dto(res))
 
     @client_handling_failures
     def signal_subprocess(self, name, signal):
-        """ not implemented yet """
-        pass
+        return { 'message': 'not implemented yet'}
 
     @client_handling_failures
-    def signal_process_group(self, name, signal):
-        """ not implemented yet """
-        pass
+    def signal_subprocess_group(self, name, signal):
+        return { 'message': 'not implemented yet'}
 
     @client_handling_failures
     def signal_all_subprocesses(self, signal):
-        """ not implemented yet """
-        pass
+        return { 'message': 'not implemented yet'}
 
     @client_handling_failures
     def send_subprocess_stdin(self, name, chars):
-        """ not implemented yet """
-        pass
+        return { 'message': 'not implemented yet'}
 
 
 class SubProcessLoggingService(BaseService):
