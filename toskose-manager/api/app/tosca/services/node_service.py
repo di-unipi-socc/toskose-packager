@@ -1,7 +1,7 @@
 from app.tosca.services.base_service import BaseService
 from app.tosca.models import ToskoseNodeInfoDTO, ToskoseNodeLogDTO
 
-from app.tosca.utils.exception_handler import client_handling_failures
+from app.tosca.exception_handler import client_handling_failures
 
 from dataclasses import asdict
 

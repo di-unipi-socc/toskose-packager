@@ -1,4 +1,3 @@
-from app.tosca.utils.exception_handler import client_handling_failures
 from app.client.client import ToskoseClientFactory
 from app.tosca.models import ToskoseNode
 
