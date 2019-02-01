@@ -1,5 +1,5 @@
 from enum import Enum, auto
-from app.client.impl.xmlrpc_client import ToskoseXMLRPCclient
+from client.impl.xmlrpc_client import ToskoseXMLRPCclient
 
 
 class ProtocolType(Enum):

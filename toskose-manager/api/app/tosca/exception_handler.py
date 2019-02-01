@@ -1,9 +1,9 @@
-from app.tosca import api
+from tosca import api
 
-from app.client.exceptions import SupervisordClientFatalError
-from app.client.exceptions import SupervisordClientConnectionError
-from app.client.exceptions import SupervisordClientProtocolError
-from app.client.exceptions import SupervisordClientFaultError
+from client.exceptions import SupervisordClientFatalError
+from client.exceptions import SupervisordClientConnectionError
+from client.exceptions import SupervisordClientProtocolError
+from client.exceptions import SupervisordClientFaultError
 
 
 def client_handling_failures(func):

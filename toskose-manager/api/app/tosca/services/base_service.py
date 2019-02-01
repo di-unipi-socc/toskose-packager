@@ -1,5 +1,5 @@
-from app.client.client import ToskoseClientFactory
-from app.tosca.models import ToskoseNode
+from client.client import ToskoseClientFactory
+from tosca.models import ToskoseNode
 
 
 # TODO

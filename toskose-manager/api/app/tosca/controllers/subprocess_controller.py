@@ -1,11 +1,11 @@
 from flask_restplus import Resource, Namespace, fields, reqparse
 
-from app.tosca.services.subprocess_service import SubProcessOperationService
+from tosca.services.subprocess_service import SubProcessOperationService
 
-from app.tosca.models import ns_subprocess as ns
-from app.tosca.models import subprocess_info
-from app.tosca.models import subprocess_single_operation_result
-from app.tosca.models import subprocess_multi_operation_result
+from tosca.models import ns_subprocess as ns
+from tosca.models import subprocess_info
+from tosca.models import subprocess_single_operation_result
+from tosca.models import subprocess_multi_operation_result
 
 @ns.header('Content-Type', 'application/json')
 class SubProcessOperation(Resource):

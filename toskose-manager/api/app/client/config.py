@@ -1,5 +1,5 @@
 import os
-from app.client.client import ProtocolType
+from client.client import ProtocolType
 
 
 class Config:
