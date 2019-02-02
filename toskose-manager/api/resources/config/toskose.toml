@@ -8,3 +8,27 @@ title = "Toskose Manager Test Configuration"
     port = 9001
     username = "admin"
     password = "admin"
+
+  [nodes.node-test-2]
+    name = "node-test-2"
+    description = "a test node"
+    hostname = "localhost"
+    port = 9002
+    username = "admin"
+    password = "admin"
+
+  [nodes.node-test-3]
+    name = "node-test-3"
+    description = "a test node"
+    hostname = "localhost"
+    port = 9003
+    username = "admin"
+    password = "admin"
+
+  [nodes.node-test-4]
+    name = "node-test-4"
+    description = "a test node"
+    hostname = "localhost"
+    port = 9004
+    username = "admin"
+    password = "admin"
