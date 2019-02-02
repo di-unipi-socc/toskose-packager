@@ -33,7 +33,6 @@ def create_app():
     from tosca import bp as bp_tosca_api
     app.register_blueprint(bp_tosca_api)
 
-    # Logging (hard-code) - TODO change with external configuration
     if not app.debug and not app.testing:
 
         """ remove default handler and add our custom handler """
@@ -58,7 +57,7 @@ if __name__ == "__main__":
     used overall the application environment by calling the singleton instance
     from the class.
     """
-    ToskoseManager()
+    ToskoseManager.get_instance().load()
 
     """ Create the Flask Application with the application factory"""
     flask_app = create_app()
