@@ -1,34 +1,67 @@
 from tosca import api
 
 from client.exceptions import SupervisordClientFatalError
-from client.exceptions import SupervisordClientConnectionError
 from client.exceptions import SupervisordClientProtocolError
 from client.exceptions import SupervisordClientFaultError
+from client.exceptions import SupervisordClientConnectionError
+from core.toskose_manager import MissingConfigurationDataError
+from core.toskose_manager import ToskoseManager
 
 
-def client_handling_failures(func):
-    """ decorator for handling client failures """
+class BaseError(Exception):
+    pass
 
-    def wrapper(self, *args, **kwargs):
-        try:
-            return func(self, *args, **kwargs)
-        except SupervisordClientConnectionError as ex:
-            print('todo')
+class GenericFatalError(BaseError):
+    """ """
 
-    return wrapper
+    def __init__(self, message):
+        super().__init__(message)
 
-@api.errorhandler(SupervisordClientFatalError)
-def handle_fatal_error(error):
+class ResourceNotFoundError(BaseError):
+    """ Raised when a resource cannot be found (e.g. node) """
+
+    def __init__(self, message):
+        super().__init__(message)
+
+class ClientConnectionError(BaseError):
+    """ Raised when a communication fails """
+
+    def __init__(self, message):
+        super().__init__(message)
+
+class ClientOperationFailedError(BaseError):
+    """ Raised when an operation made by the client fails """
+
+    def __init__(self, message):
+        super().__init__(message)
+
+class ClientFatalError(BaseError):
+    """ Raised when a fatal error occurred in the client """
+
+    def __init__(self, message):
+        super().__init__(message)
+
+
+@api.errorhandler(GenericFatalError)
+def handle_generic_fatal_error(error):
     return ({ 'message': '{0}'.format(error) }, 500)
 
-@api.errorhandler(SupervisordClientConnectionError)
-def handle_connection_error(error):
-    return ({ 'message': '{0}. Node not found'.format(error) }, 404)
-
-@api.errorhandler(SupervisordClientProtocolError)
-def handle_protocol_error(error):
+@api.errorhandler(ClientFatalError)
+def handle_client_fatal_error(error):
     return ({ 'message': '{0}'.format(error) }, 500)
 
-@api.errorhandler(SupervisordClientFaultError)
-def handle_fault_error(error):
-    return ({ 'message': '{0}'.format(error) })
+@api.errorhandler(MissingConfigurationDataError)
+def handle_client_missing_configuration_data(error):
+    return ({ 'message': '{0}'.format(error) }, 404)
+
+@api.errorhandler(ResourceNotFoundError)
+def handle_client_connection_error(error):
+    return ({ 'message': '{0}'.format(error) }, 400)
+
+@api.errorhandler(ClientOperationFailedError)
+def handle_client_protocol_error(error):
+    return ({ 'message': '{0}'.format(error) }, 500)
+
+@api.errorhandler(ClientConnectionError)
+def handle_client_connection_error(error):
+    return ({ 'message': '{0}'.format(error) }, 404)
