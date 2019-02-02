@@ -1,44 +1,6 @@
 from flask_restplus import Namespace, fields
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Dict
-
-
-class ToskoseNode:
-    """ A Toskose Node (internal representation) """
-    def __init__(self, id, host, port, username, password):
-        self._id = id
-        self._host = host
-        self._port = port
-        self._username = username
-        self._password = password
-
-    @property
-    def id(self):
-        return self._id
-
-    @property
-    def host(self):
-        return self._host
-
-    @property
-    def port(self):
-        return self._port
-
-    @property
-    def username(self):
-        return self._username
-
-    @property
-    def password(self):
-        return self._password
-
-node_codes = {
-    200: 'Success',
-    400: 'Validation Error',
-    401: 'Unauthorized',
-    404: 'Not found',
-    500: 'Internal Server Error'
-}
 
 """
 Node Namespace
@@ -51,56 +13,80 @@ ns_toskose_node = Namespace(
 """
 Node Schemas
 """
-toskose_node_info = ns_toskose_node.model('ToskoseNodeInfo', {
+toskose_node = ns_toskose_node.model('ToskoseNode', {
     'id': fields.String(
         required=True,
-        description='the identifier of the node'
+        description='The node\'s identifier'
     ),
-    'host': fields.String(
+    'name': fields.String(
         required=True,
-        description='the hostname'
+        description='The node\'s name'
+    ),
+    'description': fields.String(
+        required=True,
+        description='The node\'s description'
+    ),
+    'hostname': fields.String(
+        required=True,
+        description='The node\'s hostname'
     ),
     'port': fields.String(
         required=True,
-        description='the port'
+        description='The node\'s port'
     ),
+    'username': fields.String(
+        required=True,
+        description='The node\'s username'
+    ),
+    'password': fields.String(
+        required=True,
+        description='The node\'s password'
+    )
+})
+
+toskose_node_info = ns_toskose_node.inherit('ToskoseNodeInfo', toskose_node, {
+
     'api_protocol': fields.String(
         required=True,
-        description='the protocol used for communicating with the node API'
+        description='The protocol used for communicating with the node API'
     ),
     'api_version': fields.String(
         required=True,
-        description='the node API version'
+        description='The node API version'
     ),
     'supervisor_version': fields.String(
         required=True,
-        description='the version of the hosted Supervisor instance'
+        description='The version of the hosted Supervisor instance'
     ),
     'supervisor_id': fields.String(
         required=True,
-        description='the identifier of the hosted Supervisor instance'
+        description='The identifier of the hosted Supervisor instance'
     ),
     'supervisor_state': fields.Nested(ns_toskose_node.model('Data', {
         'name': fields.String(
             required=True,
-            description='the name of the state'),
+            description='The name of the state'),
         'code': fields.String(
             required=True,
-            description='the code of the state')
+            description='The code of the state')
         }),
         required=True,
-        description='the state of the hosted Supervisor instance'
+        description='The state of the hosted Supervisor instance'
     ),
     'supervisor_pid': fields.String(
         required=True,
-        description='the PID of the supervisord process'
+        description='The PID of the supervisord process'
     ),
+    'reacheable': fields.Boolean(
+        required=True,
+        description='A system message for reporting any errors occurred'
+    )
 })
 
 toskose_node_log = ns_toskose_node.model('ToskoseNodeLog', {
     'log': fields.String(
         required=True,
-        description='the log of the node'
+        description='The log of the node'
     )
 })
 
@@ -108,21 +94,32 @@ toskose_node_log = ns_toskose_node.model('ToskoseNodeLog', {
 Node DTO
 """
 
+def default_supervisor_state():
+    return {
+        'name': 'No Data',
+        'code': 'No Data'
+    }
+
 # https://realpython.com/python-data-classes/
 # https://www.python.org/dev/peps/pep-0557/
 @dataclass(frozen=True)
 class ToskoseNodeInfoDTO:
     """ Info about a Toskose Node (DTO) """
 
+    reacheable: bool
     id: str
-    host: str
+    name: str
+    description: str
+    hostname: str
     port: str
+    username: str
+    password: str
     api_protocol: str
-    api_version: str
-    supervisor_version: str
-    supervisor_id: str
-    supervisor_state: Dict
-    supervisor_pid: str
+    api_version: str = 'No Data'
+    supervisor_version: str = 'No Data'
+    supervisor_id: str = 'No Data'
+    supervisor_state: Dict = field(default_factory=default_supervisor_state)
+    supervisor_pid: str = 'No Data'
 
 @dataclass(frozen=True)
 class ToskoseNodeLogDTO:
