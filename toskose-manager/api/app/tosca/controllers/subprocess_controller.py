@@ -2,9 +2,8 @@ from flask_restplus import Resource, Namespace, fields, reqparse
 
 from tosca.services.subprocess_service import SubProcessOperationService
 
-from tosca.models import ns_subprocess as ns
+from tosca.models import ns_toskose_node as ns
 from tosca.models import subprocess_info
-from tosca.models import subprocess_single_operation_result
 from tosca.models import subprocess_multi_operation_result
 
 @ns.header('Content-Type', 'application/json')
@@ -12,19 +11,22 @@ class SubProcessOperation(Resource):
     """ Base class for common configurations """
     pass
 
-@ns.route('/<string:node_id>/')
+@ns.route('/<string:node_id>/subprocess')
 @ns.param('node_id', 'the node identifier')
 class SubProcessList(SubProcessOperation):
 
+    """ Parsing query url """
     parser = reqparse.RequestParser() \
         .add_argument('signal', type=str, required=False,
-            help='the signal to be sent')
+            help='the signal to be sent (optional)')
 
     @ns.marshal_list_with(subprocess_info)
     def get(self, node_id):
         """ The list of subprocesses """
-        return SubProcessOperationService(node_id=node_id) \
-                .get_all_subprocesses_info()
+        return SubProcessOperationService() \
+            .manage_subprocesses(
+                operation='info_all',
+                node_id=node_id)
 
     @ns.expect(parser, validate=True)
     @ns.marshal_list_with(subprocess_multi_operation_result)
@@ -33,26 +35,35 @@ class SubProcessList(SubProcessOperation):
 
         signal = SubProcess.parser.parse_args()['signal']
         if signal:
-            return SubProcessOperationService(node_id=node_id) \
-                .signal_all_subprocesses(signal)
+            return SubProcessOperationService() \
+                .manage_subprocesses(
+                    operation='info_all',
+                    node_id=node_id,
+                    is_signal=True)
 
-        return SubProcessOperationService(node_id=node_id) \
-                .start_all_subprocesses(wait=True)
+        return SubProcessOperationService() \
+                .manage_subprocesses(
+                operation='start_all',
+                node_id=node_id,
+                wait=True)
 
     @ns.marshal_list_with(subprocess_multi_operation_result)
     def delete(self, node_id):
         """ Stop all subprocesses """
-        return SubProcessOperationService(node_id=node_id) \
-                .stop_all_subprocesses(wait=True)
+        return SubProcessOperationService() \
+                .manage_subprocesses(
+                    operation='stop_all',
+                    node_id=node_id,
+                    wait=True)
 
-@ns.route('/<string:node_id>/<string:group_id>')
+@ns.route('/<string:node_id>/subprocess/<string:group_id>')
 @ns.param('node_id', 'the node identifier')
 @ns.param('group_id', 'the subprocess\' group identifier')
 class SubProcessGroup(SubProcessOperation):
 
     parser = reqparse.RequestParser() \
         .add_argument('signal', type=str, required=False,
-            help='the signal to be sent')
+            help='the signal to be sent (optional)')
 
     @ns.expect(parser, validate=True)
     @ns.marshal_list_with(subprocess_multi_operation_result)
@@ -61,50 +72,86 @@ class SubProcessGroup(SubProcessOperation):
 
         signal = SubProcess.parser.parse_args()['signal']
         if signal:
-            return SubProcessOperationService(node_id=node_id) \
-                .signal_subprocess_group(group_id, signal)
+            return SubProcessOperationService() \
+                .manage_subprocesses(
+                    operation='start_group',
+                    node_id=node_id,
+                    group_id=group_id,
+                    is_signal=True)
 
-        return SubProcessOperationService(node_id=node_id) \
-                .start_subprocess_group(group_id, wait=True)
+        return SubProcessOperationService() \
+                .manage_subprocesses(
+                operation='start_group',
+                node_id=node_id,
+                group_id=group_id,
+                wait=True)
 
     @ns.marshal_list_with(subprocess_multi_operation_result)
     def delete(self, node_id, group_id):
         """ Stop all subprocesses in a group """
-        return SubProcessOperationService(node_id==node_id) \
-                .stop_subprocess_group(group_id, wait=True)
+        return SubProcessOperationService() \
+                .manage_subprocesses(
+                    operation='stop_group',
+                    node_id=node_id,
+                    group_id=group_id,
+                    wait=True)
 
-@ns.route('/<string:node_id>/<string:group_id>/<string:subprocess_id>')
+@ns.route('/<string:node_id>/subprocess/<string:group_id>/<string:subprocess_id>')
 @ns.param('node_id', 'the node identifier')
 @ns.param('group_id', 'the subprocess\' group identifier')
 @ns.param('subprocess_id', 'the subprocess identifier')
+@ns.response(400, 'Operation failed, the cause may be a wrong group_id or \
+    subprocess_id')
 class SubProcess(SubProcessOperation):
 
     parser = reqparse.RequestParser() \
         .add_argument('signal', type=str, required=False,
-            help='the signal to be sent')
+            help='the signal to be sent (optional)')
 
     @ns.marshal_with(subprocess_info)
-    @ns.response(500, 'Failed to retrieve info about the subprocess')
     def get(self, node_id, group_id, subprocess_id):
         """ Info about a subprocess """
-        return SubProcessOperationService(node_id=node_id) \
-                .get_subprocess_info(subprocess_id)
+        return SubProcessOperationService() \
+                .manage_subprocesses(
+                    operation='info',
+                    node_id=node_id,
+                    group_id=group_id,
+                    subprocess_id=subprocess_id)
 
     @ns.expect(parser, validate=True)
-    @ns.marshal_with(subprocess_single_operation_result)
     def post(self, node_id, group_id, subprocess_id):
         """ Start or signal a subprocess """
 
         signal = SubProcess.parser.parse_args()['signal']
         if signal:
-            return SubProcessOperationService(node_id=node_id) \
-                .signal_subprocess(subprocess_id, signal)
+            return SubProcessOperationService() \
+                .manage_subprocesses(
+                    operation='start',
+                    node_id=node_id,
+                    group_id=group_id,
+                    subprocess_id=subprocess_id,
+                    is_signal=True)
 
-        return SubProcessOperationService(node_id=node_id) \
-                .start_subprocess(subprocess_id, wait=True)
+        res = SubProcessOperationService() \
+                .manage_subprocesses(
+                    operation='start',
+                    node_id=node_id,
+                    group_id=group_id,
+                    subprocess_id=subprocess_id,
+                    wait=True)
 
-    @ns.marshal_with(subprocess_single_operation_result)
+        return {'message': 'OK'} if res \
+            else ns.abort(500, message='failed to start')
+
     def delete(self, node_id, group_id, subprocess_id):
         """ Stop a subprocess """
-        return SubProcessOperationService(node_id=node_id) \
-                .stop_subprocess(subprocess_id, wait=True)
+        res = SubProcessOperationService() \
+                .manage_subprocesses(
+                    operation='stop',
+                    node_id=node_id,
+                    group_id=group_id,
+                    subprocess_id=subprocess_id,
+                    wait=True)
+
+        return {'message': 'OK'} if res \
+            else ns.abort(500, message='failed to stop')

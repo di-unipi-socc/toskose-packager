@@ -2,18 +2,18 @@ from tosca.services.base_service import BaseService
 
 from tosca.models import SubprocessInfoDTO
 from tosca.models import SubprocessOperationResultDTO
-from tosca.models import SubprocessSingleOperationResultDTO
+
+from tosca.exception_handler import OperationNotValid
 
 from tosca.utils.utils import compute_uptime
-from tosca.exception_handler import client_handling_failures
 
 from dataclasses import asdict
 
 
 class SubProcessOperationService(BaseService):
 
-    def __init__(self, node_id):
-        super().__init__(node_id)
+    def __init__(self):
+        super().__init__()
 
     def __build_subprocess_info_dto(self, res):
         return SubprocessInfoDTO(
@@ -33,7 +33,7 @@ class SubProcessOperationService(BaseService):
             pid=str(res['pid'])
         )
 
-    def __build_subprocess_multi_operation_result_dto(res):
+    def __build_subprocess_multi_operation_result_dto(self, res):
         return SubprocessOperationResultDTO(
             name=res['name'],
             group=res['group'],
@@ -41,73 +41,82 @@ class SubProcessOperationService(BaseService):
             description=res['description']
         )
 
-    def __build_subprocess_single_operation_result_dto(res):
-        return SubprocessSingleOperationResultDTO(
-            message=res['message']
-        )
+    def __join_group_and_subprocess_ids(self, group_id, subprocess_id):
+        return ':'.join([group_id, subprocess_id])
 
-    @client_handling_failures
-    def get_subprocess_info(self, name):
-        return self.__build_subprocess_info_dto(
-            self.client.get_process_info(name))
-
-    @client_handling_failures
-    def get_all_subprocesses_info(self):
-        infos = self.client.get_all_process_info()
+    @BaseService.init_client(validate_node=True, validate_connection=True)
+    def get_all_subprocesses_info(self, *, node_id):
+        infos = self._client.get_all_process_info()
         result = list()
         for info in infos:
             result.append(self.__build_subprocess_info_dto(info))
         return result
 
-    @client_handling_failures
-    def start_subprocess(self, name, wait=True):
-        res = self.client.start_process(name,wait)
-        return self.__build_subprocess_single_operation_result_dto(
-            {'message': 'OK'})
 
-    @client_handling_failures
-    def start_all_subprocesses(self, wait=True):
-        results = self.client.start_all_subprocesses(wait)
+    @BaseService.init_client(validate_node=True, validate_connection=True)
+    def manage_subprocesses(
+        self, *args,
+        operation, node_id, is_signal=False,
+        **kwargs):
+
+        """ single result operations """
+        if operation == 'info':
+            return self.__build_subprocess_info_dto(
+                self._client.get_process_info(  # group:name
+                    self.__join_group_and_subprocess_ids(
+                        kwargs['group_id'], kwargs['subprocess_id'])
+                ))
+        elif operation == 'start':
+            if is_signal:
+                return self._client.signal_process(
+                    kwargs['subprocess_id'], kwargs['signal'])
+
+            return self._client.start_process(  # group:name
+                self.__join_group_and_subprocess_ids(
+                    kwargs['group_id'], kwargs['subprocess_id']),
+                kwargs['wait']
+            )
+        elif operation == 'stop':
+            return self._client.stop_process(   # group:name
+                self.__join_group_and_subprocess_ids(
+                    kwargs['group_id'], kwargs['subprocess_id']),
+                kwargs['wait']
+            )
+
+        """ multiple results operations """
+        results = None
+        if operation == 'start_group':
+            if is_signal:
+                return NotImplementedError('not implemented yet')
+
+            results = self._client.start_process_group(
+                kwargs['group_id'], kwargs['wait']
+            )
+        elif operation == 'stop_group':
+            results = self._client.stop_process_group(
+                kwargs['group_id'],kwargs['wait']
+            )
+        elif operation == 'info_all':
+            results = self._client.get_all_process_info()
+        elif operation == 'start_all':
+            if is_signal:
+                return NotImplementedError('not implemented yet')
+
+            results = self._client.start_all_processes(kwargs['wait'])
+        elif operation == 'stop_all':
+            results = self._client.stop_all_processes(kwargs['wait'])
+        else:
+            raise OperationNotValid('operation {0} not valid'.format(operation))
+
         final_res = list()
         for res in results:
-            final_res.append(self.__build_subprocess_multi_operation_result_dto(res))
+            final_res.append(
+                self.__build_subprocess_multi_operation_result_dto(res))
+        return final_res
 
-    @client_handling_failures
-    def start_subprocess_group(self, name, wait=True):
-        return { 'message': 'not implemented yet'}
-
-    @client_handling_failures
-    def stop_subprocess(self, name, wait=True):
-        res = self.client.stop_process(name,wait)
-        return self.__build_subprocess_single_operation_result_dto(
-            {'message': 'OK'})
-
-    @client_handling_failures
-    def stop_subprocess_group(self, name, wait=True):
-        return { 'message': 'not implemented yet'}
-
-    @client_handling_failures
-    def stop_all_subprocesses(self, wait=True):
-        results = self.client.stop_all_processes(wait)
-        final_res = list()
-        for res in results:
-            final_res.append(self.__build_subprocess_multi_operation_result_dto(res))
-
-    @client_handling_failures
-    def signal_subprocess(self, name, signal):
-        return { 'message': 'not implemented yet'}
-
-    @client_handling_failures
-    def signal_subprocess_group(self, name, signal):
-        return { 'message': 'not implemented yet'}
-
-    @client_handling_failures
-    def signal_all_subprocesses(self, signal):
-        return { 'message': 'not implemented yet'}
-
-    @client_handling_failures
-    def send_subprocess_stdin(self, name, chars):
-        return { 'message': 'not implemented yet'}
+    @BaseService.init_client(validate_node=True, validate_connection=True)
+    def send_subprocess_stdin(self, *, node_id, name, chars):
+        return NotImplementedError('not implemented yet')
 
 
 class SubProcessLoggingService(BaseService):
@@ -115,32 +124,26 @@ class SubProcessLoggingService(BaseService):
     def __init__(self, node_id):
         super().__init__(node_id)
 
-    @client_handling_failures
     def read_subprocess_stdout_log(self, name, offset, length):
         """ not implemented yet """
         pass
 
-    @client_handling_failures
     def read_subprocess_stderr_log(self, name, offset, length):
         """ not implemented yet """
         pass
 
-    @client_handling_failures
     def tail_subprocess_stdout_log(self, name, offset, length):
         """ not implemented yet """
         pass
 
-    @client_handling_failures
     def tail_subprocess_stderr_log(self, name, offset, length):
         """ not implemented yet """
         pass
 
-    @client_handling_failures
     def clear_subprocess_log(self, name):
         """ not implemented yet """
         pass
 
-    @client_handling_failures
     def clear_all_subprocess_logs(self):
         """ not implemented yet """
         pass
