@@ -7,15 +7,17 @@ class SupervisordClientFatalError(Error):
 
     def __init__(self, message):
         super().__init__(message)
-        
+
 
 class SupervisordClientConnectionError(Error):
     """ Raised when a connection error occurred during the supervisord's client
     communication.
     """
 
-    def __init__(self, message):
+    def __init__(self, message, *, host, port):
         super().__init__(message)
+        self.host = host
+        self.port = port
 
 class SupervisordClientProtocolError(Error):
     """ Raised when an operation on the remote Supervisord' API failed, caused

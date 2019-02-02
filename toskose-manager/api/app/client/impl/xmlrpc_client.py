@@ -48,8 +48,9 @@ class ToskoseXMLRPCclient(BaseClient):
                         self._port,
                         conn_err))
                 raise SupervisordClientConnectionError(
-                    "A problem occurred while contacting the node {0}:{1}".format(
-                        self._host, self._port))
+                    "A problem occurred while contacting the node",
+                    host=self._host,
+                    port=self._port)
 
             except Fault as ferr:
                 self.logger.error('-- a Fault Error occurred -- \n \
