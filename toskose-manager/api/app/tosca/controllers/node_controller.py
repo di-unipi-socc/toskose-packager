@@ -17,8 +17,8 @@ class ToskoseNodeInfoList(ToskoseNodeOperation):
     @ns.marshal_list_with(toskose_node_info)
     @ns.response(500, 'Failed to retrieve nodes list')
     def get(self):
-        """ The list of toskose nodes identifiers """
-        return {'id': '1'} # TODO change
+        """ The list of nodes info """
+        return NodeService().get_all_nodes_info()
 
 @ns.route('/<string:node_id>')
 @ns.param('node_id', 'the node identifier')
@@ -28,12 +28,7 @@ class ToskoseNodeInfo(ToskoseNodeOperation):
     @ns.response(400, 'Node identifier not valid')
     def get(self, node_id):
         """ The current state of a node """
-        # TODO validate the node_id
-        info = ToskoseNodeService(node_id).get_node_info()
-        if not info:
-            ns.abort(404)
-        else:
-            return info
+        return NodeService().get_node_info(node_id=node_id)
 
 @ns.route('/<string:node_id>/log')
 @ns.param('node_id', 'the node identifier')
@@ -45,46 +40,58 @@ class ToskoseNodeLog(ToskoseNodeOperation):
 
     @ns.marshal_with(toskose_node_log)
     @ns.expect(parser, validate=True)
-    @ns.response(404, 'Log not found')
+    @ns.response(404, 'Log not found or node not found')
     @ns.response(400, 'Node identifier not valid')
     def get(self, node_id):
-        """ The log of a node """
-        # TODO validate the node_id
+        """ get the log of a node """
         args = ToskoseNodeLog.parser.parse_args()
-        log = ToskoseNodeService(node_id).get_node_log(
-            args['offset'],
-            args['length'])
+        log = NodeService().get_node_log(
+            node_id=node_id,
+            offset=args['offset'],
+            length=args['length'])
         if not log:
-            ns.abort(404, message='No log for Toskose Node #{0}'.format(node_id))
+            ns.abort(404, message='No log for node #{0}'.format(node_id))
         else:
             return log
+
+    def delete(self, node_id):
+        """ clear the log of a node """
+        res = NodeService().clear_log(node_id=node_id)
+        if not res:
+            ns.abort(500, message='Failed to clear the log for node #{0} \
+                '.format(node_id))
+        else:
+            return ({'message': 'OK'}, 200)
 
 @ns.route('/<string:node_id>/shutdown')
 @ns.param('node_id', 'the node identifier')
 class ToskoseNodeShutdown(ToskoseNodeOperation):
 
     @ns.response(500, 'Failed to shutdown')
+    @ns.response(404, 'Node not found')
     @ns.response(400, 'Node identifier not valid')
     def post(self, node_id):
         """ Shutdown the node """
-        # TODO validate the node_id
-        res = ToskoseNodeService(node_id).shutdown()
+        res = NodeService().shutdown(node_id=node_id)
         if not res:
-            ns.abort(500, message='Failed to shutdown the node #{0}'.format(node_id))
+            ns.abort(500, message='Failed to shutdown the node #{0} \
+                '.format(node_id))
         else:
-            return {'message': 'OK'}
+            return ({'message': 'OK'}, 200)
 
 @ns.route('/<string:node_id>/restart')
 @ns.param('node_id', 'the node identifier')
 class ToskoseNodeRestart(ToskoseNodeOperation):
 
     @ns.response(500, 'Failed to restart')
+    @ns.response(404, 'Node not found')
     @ns.response(400, 'Node identifier not valid')
     def post(self, node_id):
         """ Restart the node """
         # TODO validate the node_id
-        res = ToskoseNodeService(node_id).restart()
+        res = NodeService().restart(node_id=node_id)
         if not res:
-            ns.abort(500, message='Failed to restart the node #{0}'.format(node_id))
+            ns.abort(500, message='Failed to restart the node #{0} \
+                '.format(node_id))
         else:
-            return {'message': 'OK'}
+            return ({'message': 'OK'}, 200)
