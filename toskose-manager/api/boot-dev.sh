@@ -11,5 +11,5 @@
 
 source venv/bin/activate
 export FLASK_ENV=development
-export TOSKOSE_MANAGER_MODE=dev
-python3 manage.py run
+export TOSKOSE_APP_MODE=development
+python3 app/run.py run
