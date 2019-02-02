@@ -41,6 +41,12 @@ class ClientFatalError(BaseError):
     def __init__(self, message):
         super().__init__(message)
 
+class OperationNotValid(BaseError):
+    """ Raised when an invalid operation occurred """
+
+    def __init__(self, message):
+        super().__init__(message)
+
 
 @api.errorhandler(GenericFatalError)
 def handle_generic_fatal_error(error):
@@ -60,7 +66,7 @@ def handle_client_connection_error(error):
 
 @api.errorhandler(ClientOperationFailedError)
 def handle_client_protocol_error(error):
-    return ({ 'message': '{0}'.format(error) }, 500)
+    return ({ 'message': '{0}'.format(error) }, 400)
 
 @api.errorhandler(ClientConnectionError)
 def handle_client_connection_error(error):

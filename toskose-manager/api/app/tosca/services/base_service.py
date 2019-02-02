@@ -64,11 +64,10 @@ class BaseService():
 
                 try:
                     res = func(self, *args, **kwargs)
-                except (SupervisordClientFaultError, SupervisordClientProtocolError):
-                    raise ClientOperationFailedError('operation failed')
-                except SupervisordClientFatalError:
-                    raise ClientFatalError('an error is occurred during \
-                        the communication with the node')
+                except (SupervisordClientFaultError, SupervisordClientProtocolError) as err:
+                    raise ClientOperationFailedError(err)
+                except SupervisordClientFatalError as err:
+                    raise ClientFatalError(err)
                 except:
                     raise GenericFatalError('an unexpected error is occurred')
 

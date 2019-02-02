@@ -128,17 +128,10 @@ class ToskoseNodeLogDTO:
     log: str
 
 """
-Subprocess Namespace
-"""
-ns_subprocess = Namespace(
-    'subprocess',
-    description='Operations for managing the subprocesses within the node.'
-)
-
-"""
 Subprocess Schema
 """
-subprocess_info = ns_subprocess.model('SubprocessInfo', {
+
+subprocess_info = ns_toskose_node.model('SubprocessInfo', {
     'name': fields.String(
         required=True,
         description='The name of the subprocess.'
@@ -227,15 +220,7 @@ subprocess_info = ns_subprocess.model('SubprocessInfo', {
     )
 })
 
-subprocess_single_operation_result = \
-    ns_subprocess.model('SubprocessSingleOperationResult', {
-        'message': fields.String(
-            required=True,
-            description='The result of the operation, True if successfull.'
-        )
-    })
-
-subprocess_multi_operation_result = ns_subprocess.model('SubprocessOperationResult', {
+subprocess_multi_operation_result = ns_toskose_node.model('SubprocessOperationResult', {
     'name': fields.String(
         required=True,
         description='The name of the subprocess.'
@@ -273,10 +258,7 @@ class SubprocessInfoDTO:
     spawn_error: str
     exit_status: str
     pid: str
-
-@dataclass(frozen=True)
-class SubprocessSingleOperationResultDTO:
-    message: str
+    
 
 @dataclass(frozen=True)
 class SubprocessOperationResultDTO:

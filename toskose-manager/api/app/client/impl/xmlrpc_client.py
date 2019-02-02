@@ -26,7 +26,7 @@ def error_messages_builder(type, error, *args):
             err += 'Process {0} is already started'.format(args[0])
         elif error.faultCode == 10:
             """ BAD NAME """
-            err += 'Process {0} not exist'.format(args[0])
+            err += 'Process or group {0} not exist'.format(args[0])
         else:
             """ UNKNOWN """
             err += 'An Unknown error occurred'
