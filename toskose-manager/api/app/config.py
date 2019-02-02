@@ -4,6 +4,8 @@ import sys
 
 class AppConfig(object):
 
+    _CLIENT_PROTOCOL = 'XMLRPC'
+
     _LOGS_CONFIG_NAME = 'logging.conf'
     _LOGS_PATH = os.environ.get('TOSKOSE_LOGS_PATH')
     _LOGS_CONFIG_PATH = os.environ.get('TOSKOSE_LOGS_CONFIG_PATH')
@@ -19,6 +21,7 @@ class FlaskConfig(object):
     SECRET_KEY: used to sign cookies and other things (**important)
     DEBUG: activate the debugging mode (e.g. unhandled exceptions, reloading
     server when code changes). It is overridden by FLASK_DEBUG env.
+    ERROR_404_HELP: disable the automagically hint on 404 response messages
     """
 
     SECRET_KEY = os.environ.get(
@@ -26,6 +29,7 @@ class FlaskConfig(object):
         default='to-iterate-is-human-to-recurse-divine')
     DEBUG = False
     TESTING = False
+    ERROR_404_HELP = False
 
 
 class DevelopmentConfig(FlaskConfig):
