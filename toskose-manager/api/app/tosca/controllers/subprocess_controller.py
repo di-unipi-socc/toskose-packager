@@ -164,6 +164,17 @@ class SubProcess(SubProcessOperation):
 
 """ Subprocess Logging """
 
+@ns.route('/<string:node_id>/subprocess/logs-clear')
+class SubProcessLogClearAll(Resource):
+
+    @ns.marshal_with(subprocess_multi_operation_result)
+    def post(self, node_id):
+        """ Clear all subprocesses logs """
+        return SubProcessService().manage_subprocess_log(
+            operation='clear_all',
+            node_id=node_id
+        )
+
 parser2 = reqparse.RequestParser() \
     .add_argument('std_type', type=str, required=True,
         help='the std we read from (stdout | stderr)') \
@@ -217,3 +228,20 @@ class SubProcessLogTail(SubProcessLog):
         )
 
         return log if log else ns.abort(500, message='failed to tail log')
+
+@ns.route('/<string:node_id>/subprocess/<string:group_id>/\
+<string:subprocess_id>/clear-log')
+class SubProcessLogClear(SubProcessLog):
+
+    @ns.expect(parser2, validate=True)
+    def post(self, node_id, group_id, subprocess_id):
+        """ Clear the log of a subprocess """
+        res = SubProcessService().manage_subprocesses_log(
+            operation='clear',
+            node_id=node_id,
+            group_id=group_id,
+            subprocess_id=subprocess_id
+        )
+
+        return {'message': 'OK'} if res \
+            else ns.abort(500, message='failed to clear log')

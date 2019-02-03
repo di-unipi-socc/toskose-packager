@@ -4,7 +4,6 @@ from tosca.services.node_service import NodeService
 
 from tosca.models import ns_toskose_node as ns
 from tosca.models import toskose_node_info
-from tosca.models import toskose_node_log
 
 
 @ns.header('Content-Type', 'application/json')

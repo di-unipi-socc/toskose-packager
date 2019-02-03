@@ -125,7 +125,7 @@ class SubProcessService(BaseService):
         return NotImplementedError('not implemented yet')
 
     @BaseService.init_client(validate_node=True, validate_connection=True)
-    def manage_subprocess_log(self, *args, operation, std_type, **kwargs):
+    def manage_subprocess_log(self, *args, operation, **kwargs):
 
         if operation == 'read':
             if std_type == 'stdout':
