@@ -6,21 +6,25 @@ from tosca.models import ns_toskose_node as ns
 from tosca.models import subprocess_info
 from tosca.models import subprocess_multi_operation_result
 
+
 @ns.header('Content-Type', 'application/json')
+@ns.response(500, 'Operation failed')
+@ns.response(404, 'Node not found')
+@ns.response(200, 'Operation success')
 class SubProcessOperation(Resource):
     """ Base class for common configurations """
     pass
+
+
+parser_1 = reqparse.RequestParser() \
+    .add_argument('signal', type=str, required=False,
+        help='the signal to be sent (optional)')
 
 @ns.route('/<string:node_id>/subprocess')
 @ns.param('node_id', 'the node identifier')
 @ns.response(400, 'Operation failed, the cause may be a wrong url query \
     parameter')
 class SubProcessList(SubProcessOperation):
-
-    """ Parsing query url """
-    parser = reqparse.RequestParser() \
-        .add_argument('signal', type=str, required=False,
-            help='the signal to be sent (optional)')
 
     @ns.marshal_list_with(subprocess_info)
     def get(self, node_id):
@@ -30,12 +34,12 @@ class SubProcessList(SubProcessOperation):
                 operation='info_all',
                 node_id=node_id)
 
-    @ns.expect(parser, validate=True)
+    @ns.expect(parser_1, validate=True)
     @ns.marshal_list_with(subprocess_multi_operation_result)
     def post(self, node_id):
         """ Start or signal all subprocesses """
 
-        signal = SubProcess.parser.parse_args()['signal']
+        signal = parser_1.parse_args()['signal']
         if signal:
             return SubProcessService() \
                 .manage_subprocesses(
@@ -66,16 +70,12 @@ class SubProcessList(SubProcessOperation):
     subprocess_id or a wrong url query parameter')
 class SubProcessGroup(SubProcessOperation):
 
-    parser = reqparse.RequestParser() \
-        .add_argument('signal', type=str, required=False,
-            help='the signal to be sent (optional)')
-
-    @ns.expect(parser, validate=True)
+    @ns.expect(parser_1, validate=True)
     @ns.marshal_list_with(subprocess_multi_operation_result)
     def post(self, node_id, group_id):
         """ Start or signal all subprocesses in a group """
 
-        signal = SubProcess.parser.parse_args()['signal']
+        signal = parser_1.parse_args()['signal']
         if signal:
             return SubProcessService() \
                 .manage_subprocesses(
@@ -110,10 +110,6 @@ class SubProcessGroup(SubProcessOperation):
     subprocess_id or a wrong url query parameter')
 class SubProcess(SubProcessOperation):
 
-    parser = reqparse.RequestParser() \
-        .add_argument('signal', type=str, required=False,
-            help='the signal to be sent (optional)')
-
     @ns.marshal_with(subprocess_info)
     def get(self, node_id, group_id, subprocess_id):
         """ Info about a subprocess """
@@ -124,13 +120,13 @@ class SubProcess(SubProcessOperation):
                     group_id=group_id,
                     subprocess_id=subprocess_id)
 
-    @ns.expect(parser, validate=True)
+    @ns.expect(parser_1, validate=True)
     def post(self, node_id, group_id, subprocess_id):
         """ Start or signal a subprocess """
 
-        signal = SubProcess.parser.parse_args()['signal']
+        signal = parser_1.parse_args()['signal']
         if signal:
-            return SubProcessService() \
+            res = SubProcessService() \
                 .manage_subprocesses(
                     operation='start',
                     node_id=node_id,
@@ -138,6 +134,9 @@ class SubProcess(SubProcessOperation):
                     subprocess_id=subprocess_id,
                     is_signal=True,
                     signal=signal)
+
+            return {'message': 'OK'} if res else \
+                ns.abort(500, message='Failed to signal the subprocess')
 
         res = SubProcessService() \
                 .manage_subprocesses(
@@ -163,37 +162,58 @@ class SubProcess(SubProcessOperation):
         return {'message': 'OK'} if res \
             else ns.abort(500, message='failed to stop')
 
-@ns.route('/<string:node_id>/subprocess/<string:group_id>/\
-<string:subprocess_id>/read-log')
+""" Subprocess Logging """
+
+parser2 = reqparse.RequestParser() \
+    .add_argument('std_type', type=str, required=True,
+        help='the std we read from (stdout | stderr)') \
+    .add_argument('offset', type=int, required=True,
+        help='the offset (0 all the log)') \
+    .add_argument('length', type=int, required=True,
+        help='the length (0 all the log)')
+
 @ns.param('node_id', 'the node identifier')
 @ns.param('group_id', 'the subprocess\' group identifier')
 @ns.param('subprocess_id', 'the subprocess identifier')
 @ns.response(400, 'Operation failed, the cause may be a wrong group_id or \
     subprocess_id or a wrong url query parameter')
-class SubProcessLogRead(Resource):
+class SubProcessLog(SubProcessOperation):
+    pass
 
-    parser = reqparse.RequestParser() \
-        .add_argument('std_type', type=str, required=True,
-            help='the std we read from (stdout | stderr)') \
-        .add_argument('offset', type=int, required=True,
-            help='the offset (0 all the log)') \
-        .add_argument('length', type=int, required=True,
-            help='the length (0 all the log)')
+@ns.route('/<string:node_id>/subprocess/<string:group_id>/\
+<string:subprocess_id>/read-log')
+class SubProcessLogRead(SubProcessLog):
 
-    @ns.expect(parser, validate=True)
+    @ns.expect(parser2, validate=True)
     def get(self, node_id, group_id, subprocess_id):
         """ Read the log of a subprocess """
         log = SubProcessService().manage_subprocess_log(
             operation='read',
-            std_type=SubProcessLogRead.parser.parse_args()['std_type'],
+            std_type=parser2.parse_args()['std_type'],
             node_id=node_id,
             group_id=group_id,
             subprocess_id=subprocess_id,
-            offset=SubProcessLogRead.parser.parse_args()['offset'],
-            length=SubProcessLogRead.parser.parse_args()['length']
+            offset=parser2.parse_args()['offset'],
+            length=parser2.parse_args()['length']
         )
 
         return log if log else ns.abort(500, message='failed to read log')
 
-class SubProcessLogTail(Resource):
-    pass
+@ns.route('/<string:node_id>/subprocess/<string:group_id>/\
+<string:subprocess_id>/tail-log')
+class SubProcessLogTail(SubProcessLog):
+
+    @ns.expect(parser2, validate=True)
+    def get(self, node_id, group_id, subprocess_id):
+        """ Tail the log of a subprocess """
+        log = SubProcessService().manage_subprocess_log(
+            operation='tail',
+            std_type=parser2.parse_args()['std_type'],
+            node_id=node_id,
+            group_id=group_id,
+            subprocess_id=subprocess_id,
+            offset=parser2.parse_args()['offset'],
+            length=parser2.parse_args()['length']
+        )
+
+        return log if log else ns.abort(500, message='failed to tail log')
