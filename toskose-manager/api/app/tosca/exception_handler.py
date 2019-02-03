@@ -71,3 +71,7 @@ def handle_client_protocol_error(error):
 @api.errorhandler(ClientConnectionError)
 def handle_client_connection_error(error):
     return ({ 'message': '{0}'.format(error) }, 404)
+
+@api.errorhandler(OperationNotValid)
+def handle_operation_not_valid(error):
+    return ({ 'message': '{0}'.format(error) }, 400)

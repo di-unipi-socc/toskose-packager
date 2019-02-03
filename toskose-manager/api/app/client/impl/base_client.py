@@ -338,7 +338,7 @@ class BaseClient(ABC):
             signal (str): the signal to send as name or number (e.g. HUP or 1).
 
         Returns:
-            result: a list of bools for each process with True unless error.
+            result: a list of process status info for each process in group.
 
         """
         pass

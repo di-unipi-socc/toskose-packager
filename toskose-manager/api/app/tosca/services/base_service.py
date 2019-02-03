@@ -9,6 +9,7 @@ from tosca.exception_handler import GenericFatalError
 from tosca.exception_handler import ClientFatalError
 from tosca.exception_handler import ClientOperationFailedError
 from tosca.exception_handler import ClientConnectionError
+from tosca.exception_handler import OperationNotValid
 
 
 class BaseService():
@@ -68,6 +69,8 @@ class BaseService():
                     raise ClientOperationFailedError(err)
                 except SupervisordClientFatalError as err:
                     raise ClientFatalError(err)
+                except OperationNotValid:
+                    raise
                 except:
                     raise GenericFatalError('an unexpected error is occurred')
 

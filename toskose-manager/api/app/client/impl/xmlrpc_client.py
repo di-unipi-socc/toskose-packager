@@ -77,6 +77,11 @@ class ToskoseXMLRPCclient(BaseClient):
                         perr.errmsg))
                 raise SupervisordClientProtocolError('A protocol error occurred')
 
+            except OverflowError as err:
+                self.logger.error('An overflow error occurred (an integer \
+                exceeds the XML-RPC buffer limits)')
+                raise SupervisordClientFatalError('A fatal error occurred')
+
             except OSError as err:
                 self.logger.error('OS error: {0}'.format(err))
                 raise SupervisordClientFatalError('A fatal error occurred')
