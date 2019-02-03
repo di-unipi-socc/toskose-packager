@@ -83,13 +83,6 @@ toskose_node_info = ns_toskose_node.inherit('ToskoseNodeInfo', toskose_node, {
     )
 })
 
-toskose_node_log = ns_toskose_node.model('ToskoseNodeLog', {
-    'log': fields.String(
-        required=True,
-        description='The log of the node'
-    )
-})
-
 """
 Node DTO
 """
@@ -258,7 +251,7 @@ class SubprocessInfoDTO:
     spawn_error: str
     exit_status: str
     pid: str
-    
+
 
 @dataclass(frozen=True)
 class SubprocessOperationResultDTO:
