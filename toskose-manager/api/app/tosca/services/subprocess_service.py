@@ -10,7 +10,7 @@ from tosca.utils.utils import compute_uptime
 from dataclasses import asdict
 
 
-class SubProcessOperationService(BaseService):
+class SubProcessService(BaseService):
 
     def __init__(self):
         super().__init__()
@@ -69,7 +69,10 @@ class SubProcessOperationService(BaseService):
         elif operation == 'start':
             if is_signal:
                 return self._client.signal_process(
-                    kwargs['subprocess_id'], kwargs['signal'])
+                    self.__join_group_and_subprocess_ids(
+                        kwargs['group_id'], kwargs['subprocess_id']),
+                    kwargs['signal']
+                )
 
             return self._client.start_process(  # group:name
                 self.__join_group_and_subprocess_ids(
@@ -87,7 +90,10 @@ class SubProcessOperationService(BaseService):
         results = None
         if operation == 'start_group':
             if is_signal:
-                return NotImplementedError('not implemented yet')
+                results = self._client.signal_process_group(
+                    kwargs['group_id'],
+                    kwargs['signal']
+                )
 
             results = self._client.start_process_group(
                 kwargs['group_id'], kwargs['wait']
@@ -100,7 +106,7 @@ class SubProcessOperationService(BaseService):
             results = self._client.get_all_process_info()
         elif operation == 'start_all':
             if is_signal:
-                return NotImplementedError('not implemented yet')
+                results = self._client.signal_all_processes(kwargs['signal'])
 
             results = self._client.start_all_processes(kwargs['wait'])
         elif operation == 'stop_all':
@@ -118,32 +124,46 @@ class SubProcessOperationService(BaseService):
     def send_subprocess_stdin(self, *, node_id, name, chars):
         return NotImplementedError('not implemented yet')
 
+    @BaseService.init_client(validate_node=True, validate_connection=True)
+    def manage_subprocess_log(self, *args, operation, std_type, **kwargs):
 
-class SubProcessLoggingService(BaseService):
-
-    def __init__(self, node_id):
-        super().__init__(node_id)
-
-    def read_subprocess_stdout_log(self, name, offset, length):
-        """ not implemented yet """
-        pass
-
-    def read_subprocess_stderr_log(self, name, offset, length):
-        """ not implemented yet """
-        pass
-
-    def tail_subprocess_stdout_log(self, name, offset, length):
-        """ not implemented yet """
-        pass
-
-    def tail_subprocess_stderr_log(self, name, offset, length):
-        """ not implemented yet """
-        pass
-
-    def clear_subprocess_log(self, name):
-        """ not implemented yet """
-        pass
-
-    def clear_all_subprocess_logs(self):
-        """ not implemented yet """
-        pass
+        if operation == 'read':
+            if std_type == 'stdout':
+                return self._client.read_process_stdout_log(
+                    self.__join_group_and_subprocess_ids(
+                        kwargs['group_id'], kwargs['subprocess_id']),
+                    kwargs['offset'],
+                    kwargs['length']
+                )
+            elif std_type == 'stderr':
+                return self._client.read_process_stderr_log(
+                    self.__join_group_and_subprocess_ids(
+                        kwargs['group_id'], kwargs['subprocess_id']),
+                    kwargs['offset'],
+                    kwargs['length']
+                )
+            else:
+                raise OperationNotValid(
+                    'reading log in invalid std: {0}'.format(std_type))
+        elif operation == 'tail':
+            if std_type == 'stdout':
+                raise NotImplementedError('not implemented yet')
+            elif std_type == 'stderr':
+                raise NotImplementedError('not implemented yet')
+            else:
+                raise OperationNotValid(
+                    'tailing log in invalid std: {0}'.format(std_type))
+        elif operation == 'clear':
+            return self._client.clear_process_log(
+                self.__join_group_and_subprocess_ids(
+                    kwargs['group_id'], kwargs['subprocess_id'])
+            )
+        elif operation == 'clear_all':
+            results = self._client.clear_all_process_logs()
+            final_res = list()
+            for res in results:
+                final_res.append(
+                    self.__build_subprocess_multi_operation_result_dto(res))
+            return final_res
+        else:
+            raise OperationNotValid('operation {0} not valid'.format(operation))
