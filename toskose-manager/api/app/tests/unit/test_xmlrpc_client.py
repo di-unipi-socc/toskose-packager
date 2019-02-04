@@ -1,7 +1,6 @@
 import unittest
 import json
-from app.client.impl.xmlrpc_client import ToskoseXMLRPCclient
-
+from client.impl.xmlrpc_client import ToskoseXMLRPCclient
 
 class TestXMLRPCclient(unittest.TestCase):
 
@@ -97,6 +96,9 @@ class TestXMLRPCclient(unittest.TestCase):
             json.dumps(
                 self.client.start_process(self.fake_process_name, True),
                 indent=2))
+
+    def test_reload_config(self):
+        print(json.dumps(self.client.reload_config()))
 
 
 if __name__ == '__main__':
