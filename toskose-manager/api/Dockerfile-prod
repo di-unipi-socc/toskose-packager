@@ -1,0 +1,12 @@
+ARG PYTHON_VERSION=3.7.2
+
+FROM python:${PYTHON_VERSION}-slim as base
+
+WORKDIR /toskose
+COPY . .
+
+RUN python -m ensurepip \
+    && pip install -r requirements.txt \
+    && chmod +x entrypoint.sh
+
+ENTRYPOINT ["/bin/bash", "-c", "/toskose/entrypoint.sh"]
