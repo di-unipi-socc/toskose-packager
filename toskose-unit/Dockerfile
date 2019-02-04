@@ -104,12 +104,12 @@ COPY base/configs/supervisord/supervisord.conf /toskose/supervisord/config/super
 # Create Apps structure (lifecycle scripts + logs)
 # A test program is included
 WORKDIR /toskose/apps/test
-COPY base/scripts/test/ lifecycle/
+COPY base/scripts/test/ scripts/
 
 RUN set -eu \
     && mkdir -p logs/ \
     && touch logs/test-1.log \
-    && chmod -R 777 lifecycle/
+    && chmod -R 777 scripts/
 
 # DEV ONLY
 # !! overwrite ENVs in production !!
