@@ -1,11 +1,11 @@
-from tosca import api
+from app.tosca import api
 
-from client.exceptions import SupervisordClientFatalError
-from client.exceptions import SupervisordClientProtocolError
-from client.exceptions import SupervisordClientFaultError
-from client.exceptions import SupervisordClientConnectionError
-from core.toskose_manager import MissingConfigurationDataError
-from core.toskose_manager import ToskoseManager
+from app.client.exceptions import SupervisordClientFatalError
+from app.client.exceptions import SupervisordClientProtocolError
+from app.client.exceptions import SupervisordClientFaultError
+from app.client.exceptions import SupervisordClientConnectionError
+from app.core.toskose_manager import MissingConfigurationDataError
+from app.core.toskose_manager import ToskoseManager
 
 
 class BaseError(Exception):

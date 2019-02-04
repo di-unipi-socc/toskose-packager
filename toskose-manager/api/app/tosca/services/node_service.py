@@ -1,12 +1,12 @@
-from tosca.services.base_service import BaseService
+from app.tosca.services.base_service import BaseService
 
-from tosca.models import ToskoseNodeInfoDTO
-from tosca.models import ToskoseNodeLogDTO
-from core.toskose_manager import ToskoseManager
+from app.tosca.models import ToskoseNodeInfoDTO
+from app.tosca.models import ToskoseNodeLogDTO
+from app.core.toskose_manager import ToskoseManager
 
-from client.exceptions import SupervisordClientConnectionError
+from app.client.exceptions import SupervisordClientConnectionError
 
-from config import AppConfig
+from app.config import AppConfig
 
 from dataclasses import asdict
 from typing import List, Dict
@@ -79,11 +79,11 @@ class NodeService(BaseService):
         return results
 
     @BaseService.init_client(validate_node=True)
-    def get_node_info(self, *, node_id):
+    def get_node_info(self, **kwargs):
 
         """ retrieve node data from app configuration """
         node_id, node_data = ToskoseManager.get_instance().get_node_data(
-            node_id=node_id)
+            node_id=kwargs['node_id'])
 
         return self.__build_node_info_dto(
             node_id=node_id,
@@ -92,31 +92,32 @@ class NodeService(BaseService):
 
 
     @BaseService.init_client(validate_node = True, validate_connection=True)
-    def get_node_log(self, *, node_id, offset=0, length=0):
+    def get_node_log(self, **kwargs):
 
         return asdict(ToskoseNodeLogDTO(
-            log=self._client.read_log(offset, length)
+            log=self._client.read_log(kwargs['offset'], kwargs['length'])
         ))
 
     @BaseService.init_client(validate_node = True, validate_connection=True)
-    def clear_log(self, *, node_id):
+    def clear_log(self, **kwargs):
         return self._client.clear_log()
 
     @BaseService.init_client(validate_node = True, validate_connection=True)
-    def shutdown(self, *, node_id):
+    def shutdown(self, **kwargs):
         return self._client.shutdown()
 
     @BaseService.init_client(validate_node = True, validate_connection=True)
-    def restart(self, *, node_id):
+    def restart(self, **kwargs):
         return self._client.restart()
 
     @BaseService.init_client(validate_node = True, validate_connection=True)
-    def send_remote_comm_event(self, *, node_id, type, data):
-        """ not implemented yet """
-        pass
+    def reload_config(self, **kwargs):
+        return self._client.reload_config()
+
+    """ not implemented """
 
     @BaseService.init_client(validate_node = True, validate_connection=True)
-    def reload_config(self, *, node_id):
+    def send_remote_comm_event(self, *, node_id, type, data):
         """ not implemented yet """
         pass
 

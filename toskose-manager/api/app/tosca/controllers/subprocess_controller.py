@@ -1,10 +1,10 @@
 from flask_restplus import Resource, Namespace, fields, reqparse
 
-from tosca.services.subprocess_service import SubProcessService
+from app.tosca.services.subprocess_service import SubProcessService
 
-from tosca.models import ns_toskose_node as ns
-from tosca.models import subprocess_info
-from tosca.models import subprocess_multi_operation_result
+from app.tosca.models import ns_toskose_node as ns
+from app.tosca.models import subprocess_info
+from app.tosca.models import subprocess_multi_operation_result
 
 
 @ns.header('Content-Type', 'application/json')
@@ -30,9 +30,7 @@ class SubProcessList(SubProcessOperation):
     def get(self, node_id):
         """ The list of subprocesses """
         return SubProcessService() \
-            .manage_subprocesses(
-                operation='info_all',
-                node_id=node_id)
+            .get_all_subprocesses_info(node_id=node_id)
 
     @ns.expect(parser_1, validate=True)
     @ns.marshal_list_with(subprocess_multi_operation_result)

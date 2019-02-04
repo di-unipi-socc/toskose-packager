@@ -1,11 +1,11 @@
-from tosca.services.base_service import BaseService
+from app.tosca.services.base_service import BaseService
 
-from tosca.models import SubprocessInfoDTO
-from tosca.models import SubprocessOperationResultDTO
+from app.tosca.models import SubprocessInfoDTO
+from app.tosca.models import SubprocessOperationResultDTO
 
-from tosca.exception_handler import OperationNotValid
+from app.tosca.exception_handler import OperationNotValid
 
-from tosca.utils.utils import compute_uptime
+from app.tosca.utils.utils import compute_uptime
 
 from dataclasses import asdict
 
@@ -45,7 +45,7 @@ class SubProcessService(BaseService):
         return ':'.join([group_id, subprocess_id])
 
     @BaseService.init_client(validate_node=True, validate_connection=True)
-    def get_all_subprocesses_info(self, *, node_id):
+    def get_all_subprocesses_info(self, **kwargs):
         infos = self._client.get_all_process_info()
         result = list()
         for info in infos:
@@ -102,8 +102,6 @@ class SubProcessService(BaseService):
             results = self._client.stop_process_group(
                 kwargs['group_id'],kwargs['wait']
             )
-        elif operation == 'info_all':
-            results = self._client.get_all_process_info()
         elif operation == 'start_all':
             if is_signal:
                 results = self._client.signal_all_processes(kwargs['signal'])

@@ -8,11 +8,11 @@ import logging.handlers as handlers
 from flask import Flask
 from flask_bcrypt import Bcrypt
 
-from config import AppConfig
-from config import configs
+from app.config import AppConfig
+from app.config import configs
 
-from core.logging import LoggingFacility
-from core.toskose_manager import ToskoseManager
+from app.core.logging import LoggingFacility
+from app.core.toskose_manager import ToskoseManager
 
 
 basedir = os.path.abspath(os.path.dirname(__file__))
@@ -30,7 +30,7 @@ def create_app():
     bcrypt.init_app(app)
 
     """ register blueprints """
-    from tosca import bp as bp_tosca_api
+    from app.tosca import bp as bp_tosca_api
     app.register_blueprint(bp_tosca_api)
 
     if not app.debug and not app.testing:
@@ -39,7 +39,7 @@ def create_app():
         from flask.logging import default_handler
         app.logger.removeHandler(default_handler)
 
-        app.logger.addHandler(LoggingFacility.__call__().get_handler())
+        app.logger.addHandler(LoggingFacility.get_instance().get_handler())
         app.logger.setLevel(logging.INFO)
         app.logger.info('- Toskose Manager API started -')
 
@@ -57,7 +57,7 @@ if __name__ == "__main__":
     used overall the application environment by calling the singleton instance
     from the class.
     """
-    ToskoseManager.get_instance().load()
+    ToskoseManager()
 
     """ Create the Flask Application with the application factory"""
     flask_app = create_app()

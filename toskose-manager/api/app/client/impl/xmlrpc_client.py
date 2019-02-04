@@ -1,9 +1,9 @@
 from xmlrpc.client import ServerProxy, ProtocolError, Fault
-from client.impl.base_client import BaseClient
-from client.exceptions import SupervisordClientFatalError
-from client.exceptions import SupervisordClientConnectionError
-from client.exceptions import SupervisordClientProtocolError
-from client.exceptions import SupervisordClientFaultError
+from app.client.impl.base_client import BaseClient
+from app.client.exceptions import SupervisordClientFatalError
+from app.client.exceptions import SupervisordClientConnectionError
+from app.client.exceptions import SupervisordClientProtocolError
+from app.client.exceptions import SupervisordClientFaultError
 
 import logging
 from enum import Enum, auto

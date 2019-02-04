@@ -1,15 +1,15 @@
-from core.toskose_manager import ToskoseManager
+from app.core.toskose_manager import ToskoseManager
 
-from client.exceptions import SupervisordClientConnectionError
-from client.exceptions import SupervisordClientFatalError
-from client.exceptions import SupervisordClientProtocolError
-from client.exceptions import SupervisordClientFaultError
+from app.client.exceptions import SupervisordClientConnectionError
+from app.client.exceptions import SupervisordClientFatalError
+from app.client.exceptions import SupervisordClientProtocolError
+from app.client.exceptions import SupervisordClientFaultError
 
-from tosca.exception_handler import GenericFatalError
-from tosca.exception_handler import ClientFatalError
-from tosca.exception_handler import ClientOperationFailedError
-from tosca.exception_handler import ClientConnectionError
-from tosca.exception_handler import OperationNotValid
+from app.tosca.exception_handler import GenericFatalError
+from app.tosca.exception_handler import ClientFatalError
+from app.tosca.exception_handler import ClientOperationFailedError
+from app.tosca.exception_handler import ClientConnectionError
+from app.tosca.exception_handler import OperationNotValid
 
 
 class BaseService():
