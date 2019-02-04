@@ -12,4 +12,7 @@
 source venv/bin/activate
 export FLASK_ENV=development
 export TOSKOSE_APP_MODE=development
-python3 app/run.py run
+export FLASK_APP=run.py
+cd app
+python -m flask routes
+python -m flask run
