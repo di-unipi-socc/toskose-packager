@@ -1,12 +1,16 @@
 import os
 import sys
-import logging
 import toml
+import socket
 from toml import TomlDecodeError
 from schema import Schema, And, Use, Optional, SchemaError
 
-from config import AppConfig
-from client.client import ToskoseClientFactory
+from app.config import AppConfig
+from app.client.client import ToskoseClientFactory
+from app.core.logging import LoggingFacility
+
+
+logger = LoggingFacility.get_instance().get_logger()
 
 
 class MissingConfigurationDataError(Exception):
@@ -28,11 +32,13 @@ class ToskoseManager():
             ToskoseManager()
         return ToskoseManager.__instance
 
-    def __init__(self):
+    def __init__(self, config_path=None):
         if ToskoseManager.__instance != None:
             raise Exception('This is a singleton')
         else:
             ToskoseManager.__instance = self
+
+        self.load(config_path)
 
     def load(self, config_path=None):
         self._config_path = self.load_config(config_path)
@@ -47,16 +53,19 @@ class ToskoseManager():
             """ no manual path fetched or it is not valid """
 
             config_path = AppConfig._APP_CONFIG_PATH
-            if not config_path or not os.path.exists(config_path) \
-                and AppConfig._APP_MODE == 'development':
-                """ env variable not valid, just load a test config """
+            logger.info('detected configuration {0}'.format(config_path))
 
-                config_path = \
-                    os.path.join(
-                        os.path.abspath('./resources/config'),
-                        AppConfig._APP_CONFIG_NAME)
-            else:
-                sys.exit('missing configuration file {0}'.format(config_name))
+            if not config_path or not os.path.exists(config_path):
+                if AppConfig._APP_MODE == 'development':
+                    """ env variable not valid, just load a test config """
+
+                    config_path = \
+                        os.path.join(
+                            os.path.abspath('./resources/config'),
+                            AppConfig._APP_CONFIG_NAME)
+                else:
+                    sys.exit('missing configuration file {0}'.format(
+                        AppConfig._APP_CONFIG_NAME))
 
         return config_path
 
@@ -67,7 +76,7 @@ class ToskoseManager():
         try:
             with open(config_path, 'r') as f:
 
-                logging.info('Parsing configuration file {0}' \
+                logger.info('Parsing configuration file {0}' \
                     .format(self._config_path))
 
                 config = toml.load(f, _dict=dict)
@@ -142,9 +151,12 @@ class ToskoseManager():
                 .format(node_id))
 
         """ assuming node fields are previously validated """
+        resolved_host = socket.gethostbyname(node['hostname'])
+        # logger.info('resolved {0} in {1}'.format(node['hostname'],resolved_host))
+
         return ToskoseClientFactory.create(
             type=AppConfig._CLIENT_PROTOCOL,
-            host=node['hostname'],
+            host=resolved_host,
             port=node['port'],
             username=node['username'],
             password=node['password']
