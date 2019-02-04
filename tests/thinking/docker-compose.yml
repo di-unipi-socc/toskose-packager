@@ -6,7 +6,7 @@ services:
       context: .
       dockerfile: Dockerfile
       args:
-        TOSKOSE_UNIT_IMAGE: toskose-unit-base:1.0.0
+        TOSKOSE_UNIT_IMAGE: diunipisocc/toskose-unit-base:1.0.0
         TOSCA_NODES_CONTAINER_IMAGE: stephenreed/jenkins-java8-maven-git:latest
         TOSCA_NODES_SOFTWARE_APPS_NAMES: api
         TOSCA_NODES_SOFTWARE_STUFF_PATH: ./node-1/
@@ -49,7 +49,7 @@ services:
       - api-volume:/toskose/apps
 
   toskose-manager:
-    image: toskose-manager:1.0.0
+    image: diunipisocc/toskose-manager:1.0.0
     container_name: toskose-manager
     environment:
       TOSKOSE_LOGS_PATH: /toskose/logs

@@ -63,8 +63,11 @@ RUN mkdir -p src/ dist/ temp/
 COPY --from=fetcher /tmp/src ./src/
 COPY base/configs/pyinstaller/supervisord.spec /supervisord/supervisord.spec
 
+# note: downgraded pip version (pip >=19 has issue with pyinstaller)
 RUN python -m ensurepip \
+    && pip install --quiet pip==18.1 \ 
     && pip install --quiet \
+    setuptools \
     pyinstaller \
     meld3 \
     && pyinstaller \
