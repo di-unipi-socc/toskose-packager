@@ -8,7 +8,6 @@ class AppConfig(object):
 
     _LOGS_CONFIG_NAME = 'logging.conf'
     _LOGS_PATH = os.environ.get('TOSKOSE_LOGS_PATH')
-    _LOGS_CONFIG_PATH = os.environ.get('TOSKOSE_LOGS_CONFIG_PATH')
 
     _APP_CONFIG_NAME = 'toskose.toml'
     _APP_CONFIG_PATH = os.environ.get('TOSKOSE_APP_CONFIG_PATH')
