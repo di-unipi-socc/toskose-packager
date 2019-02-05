@@ -4,7 +4,7 @@ import sys
 
 class AppConfig(object):
 
-    _CLIENT_PROTOCOL = 'XMLRPC'
+    _CLIENT_PROTOCOL = os.environ.get('TOSKOSE_CLIENT_PROTOCOL', default='XMLRPC')
 
     _LOGS_CONFIG_NAME = 'logging.conf'
     _LOGS_PATH = os.environ.get('TOSKOSE_LOGS_PATH')
