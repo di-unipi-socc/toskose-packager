@@ -68,7 +68,7 @@ RUN python -m ensurepip \
     && pip install --quiet pip==18.1 \ 
     && pip install --quiet \
     setuptools \
-    pyinstaller \
+    pyinstaller==3.4 \
     meld3 \
     && pyinstaller \
     --distpath /supervisord/dist \
