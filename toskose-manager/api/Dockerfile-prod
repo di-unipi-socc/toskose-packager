@@ -1,12 +1,19 @@
 ARG PYTHON_VERSION=3.7.2
 
 FROM python:${PYTHON_VERSION}-slim as base
+ENV TOSKOSE_MANAGER_PORT=10000
 
 WORKDIR /toskose
 COPY . .
 
-RUN python -m ensurepip \
+RUN apt-get update -qq \
+    && apt-get install -y --no-install-recommends \
+    dnsutils \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* \
+    && python -m ensurepip \
     && pip install -r requirements.txt \
     && chmod +x entrypoint.sh
 
 ENTRYPOINT ["/bin/bash", "-c", "/toskose/entrypoint.sh"]
+    
