@@ -2,17 +2,17 @@ version: '3.3'
 
 services:
   api:
-    build:
-      context: .
-      dockerfile: Dockerfile
-      args:
-        TOSKOSE_UNIT_IMAGE: diunipisocc/toskose-unit-base:1.0.0
-        TOSCA_NODES_CONTAINER_IMAGE: stephenreed/jenkins-java8-maven-git:latest
-        TOSCA_NODES_SOFTWARE_APPS_NAMES: api
-        TOSCA_NODES_SOFTWARE_STUFF_PATH: ./node-1/
-      labels:
-        maintainer: "matteo.bogo@gmail.com"
-        description: "contains two thinking api webapps"
+    # build:
+    #   context: .
+    #   dockerfile: Dockerfile
+    #   args:
+    #     TOSKOSE_UNIT_IMAGE: diunipisocc/toskose-unit-base:1.0.0
+    #     TOSCA_NODES_CONTAINER_IMAGE: stephenreed/jenkins-java8-maven-git:latest
+    #     TOSCA_NODES_SOFTWARE_APPS_NAMES: api
+    #     TOSCA_NODES_SOFTWARE_STUFF_PATH: ./node-1/
+    #   labels:
+    #     maintainer: "matteo.bogo@gmail.com"
+    #     description: "contains two thinking api webapps"
     image: stephenreed/jenkins-java8-maven-git-toskosed:latest
     container_name: api-container
     # dependes_on
