@@ -1,0 +1,19 @@
+
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: example-ingress
+  annotations:
+    ingress.kubernetes.io/rewrite-target: /
+spec:
+  rules:
+  - http:
+      paths:
+        - path: /api
+          backend:
+            serviceName: api
+            servicePort: 9001
+        - path: /toskose-manager
+          backend:
+            serviceName: toskose-manager
+            servicePort: 10000
