@@ -1,7 +1,7 @@
-from app.tosca.services.base_service import BaseService
+from app.api.services.base_service import BaseService
 
-from app.tosca.models import ToskoseNodeInfoDTO
-from app.tosca.models import ToskoseNodeLogDTO
+from app.api.models import ToskoseNodeInfoDTO
+from app.api.models import ToskoseNodeLogDTO
 from app.core.toskose_manager import ToskoseManager
 
 from app.client.exceptions import SupervisordClientConnectionError

@@ -1,10 +1,10 @@
 from flask_restplus import Resource, Namespace, fields, reqparse
 
-from app.tosca.services.subprocess_service import SubProcessService
+from app.api.services.subprocess_service import SubProcessService
 
-from app.tosca.models import ns_toskose_node as ns
-from app.tosca.models import subprocess_info
-from app.tosca.models import subprocess_multi_operation_result
+from app.api.models import ns_toskose_node as ns
+from app.api.models import subprocess_info
+from app.api.models import subprocess_multi_operation_result
 
 
 @ns.header('Content-Type', 'application/json')

@@ -1,4 +1,4 @@
-from app.tosca import api
+from app.api import api
 
 from app.client.exceptions import SupervisordClientFatalError
 from app.client.exceptions import SupervisordClientProtocolError

@@ -30,7 +30,7 @@ def create_app():
     bcrypt.init_app(app)
 
     """ register blueprints """
-    from app.tosca import bp as bp_tosca_api
+    from app.api import bp as bp_tosca_api
     app.register_blueprint(bp_tosca_api)
 
     if not app.debug and not app.testing:

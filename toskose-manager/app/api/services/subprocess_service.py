@@ -1,11 +1,11 @@
-from app.tosca.services.base_service import BaseService
+from app.api.services.base_service import BaseService
 
-from app.tosca.models import SubprocessInfoDTO
-from app.tosca.models import SubprocessOperationResultDTO
+from app.api.models import SubprocessInfoDTO
+from app.api.models import SubprocessOperationResultDTO
 
-from app.tosca.exception_handler import OperationNotValid
+from app.api.exception_handler import OperationNotValid
 
-from app.tosca.utils.utils import compute_uptime
+from app.api.utils.utils import compute_uptime
 
 from dataclasses import asdict
 

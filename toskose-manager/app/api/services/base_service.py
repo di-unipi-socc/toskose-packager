@@ -5,11 +5,11 @@ from app.client.exceptions import SupervisordClientFatalError
 from app.client.exceptions import SupervisordClientProtocolError
 from app.client.exceptions import SupervisordClientFaultError
 
-from app.tosca.exception_handler import GenericFatalError
-from app.tosca.exception_handler import ClientFatalError
-from app.tosca.exception_handler import ClientOperationFailedError
-from app.tosca.exception_handler import ClientConnectionError
-from app.tosca.exception_handler import OperationNotValid
+from app.api.exception_handler import GenericFatalError
+from app.api.exception_handler import ClientFatalError
+from app.api.exception_handler import ClientOperationFailedError
+from app.api.exception_handler import ClientConnectionError
+from app.api.exception_handler import OperationNotValid
 
 
 class BaseService():

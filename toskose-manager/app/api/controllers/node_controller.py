@@ -1,9 +1,9 @@
 from flask_restplus import Resource, Namespace, fields, reqparse
 
-from app.tosca.services.node_service import NodeService
+from app.api.services.node_service import NodeService
 
-from app.tosca.models import ns_toskose_node as ns
-from app.tosca.models import toskose_node_info
+from app.api.models import ns_toskose_node as ns
+from app.api.models import toskose_node_info
 
 
 @ns.header('Content-Type', 'application/json')
