@@ -54,10 +54,10 @@ class SubProcessService(BaseService):
 
 
     @BaseService.init_client(validate_node=True, validate_connection=True)
-    def manage_subprocesses(
-        self, *args,
-        operation, node_id, is_signal=False,
-        **kwargs):
+    def manage_subprocesses(self, *args, **kwargs):
+
+        operation = kwargs.get('operation')
+        is_signal = kwargs.get('is_signal')
 
         """ single result operations """
         if operation == 'info':
@@ -123,7 +123,10 @@ class SubProcessService(BaseService):
         return NotImplementedError('not implemented yet')
 
     @BaseService.init_client(validate_node=True, validate_connection=True)
-    def manage_subprocess_log(self, *args, operation, **kwargs):
+    def manage_subprocess_log(self, *args, **kwargs):
+
+        operation = kwargs.get('operation')
+        std_type = kwargs.get('std_type')
 
         if operation == 'read':
             if std_type == 'stdout':
