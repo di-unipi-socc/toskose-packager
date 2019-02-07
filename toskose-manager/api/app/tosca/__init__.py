@@ -1,5 +1,6 @@
 from flask import Blueprint
 from flask_restplus import Api
+from app.config import AppConfig
 
 
 bp = Blueprint('api', __name__, url_prefix='/api/v1')
@@ -7,7 +8,7 @@ bp = Blueprint('api', __name__, url_prefix='/api/v1')
 api = Api(
     bp,
     title='Toskose Manager API',
-    version='1.0',
+    version=AppConfig._APP_VERSION,
     description='API for managing TOSCA-based multi-component cloud applications'
 )
 

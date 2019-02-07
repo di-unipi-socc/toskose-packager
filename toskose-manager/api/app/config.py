@@ -13,6 +13,7 @@ class AppConfig(object):
     _APP_CONFIG_PATH = os.environ.get('TOSKOSE_APP_CONFIG_PATH')
     _APP_MODE = os.environ.get('TOSKOSE_APP_MODE', default='development')
 
+    _APP_VERSION = os.environ.get('TOSKOSE_APP_VERSION')
 
 class FlaskConfig(object):
     """ Flask Base Configuration
