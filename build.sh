@@ -3,19 +3,21 @@
 type=$1
 version=$2
 
+usage_msg="usage: ./build.sh [unit|manager] [VERSION]\nexample: ./build.sh manager 1.0.2\n"
+
 if [ -z "${type}" ]; then
-    echo "missing operation type (unit | manager)"
+    printf "missing operation type\n${usage_msg}"
     exit 1
 fi
 
 if [ -z "${version}" ]; then
-    echo "missing version"
+    printf "missing version\n${usage_msg}"
     exit 1
 fi
 
 if [ "${type}" == 'unit' ]; then
 
-    echo "build toskose-unit image (version: ${type}).."
+    printf "build toskose-unit image (version: ${type}).."
     docker build \
     -t diunipisocc/toskose-unit:${version} \
     --build-arg APP_VERSION=${version} \
@@ -26,7 +28,7 @@ if [ "${type}" == 'unit' ]; then
 
 elif [ "${type}" == 'manager' ]; then
 
-    echo "build toskose-manager image (version: ${version}).."
+    printf "build toskose-manager image (version: ${version}).."
     docker build \
     -t diunipisocc/toskose-manager:${version} \
     --build-arg PYTHON_VERSION=3.7.2 \
@@ -34,13 +36,13 @@ elif [ "${type}" == 'manager' ]; then
     -f toskose-manager/api/Dockerfile toskose-manager/api/.
     
 else
-    echo "operation type not recognized"
+    printf "operation type not recognized\n${usage_msg}"
     exit 1
 fi
 
-echo "generating the latest version.."
+printf "generating the latest version.."
 docker tag diunipisocc/toskose-${type}:${version} diunipisocc/toskose-${type}:latest
 
-echo "pushing on the repository.."
+printf "pushing on the repository.."
 docker push diunipisocc/toskose-${type}:${version}
 docker push diunipisocc/toskose-${type}:latest
