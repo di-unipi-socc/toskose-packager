@@ -1,12 +1,7 @@
-ARG TOSKOSE_UNIT_IMAGE
-
 # the image to be "toskosed"
 ARG TOSCA_NODES_CONTAINER_IMAGE
 ARG TOSCA_NODES_SOFTWARE_APPS_NAMES
 ARG TOSCA_NODES_SOFTWARE_STUFF_PATH
-
-# toskose-unit base image
-FROM ${TOSKOSE_UNIT_IMAGE} as toskose_unit
 
 # "toskose" an given image
 FROM ${TOSCA_NODES_CONTAINER_IMAGE} as toskosed
@@ -15,7 +10,8 @@ ARG TOSCA_NODES_SOFTWARE_STUFF_PATH
 
 # copy the toskose-unit's supervisord bundle (supervisord + python 2.7.15)
 WORKDIR /
-COPY --from=toskose_unit /toskose/ /toskose/
+# check: copy from remote image (no need to declare toskose_unit as an empty from)
+COPY --from=diunipisocc/toskose-unit:latest /toskose/ /toskose/
 
 # copy lifecyle scripts and artifacts of apps hosted by this image
 COPY ${TOSCA_NODES_SOFTWARE_STUFF_PATH} /tmp/toskose/apps
