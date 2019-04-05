@@ -5,9 +5,9 @@ import socket
 from toml import TomlDecodeError
 from schema import Schema, And, Use, Optional, SchemaError
 
-from toskosetool.config import AppConfig
-from toskosetool.client.client import ToskoseClientFactory
-from toskosetool.core.logging import LoggingFacility
+from app.config import AppConfig
+from app.client.client import ToskoseClientFactory
+from app.core.logging import LoggingFacility
 
 
 logger = LoggingFacility.get_instance().get_logger()
