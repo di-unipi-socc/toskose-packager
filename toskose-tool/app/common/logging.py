@@ -3,6 +3,7 @@ from pathlib import Path
 import time
 import datetime
 import logging
+import logging.handlers
 
 from app.config import AppConfig
 
@@ -59,7 +60,8 @@ class LoggingFacility:
         streamHandler.setFormatter(self.formatter)
 
         self._logger.addHandler(self._file_handler)
-        self._logger.addHandler(streamHandler)
+        # stdout disabled for logging
+        #self._logger.addHandler(streamHandler)
 
     def __create_default_log_path(self):
 

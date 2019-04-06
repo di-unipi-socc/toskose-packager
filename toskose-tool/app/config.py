@@ -1,3 +1,5 @@
+import os
+
 class AppConfig(object):
     """ Application Configuration """
 

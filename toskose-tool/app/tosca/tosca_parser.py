@@ -1,6 +1,5 @@
 import os
 import sys
-from aenum import MultiValueEnum
 from toscaparser.prereq.csar import CSAR
 from app.config import AppConfig
 from app.common.logging import LoggingFacility
@@ -11,7 +10,7 @@ from app.common.exception import ToscaValidationError
 logger = LoggingFacility.get_instance().get_logger()
 
 
-class FileType(MultiValueEnum):
+class FileType(object):
     """
     CSAR: full TOSCA CSAR archive (including scripts, manifest)
     YAML: partial TOSCA archive (including only the manifest)
@@ -34,16 +33,18 @@ class ToscaParser():
     def _load(self):
         """ Load the .yml manifest (partial) or the .CSAR archive (full) """
 
-        if not os.path.isfile(file_path):
-            raise ToscaParsingError("Error: Missing .CSAR/.yml file")
+        """ File Validation """
+        if not os.path.isfile(self.file_path):
+            raise ToscaParsingError("Missing CSAR/yml file")
 
-        if file_path.lower().endswith(FileType.CSAR):
+        """ Recognizing extension """
+        if self.file_path.lower().endswith(FileType.CSAR):
             self._load_csar()
-        elif file_path.lower().endswith(FileType.YAML):
+        elif self.file_path.lower().endswith(FileType.YAML):
             self.is_only_yaml = True
             self._load_yml()
         else:
-            raise ToscaParsingError('Error: Invalid file extension')
+            raise ToscaParsingError('Invalid file extension')
 
 
     def _load_csar(self):

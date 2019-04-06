@@ -1,7 +1,0 @@
-tosca-parser==1.4.0
-click==7.0
-termcolor==1.1.0
-pyfiglet==0.8.post1
-six==1.12.0
-colorama==0.4.1
-aenum==2.1.2
