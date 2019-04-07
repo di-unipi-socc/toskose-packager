@@ -1,120 +1,198 @@
 import os
-import click
+import sys
+from enum import Enum, auto
 from app.gui.effects import print_cli
 from app.config import AppConfig
 from app.tosca.tosca_parser import ToscaParser
 from app.common.exception import ToscaParsingError
+from app.common.exception import ToscaValidationError
 from app.common.logging import LoggingFacility
 
 
 logger = LoggingFacility.get_instance().get_logger()
 
 
-@dataclass
-class CLIState:
-    """ """
+current_session_text = \
+"""
+=== Current Session ===
+File: {0}
+Validated: {1}
+Toskosed: {2}
+=======================
+"""
 
-    file_path: str
-    is_valid: bool
+
+class Menus(Enum):
+    Main = auto()
+    Loader = auto()
+    Validator = auto()
+    Toskose = auto()
+
+menus_options = {
+
+    Menus.Main: {
+        'options': (
+            'Quit',
+            'Load CSAR/YAML',
+            'Validate',
+            'Toskose it!',
+        ),
+        'subroutines': (
+            'quit',
+            'tosca_loader_menu',
+            'tosca_validator',
+            'toskoserization',
+        ),
+    },
+    Menus.Loader: {
+        'options': (
+            'Back',
+            'Load from file',
+        ),
+        'subroutines': (
+            'go_back_menu',
+            'tosca_load_from',
+        )
+    }
+}
 
 
-def cli():
+class CLI():
 
-    clistate = CLIState()
+    def __init__(self):
 
-    while True:
+        self.tosca = None
+
+        self.file_path = None
+        self.is_valid = False
+        self.is_toskosed = False
+
+        self.menu_stack = [Menus.Main]
+        self.current_action = None
+
+        self.notification = None
+
+
+    def run(self):
+    
+        self.menu()
+
+    def menu(self):
+        """ """
+
+        while True:
+
+            self.load_menu()
+            self.__action_validator(input('\nMake your choice: '))
+            if self.current_action is not None:
+                self.__action_handler()
+
+    def load_menu(self):
+        """ """
 
         os.system('clear')
         print_app_info()
 
+        self.print_session()
+        self.print_menu()
 
+        if self.notification is not None:
+            print_cli('\n{0}'.format(self.notification), color='red')
+            self.notification = None
 
-
-
-
-    if file is not None:
+    def __action_validator(self, input):
+        """ Validate actions inserted by the user """
 
         try:
 
-            tosca = ToscaParser(file)
+            action_idx = int(input)
 
-        except ToscaParsingError as parse_err:
-            logger.exception(parse_err)
-            print_cli('{0}'.format(str(parse_err)), color="red")
+            if action_idx < 0 and action_idx > len(menus_options[self.menu_stack[-1]]['options'])-1:
+                raise ValueError
+            else: 
+                self.current_action = action_idx
+                
+        except ValueError as err:
+            self.current_action = None
+            self.notification = 'It doesn \'t seem a valid option. Try Again!'
+    
+    def __action_handler(self):
+        """ Call a subroutine by name based on the current menu and the current selected action 
+        
+        Note: the menu path is represented as a (list) stack, so the last inserted item is the current menu and it's
+        obtained using list[-1]
+        """
+
+        getattr(self, menus_options[self.menu_stack[-1]]['subroutines'][self.current_action])()
+    
+    def go_back_menu(self):
+        """ Go to the previous menu following the path on the menu stack """
+
+        self.menu_stack.pop()
+
+    def tosca_loader_menu(self):
+        """ """
+
+        self.menu_stack.append(Menus.Loader)  
+
+    def tosca_load_from(self, source='File'):
+        """ """
+
+        while True:
+            
+            file_path = input('\nInsert the file path (0 Abort): ')
+            if file_path == '0':
+                break
+
+            try:
+                
+                self.tosca = ToscaParser(file_path)
+                self.file_path = file_path
+                self.is_valid = True
+                break
+            
+            except (ToscaParsingError, ToscaValidationError) as err:
+                logger.exception(err)
+                print_cli('{0}'.format(str(err)), color="red")  
+
+    def tosca_validator(self):
+        """ """
+
+    def toskoserization(self):
+        pass    
+
+    def quit(self):
+        """ Quit the program """
+
+        print_cli('Goodbye!', color='blue', attrs=['bold'])
+        sys.exit()
+        
+
+    def print_menu(self):
+        """ Show the current menu options """
+
+        menu_text = ''
+        for idx, option in enumerate(menus_options[self.menu_stack[-1]]['options'][1:]):
+            menu_text += '{0}. {1}\n'.format(idx+1, option)
+
+        back_option = menus_options[self.menu_stack[-1]]['options'][0] # self.menu_stack[-1] is the current menu
+        menu_text += '\n0. {0}'.format(back_option)
+
+        print_cli('Menu\n\n{0}'.format(menu_text), color='blue', attrs=['bold'])
+
+
+    def print_session(self):
+        """ """
+
+        print_cli(current_session_text.format( \
+            'not loaded yet' if self.file_path is None else self.file_path,
+            'No' if not self.is_valid else 'Yes',
+            'No' if not self.is_toskosed else 'Yes'
+        ), color="green", attrs=['bold'])
 
 
 def print_app_info():
-    """ """
+    """ Show info about the app """
 
-    print_cli(AppConfig._APP_NAME, color="blue", figlet=True)
+    print_cli(AppConfig._APP_NAME, color="blue", attrs=['bold'], figlet=True)
     print_cli("version {0}\n".format(AppConfig._APP_VERSION), color="yellow")
-
-
-
-
-
-
-
-
-
-
-# _MAIN_MENU_OPTIONS = ('Load')
-
-# _MENU_OPTIONS = {
-#     "MAIN_MENU": _MAIN_MENU_OPTIONS
-# }
-
-
-# class InteractiveMenu():
-#     """ """
-
-#     def __init__(self):
-        
-#         self.current_selection = None
-#         self.is_main_menu = False
-
-#         self.main()
-
-#     @click.command()
-#     def main(self):
-#         """ """
-
-#         self._menu_selector()
-
-
-            
-#     def _menu_selector(self):
-#         """ """
-
-#         __print_app_info()
-#         __print_menu(_MENU_OPTIONS['MAIN_MENU'])
-
-
-#     @staticmethod
-#     def __print_menu(menu_options, is_main_menu=True):
-#         """ """
-
-#         txt = ''
-#         entries = []
-#         for idx, val in enumerate(menu_options):
-#             entries.append('{0}. {1}'.format(idx,val))
-
-#         last_entry = 'Back'
-#         if is_main_menu:
-#             last_entry = 'Exit'
-
-#         entries.append('0. {1}'.format(last_entry))
-
-#         print_cli(txt.join(entries))
-        
-#     @staticmethod
-#     def __print_app_info():
-#         """ """
-
-#         print_cli(AppConfig._APP_NAME, color="blue", figlet=True)
-#         print_cli("version {0}\n".format(AppConfig._APP_VERSION), color="yellow")
-
-
-# @click.group()
-# def main():
-#     pass
