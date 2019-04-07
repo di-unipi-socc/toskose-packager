@@ -1,8 +1,8 @@
-from app.gui.interactive_menu import cli
+from app.gui.interactive_menu import CLI
 
 def main():
     
-    cli()
+    CLI().run()
 
 
 if __name__ == "__main__":
