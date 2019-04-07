@@ -58,12 +58,12 @@ class ToscaParser():
             self.csar.validate()
 
         except ValueError as err:
-            logger.error('Error: Failed to validate .CSAR archive \n {0}'.format(err))
-            raise err
+            logger.exception(err)
+            raise ToscaValidationError('Failed to validate .CSAR archive: {0}'.format(err))
         
         logger.info('{0} is valid. Decompression started...'.format(self.file_path))
 
-        csar.decompress()
+        self.csar.decompress()
     
     def _load_yml(self, file_path):
         print('yaml')
