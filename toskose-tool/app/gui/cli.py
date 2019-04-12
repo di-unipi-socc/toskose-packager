@@ -1,9 +1,11 @@
 import os
 import sys
 from enum import Enum, auto
+import app
 from app.gui.effects import print_cli
 from app.config import AppConfig
-from app.tosca.tosca_parser import ToscaParser
+from app.tosca.parser import ToscaLoader
+from app.tosca.model import ToscaModel
 from app.common.exception import ToscaParsingError
 from app.common.exception import ToscaValidationError
 from app.common.logging import LoggingFacility
@@ -15,9 +17,10 @@ logger = LoggingFacility.get_instance().get_logger()
 current_session_text = \
 """
 === Current Session ===
-File: {0}
-Validated: {1}
-Toskosed: {2}
+Archive: {0}
+Manifest: {1}
+Validated: {2}
+Toskosed: {3}
 =======================
 """
 
@@ -26,6 +29,7 @@ class Menus(Enum):
     Main = auto()
     Loader = auto()
     Validator = auto()
+    Metadata = auto()
     Toskose = auto()
 
 menus_options = {
@@ -33,14 +37,14 @@ menus_options = {
     Menus.Main: {
         'options': (
             'Quit',
-            'Load CSAR/YAML',
-            'Validate',
+            'Load CSAR',
+            'Show Topology',
             'Toskose it!',
         ),
         'subroutines': (
             'quit',
             'tosca_loader_menu',
-            'tosca_validator',
+            'tosca_metadata',
             'toskoserization',
         ),
     },
@@ -61,11 +65,13 @@ class CLI():
 
     def __init__(self):
 
-        self.tosca = None
-
-        self.file_path = None
+        self.archive_path = None
+        self.manifest_path = None
         self.is_valid = False
         self.is_toskosed = False
+
+        self.csar_metadata = None
+        self.tosca_model = None
 
         self.menu_stack = [Menus.Main]
         self.current_action = None
@@ -130,33 +136,47 @@ class CLI():
 
         self.menu_stack.pop()
 
+    def go_main_menu(self):
+        """ Go to the main menu"""
+
+        self.menu_stack = [Menus.Main]
+
     def tosca_loader_menu(self):
         """ """
 
-        self.menu_stack.append(Menus.Loader)  
+        self.menu_stack.append(Menus.Loader) 
 
     def tosca_load_from(self, source='File'):
         """ """
 
+        """ user input """
         while True:
+
+            archive_path = None
+            if source == 'File':
+                archive_path = input('\nInsert the file path (0 Abort): ')
             
-            file_path = input('\nInsert the file path (0 Abort): ')
-            if file_path == '0':
+            if archive_path == '0':
                 break
 
             try:
                 
-                self.tosca = ToscaParser(file_path)
-                self.file_path = file_path
-                self.is_valid = True
+                tl = ToscaLoader(archive_path)
+                self.archive_path, self.yaml_path, self.csar_metadata = \
+                tl.archive_path, tl.yaml_path, tl.csar_metadata
                 break
             
             except (ToscaParsingError, ToscaValidationError) as err:
-                logger.exception(err)
-                print_cli('{0}'.format(str(err)), color="red")  
+                print_cli('{0}'.format(str(err)), color="red") 
 
-    def tosca_validator(self):
+        """ build model """
+        self.tosca_model = ToscaModel(self.archive_path)
+
+        self.go_main_menu() 
+
+    def tosca_metadata(self):
         """ """
+        pass
 
     def toskoserization(self):
         pass    
@@ -185,7 +205,8 @@ class CLI():
         """ """
 
         print_cli(current_session_text.format( \
-            'not loaded yet' if self.file_path is None else self.file_path,
+            'not loaded yet' if self.archive_path is None else self.archive_path,
+            'not loaded yet' if self.manifest_path is None else self.manifest_path
             'No' if not self.is_valid else 'Yes',
             'No' if not self.is_toskosed else 'Yes'
         ), color="green", attrs=['bold'])
@@ -194,5 +215,5 @@ class CLI():
 def print_app_info():
     """ Show info about the app """
 
-    print_cli(AppConfig._APP_NAME, color="blue", attrs=['bold'], figlet=True)
-    print_cli("version {0}\n".format(AppConfig._APP_VERSION), color="yellow")
+    print_cli(app.__name__, color="blue", attrs=['bold'], figlet=True)
+    print_cli("version {0}\n".format(app.__version__), color="yellow")
