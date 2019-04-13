@@ -17,7 +17,7 @@ class FileType(object):
     CSAR = ".zip", ".ZIP", ".csar", ".CSAR"
 
 
-class ToscaParser():
+class ToscaLoader():
     """ Load and validate a .CSAR archive  """
 
     def __init__(self, archive_path):
@@ -25,10 +25,10 @@ class ToscaParser():
         self._archive_path = archive_path
         
         self._manifest_path = None
-        self._csar_metadata = {}
+        self._csar_dir_path = None
+        self._csar_metadata = None
 
         self._load()
-        self._validation()
 
     def _load(self):
         """ Load the .CSAR archive """
@@ -67,17 +67,9 @@ class ToscaParser():
         logger.info('{0} is valid. Decompression started...'.format(self._archive_path))
 
         csar.decompress()
-        self._manifest_path = os.path.join(csar.temp_dir, csar.get_main_template())
-        self.csar_metadata = {
-            **{
-                'temp_dir': csar.temp_dir,
-            },
-            **csar.get_metadata()
-        }
-
-    def _validation(self):
-        """ Toskose custom validation """
-        pass
+        self._manifest_path = csar.get_main_template()
+        self._csar_dir_path = csar.temp_dir
+        self._csar_metadata = csar.get_metadata()
 
     @property
     def archive_path(self):
@@ -85,7 +77,12 @@ class ToscaParser():
         return self._archive_path
 
     @property
-    def manifest_pat(self):
+    def csar_dir_path(self):
+        """ The path of the temporary unpacked csar dir """
+        return self._csar_dir_path
+
+    @property
+    def manifest_path(self):
         """ The path of the yaml manifest for the validated .CSAR archive """
         return self._manifest_path
 
@@ -94,5 +91,10 @@ class ToscaParser():
         """ Metadata about the validated .CSAR archive """
         return self._csar_metadata
 
-    @property
-    def 
+    def get_paths(self):
+            """ Return all the paths in a dict """
+            return {
+                'archive': self._archive_path,
+                'csar_dir': self._csar_dir_path,
+                'manifest': self._manifest_path,
+            }
