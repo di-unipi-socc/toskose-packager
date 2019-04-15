@@ -1,6 +1,6 @@
 import unittest
 import json
-from client.impl.xmlrpc_client import ToskoseXMLRPCclient
+from app.client.impl.xmlrpc_client import ToskoseXMLRPCclient
 
 class TestXMLRPCclient(unittest.TestCase):
 
