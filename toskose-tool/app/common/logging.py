@@ -31,9 +31,9 @@ class LoggingFacility:
         self._logger = logging.getLogger(__name__)
         self._logger.setLevel(logging.DEBUG)
 
-        """ Formatter """
-        self.formatter = logging.Formatter('%(asctime)s %(levelname)s: %(message)s')
-            # [in %(pathname)s:%(lineno)d]')
+        """ Formatters """
+        self.formatter_file = logging.Formatter('%(asctime)s %(levelname)s: %(message)s [in %(pathname)s:%(lineno)d]')
+        self.formatter_stream = logging.Formatter('%(message)s')
 
         """ Output path """
         logs_path = AppConfig._LOGS_PATH
@@ -53,15 +53,16 @@ class LoggingFacility:
             maxBytes=10240,
             backupCount=10)
 
-        self._file_handler.setFormatter(self.formatter)
+        self._file_handler.setFormatter(self.formatter_file)
         self._file_handler.setLevel(logging.INFO)
 
-        streamHandler = logging.StreamHandler()
-        streamHandler.setFormatter(self.formatter)
+        """ Stdout Handler """
+        self._streamHandler = logging.StreamHandler()
+        self._streamHandler.setFormatter(self.formatter_stream)
+        self._streamHandler.setLevel(logging.INFO)
 
         self._logger.addHandler(self._file_handler)
-        # stdout disabled for logging
-        #self._logger.addHandler(streamHandler)
+        self._logger.addHandler(self._streamHandler)
 
     def __create_default_log_path(self):
 
@@ -75,5 +76,8 @@ class LoggingFacility:
     def get_logger(self):
         return self._logger
 
-    def get_handler(self):
-        return self._file_handler
+    def quiet(self):
+        self._streamHandler.setLevel(logging.WARNING)
+
+    def debug(self):
+        self._streamHandler.setLevel(logging.INFO)

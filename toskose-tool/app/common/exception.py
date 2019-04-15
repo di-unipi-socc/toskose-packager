@@ -28,3 +28,21 @@ class ToscaValidationError(BaseToskoseException):
 
     def __init__(self, message):
         super().__init__(message)
+
+class ToscaTranslationError(BaseToskoseException):
+    """ Raised when an error occurred during the translation of a TOSCA application """
+
+    def __init__(self, message):
+        super().__init__(message)
+
+class ToscaFatalError(BaseToskoseException):
+    """ Raised when a fatal error is occurred """
+
+    def __init__(self, message):
+        super().__init__(message)
+
+class DockerOperationError(BaseToskoseException):
+    """ Raised when an operation with the Docker Engine is failed """
+
+    def __init__(self, message):
+        super().__init__(message)
