@@ -2,7 +2,6 @@ import pytest
 import os
 from toscaparser.tosca_template import ToscaTemplate
 from app.tosca.loader import ToscaLoader
-from app.tosca.model import ToscaModel
 
 csars = [
         '/home/matteo/git/toskose/tests/data/thinking-app/thinking.csar'
