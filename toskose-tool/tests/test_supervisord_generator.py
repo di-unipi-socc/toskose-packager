@@ -12,9 +12,7 @@ def test_supervisord_unit_generation():
     # TemporaryDirectory will delete itself when it is done.
     # when you leave the scope of the with, the temporary directory 
     # will be deleted. With mkdtemp, you would need to do that manually.
-    #with tempfile.TemporaryDirectory() as tmp_dir:
-
-        tmp_dir = '/home/matteo/temp/bbb'
+    with tempfile.TemporaryDirectory() as tmp_dir:
 
         name = 'api'
 
