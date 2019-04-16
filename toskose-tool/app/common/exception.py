@@ -41,6 +41,12 @@ class ToscaFatalError(BaseToskoseException):
     def __init__(self, message):
         super().__init__(message)
 
+class SupervisordConfigGeneratorError(BaseToskoseException):
+    """ Raised when an error occurred during supervisord config generator """
+
+    def __init__(self, message):
+        super().__init__(message)
+
 class DockerOperationError(BaseToskoseException):
     """ Raised when an operation with the Docker Engine is failed """
 
