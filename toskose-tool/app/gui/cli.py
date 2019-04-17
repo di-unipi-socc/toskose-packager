@@ -3,9 +3,9 @@ import click
 # from . import __name__
 # from . import __version__
 
-from app.toskose import Toskose
+#from app.toskose import Toskose
+from app.toskoserizator import Toskoserizator
 from app.common.commons import Alerts
-from app.gui.interactive_cli import InteractiveCLI
 from app.gui.effects import print_notification_cli
 
 
@@ -17,24 +17,17 @@ def handling_failure(func):
             print_notification_cli(err, Alerts.Failure)
     return wrapper
 
-@click.group(invoke_without_command=True)
+@click.group()
 #@click.version_option(version=__version__)
 @click.option('--quiet', '-q', is_flag=True, help='Give less output.')
 @click.option('--debug', is_flag=True, help='Enable debug mode.')
-@click.option('--interactive-cli', is_flag=True, help='Enable the interactive CLI.')
 @click.pass_context
-def cli(ctx, quiet, debug, interactive_cli):
+def cli(ctx, quiet, debug):
     """
-    test
+    Description Soon
     """
 
-    ctx.obj = Toskose(debug=debug, quiet=quiet)
-
-    if ctx.invoked_subcommand is None:
-        if interactive_cli:
-            InteractiveCLI().run()   
-        else:
-            click.echo(ctx.get_help())
+    ctx.obj = Toskoserizator(debug=debug, quiet=quiet)
 
 @cli.command(name='validate')
 @click.pass_context
@@ -42,22 +35,21 @@ def cli(ctx, quiet, debug, interactive_cli):
 @handling_failure
 def validate(ctx, file):
     """ 
-    test
+    Soon
     """
 
-    validated = ctx.obj.validate(file=file)
+    print_notification_cli('Not implemented yet', Alerts.Warning)
+
+    # validated = ctx.obj.validate(file=file)
     
-    print_notification_cli('\u2713 Validated.', Alerts.Success) if validated \
-            else print_notification_cli('\u274C Not Validated.', Alerts.Failure)
+    # print_notification_cli('\u2713 Validated.', Alerts.Success) if validated \
+    #         else print_notification_cli('\u274C Not Validated.', Alerts.Failure)
     
-@cli.command(name='generate')
+@cli.command(name='toskoserize')
 @click.pass_context
-@click.argument('file', type=click.Path(exists=True))
-@click.option(
-    '--orchestrator', 
-    help='The target orchestrator',
-    default='compose',
-    show_default=True
+@click.argument(
+    'csar_path', 
+    type=click.Path(exists=True),
 )
 @click.option(
     '--docker-url', 
@@ -70,16 +62,18 @@ def validate(ctx, file):
     help='The path for the output.'
 )
 @handling_failure
-def generate(ctx, file, output_path, orchestrator, docker_url):
+def toskose(ctx, csar_path, output_path, docker_url):
     """
-    test
+    Description Soon
     """
 
-    res = ctx.obj.generate(
-        file=file, 
-        output_path=output_path,
-        orchestrator=orchestrator,
-        docker_url=docker_url)
+    ctx.obj.csar_path = csar_path
+    if output_path:
+        ctx.obj.output_path = output_path
+    if docker_url:
+        ctx.obj.docker_url = docker_url
+
+    ctx.obj.toskosed()
 
 
 if __name__ == '__main__':
