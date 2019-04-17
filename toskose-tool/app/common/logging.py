@@ -36,10 +36,13 @@ class LoggingFacility:
         self.formatter_stream = logging.Formatter('%(message)s')
 
         """ Output path """
-        logs_path = AppConfig._LOGS_PATH
-        if not logs_path:
-            """ logs path not set -- use default """
-            logs_path = self.__create_default_log_path()
+        # logs_path = AppConfig._LOGS_PATH
+        # if not logs_path:
+        #     """ logs path not set -- use default """
+        
+        #TODO set logpath with option in click ui (user-defined log path)
+        # how to initialize? remove the singleton?
+        logs_path = self.__create_default_log_path()
 
         if not os.path.exists(logs_path):
             sys.exit('failed to setup logging')
