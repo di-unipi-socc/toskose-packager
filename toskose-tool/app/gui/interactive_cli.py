@@ -6,7 +6,7 @@ import app
 from app.gui.effects import print_cli
 from app.config import AppConfig
 from app.tosca.loader import ToscaLoader
-from app.tosca.validator import ToscaValidator
+from app.tosca.validation.validator import ToscaValidator
 from app.tosca.model import ToscaModel
 from app.common.exception import ToscaFileNotFoundError
 from app.common.exception import ToscaParsingError

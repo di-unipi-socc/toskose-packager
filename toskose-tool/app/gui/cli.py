@@ -55,24 +55,29 @@ def validate(ctx, file):
 @click.argument('file', type=click.Path(exists=True))
 @click.option(
     '--orchestrator', 
-    help='the target orchestrator',
+    help='The target orchestrator',
     default='compose',
     show_default=True
 )
 @click.option(
     '--docker-url', 
-    help='the URL for connecting to the Docker Engine',
+    help='The URL for the Docker Engine.',
     default='unix:///var/run/docker.sock',
     show_default=True
 )
+@click.option(
+    '--output-path', '-o', 
+    help='The path for the output.'
+)
 @handling_failure
-def generate(ctx, file, orchestrator, docker_url):
+def generate(ctx, file, output_path, orchestrator, docker_url):
     """
     test
     """
 
     res = ctx.obj.generate(
         file=file, 
+        output_path=output_path,
         orchestrator=orchestrator,
         docker_url=docker_url)
 
