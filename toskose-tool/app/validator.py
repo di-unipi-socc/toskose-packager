@@ -7,6 +7,7 @@ from toscaparser.tosca_template import ToscaTemplate
 from app.common.logging import LoggingFacility
 from app.common.commons import unpack_archive
 from app.common.commons import CommonErrorMessages
+from app.common.commons import suppress_stderr
 from app.common.exception import ToscaFileNotFoundError
 from app.common.exception import ToscaValidationError
 from app.common.exception import ToscaMalformedCsarError
@@ -83,51 +84,54 @@ def validate_csar(csar_path):
 
     # validate csar structure
     with zipfile.ZipFile(csar_path, 'r') as archive:
-        filelist = archive.filelist()
+        with suppress_stderr(): #TODO fix yaml error and remove it
+            # filelist = archive.filelist()
 
-        if _TOSCA_METADATA_PATH not in filelist:
-            logger.error('{0} does not contain a valid TOSCA.meta'.format(csar_path))
-            raise ToscaMalformedCsarError(CommonErrorMessages._DEFAULT_MALFORMED_CSAR_ERROR_MSG)
+            # if _TOSCA_METADATA_PATH not in filelist:
+            #     logger.error('{0} does not contain a valid TOSCA.meta'.format(csar_path))
+            #     raise ToscaMalformedCsarError(CommonErrorMessages._DEFAULT_MALFORMED_CSAR_ERROR_MSG)
 
-        # validate TOSCA.meta
-        try:
+            # validate TOSCA.meta
+            try:
 
-            csar_metadata = yaml.load(archive.read(_TOSCA_METADATA_PATH))
-            if type(csar_metadata) is not dict:
-                logger.error('{0} is not a valid dictionary'.format(
-                    _TOSCA_METADATA_PATH))
-                raise ToscaMalformedCsarError(CommonErrorMessages._DEFAULT_MALFORMED_CSAR_ERROR_MSG)
+                #TODO !!!fix!!! YAMLLoadWarning: calling yaml.load() without Loader=... is deprecated, as the default Loader is unsafe. 
+                # Please read https://msg.pyyaml.org/load for full details.
+                csar_metadata = yaml.load(archive.read(_TOSCA_METADATA_PATH))
+                if type(csar_metadata) is not dict:
+                    logger.error('{0} is not a valid dictionary'.format(
+                        _TOSCA_METADATA_PATH))
+                    raise ToscaMalformedCsarError(CommonErrorMessages._DEFAULT_MALFORMED_CSAR_ERROR_MSG)
 
-        except yaml.YAMLError as err:
-            logger.exception(err)
-            raise ToscaFatalError(CommonErrorMessages._DEFAULT_FATAL_ERROR_MSG)
+            except yaml.YAMLError as err:
+                logger.exception(err)
+                raise ToscaFatalError(CommonErrorMessages._DEFAULT_FATAL_ERROR_MSG)
 
-        # validate tosca metadata
-        for key in ToscaMetadataSchema._TOSCA_METADATA_REQUIRED_KEYS:
-            if key not in csar_metadata:
-                logger.error('Missing {0} in {1}'.format(key, _TOSCA_METADATA_PATH))
-                raise ToscaMalformedCsarError(CommonErrorMessages._DEFAULT_MALFORMED_CSAR_ERROR_MSG)
+            # validate tosca metadata
+            # for key in _TOSCA_METADATA_REQUIRED_KEYS:
+            #     if key not in csar_metadata:
+            #         logger.error('Missing {0} in {1}'.format(key, _TOSCA_METADATA_PATH))
+            #         raise ToscaMalformedCsarError(CommonErrorMessages._DEFAULT_MALFORMED_CSAR_ERROR_MSG)
 
-        # validate tosca manifest file
-        manifest = csar_metadata.get(_TOSCA_METADATA_MANIFEST_KEY, None)
-        if manifest is None or manifest not in filelist:
-            logger.error('{0} contains an invalid manifest reference or it does not exist'.format(
-                _TOSCA_METADATA_PATH))
-            raise ToscaMalformedCsarError(CommonErrorMessages._DEFAULT_MALFORMED_CSAR_ERROR_MSG)
+            # validate tosca manifest file
+            manifest = csar_metadata.get(_TOSCA_METADATA_MANIFEST_KEY)
+            # if manifest is None or manifest not in filelist:
+            #     logger.error('{0} contains an invalid manifest reference or it does not exist'.format(
+            #         _TOSCA_METADATA_PATH))
+            #     raise ToscaMalformedCsarError(CommonErrorMessages._DEFAULT_MALFORMED_CSAR_ERROR_MSG)
 
-        # validate other tosca metadata
-        for option in ToscaMetadataSchema._TOSCA_METADATA_OPTIONAL_KEYS:
-            if option not in csar_metadata:
-                logger.warning('Missing {0} option in {1}'.format(
-                    option, _TOSCA_METADATA_PATH))
+            # validate other tosca metadata
+            # for option in _TOSCA_METADATA_OPTIONAL_KEYS:
+            #     if option not in csar_metadata:
+            #         logger.warning('Missing {0} option in {1}'.format(
+            #             option, _TOSCA_METADATA_PATH))
 
-        # validate tosca manifest (yaml)
-        with tempfile.TemporaryDirectory() as tmp_dir:
-            unpack_archive(csar_path, tmp_dir)
-            manifest_path = os.path.join(tmp_dir, manifest)
-            validate_manifest(manifest_path)
+            # validate tosca manifest (yaml)
+            # with tempfile.TemporaryDirectory() as tmp_dir:
+            #     unpack_archive(csar_path, tmp_dir)
+            #     manifest_path = os.path.join(tmp_dir, manifest)
+            #     validate_manifest(manifest_path)
 
-        # replace ugly key with more user-friendly key for manifest filename
-        csar_metadata['manifest_filename'] = csar_metadata.pop(_TOSCA_METADATA_MANIFEST_KEY)
+            # replace ugly key with more user-friendly key for manifest filename
+            csar_metadata['manifest_filename'] = csar_metadata.pop(_TOSCA_METADATA_MANIFEST_KEY)
 
     return csar_metadata

@@ -108,6 +108,7 @@ class SupervisordConfigGenerator:
             
             config_file_path = os.path.join(self._config_path, self._config_name)
 
+            # Write the Supervisord config
             with open(config_file_path, "w") as config_file:
                 self._config.write(config_file)
 
