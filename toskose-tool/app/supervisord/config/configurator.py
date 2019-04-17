@@ -77,28 +77,30 @@ class SupervisordConfigGenerator:
 
     def _build_unit(self, **kwargs):
 
-        name = kwargs['name']
-        lifecyle_operations = kwargs['lifecycle_operations']
+        components_data = kwargs['components_data']
 
         try:
 
-            for operation, command in lifecyle_operations.items():
-                section_name = 'program:{0}-{1}'.format(name, operation)
-                template = dict(_SUPERVISORD_PROGRAM_TEMPLATE)
-                template_updated = {
-                    'command': _BASE_COMMAND + '\'' + command + '\'',
-                    'process_name': '{0}-{1}'.format(name, operation),
-                    'stdout_logfile': os.path.join(
-                        _BASEDIR_STDOUT_LOGFILE,
-                        name,
-                        'logs',
-                        '{0}-{1}.log'.format(name, operation)
-                    ),
-                }
+            for component_data in components_data:
+                name = component_data['name']
+                lifecycle_operations = component_data['interfaces']
+                for operation, command in lifecycle_operations.items():
+                    section_name = 'program:{0}-{1}'.format(name, operation)
+                    template = dict(_SUPERVISORD_PROGRAM_TEMPLATE)
+                    template_updated = {
+                        'command': _BASE_COMMAND + '\'' + command + '\'',
+                        'process_name': '{0}-{1}'.format(name, operation),
+                        'stdout_logfile': os.path.join(
+                            _BASEDIR_STDOUT_LOGFILE,
+                            name,
+                            'logs',
+                            '{0}-{1}.log'.format(name, operation)
+                        ),
+                    }
 
-                template.update(template_updated)
+                    template.update(template_updated)
 
-                self._config[section_name] = template
+                    self._config[section_name] = template
 
             if not os.path.exists(self._config_path):
                 logger.error('{0} not exists'.format(self._config_path))
