@@ -17,6 +17,12 @@ class ToscaFileNotFoundError(BaseToskoseException):
     def __init__(self, message):
         super().__init__(message)
 
+class ToscaMalformedCsarError(BaseToskoseException):
+    """ Raised when a TOSCA .CSAR archive contains malformed data """
+
+    def __init__(self, message):
+        super().__init__(message)
+
 class ToscaParsingError(BaseToskoseException):
     """ Raised when the parsing of the TOSCA .CSAR/.yml file fails """
 
