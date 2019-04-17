@@ -40,8 +40,8 @@ class Input:
 class Interface:
     """ Represents a lifecycle operation """
     name: str
-    implementation: str         # script path
-    envs: List[Input]           # envs vars
+    implementation: str           # script path
+    inputs: List[Input]           # envs vars
 
 @dataclass
 class Component:
@@ -56,8 +56,21 @@ class Container:
     image_repository: str
     ports: List[str]
     components: List[Component]
-    def add_component(self, component):
+    
+    def add_component(self, component): # components is mutable
         self.components.append(component)
+
+    def get_envs(self):
+        envs = []
+        for component in self.components:
+            for interface in component.interfaces:
+                for inputt in interface.inputs:
+                    envs.append((
+                        inputt.key,
+                        inputt.value
+                    ))
+        return envs
+
 
 @dataclass
 class ToscaModel:
