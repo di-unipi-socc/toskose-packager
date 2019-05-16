@@ -118,7 +118,7 @@ class Container(Root):
         self.env = None
         self.cmd = None
         self.ports = None
-        self.share_data = {}
+        self.share_data = {}        
 
         self._ATTRIBUTE = {
             'id': lambda: self.id,
