@@ -21,7 +21,8 @@ from app.config import AppConfig
 src_image = 'stephenreed/jenkins-java8-maven-git'
 dst_image = 'test/thinking-maven-toskosed'
 wrong_toskose_image = 'diunipisocc/toskosee-unit'
-src_tag = dst_tag = wrong_toskose_tag = 'latest'
+dst_tag = '1.2-beta'
+src_tag = wrong_toskose_tag = 'latest'
 
 context_path = os.path.join(
     os.path.dirname(__file__), 
@@ -136,22 +137,23 @@ def test_toskose_unit_wrong(dit):
 def test_toskose_image(dit):
     """ Test the "toskose" image process without pushing the generated image. """
     
+    #dit._verbose = True
     dit.toskose_image(
         src_image,
         dst_image,
         context_path,
+        src_tag=src_tag,
+        dst_tag=dst_tag,
         enable_push=False
     )
     
+    full_name = dst_image + ':' + dst_tag
     dc = DockerClient(base_url=None)
+    
     img = dc.images.get(dst_image)
-    assert dst_image+':'+dst_tag in img.tags
+    assert full_name in img.tags
 
-    dc.images.remove(dst_image)
-    with pytest.raises(ImageNotFound):
-        dc.images.get(dst_image)
-
-
+    
 def test_auth_push_fail_attempts(dit):
     """ Test the "toskose" image process with authentication max attempts reached during a push to a private repo. """
 
@@ -163,7 +165,9 @@ def test_auth_push_fail_attempts(dit):
                     dit.toskose_image(
                         src_image,
                         dst_image,
-                        context_path
+                        context_path,
+                        src_tag=src_tag,
+                        dst_tag=dst_tag
                     )
 
 

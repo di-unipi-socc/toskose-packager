@@ -1,6 +1,12 @@
+""" 
+The Docker Manager module for handling operations with the Docker Engine.
+"""
+
 import os
 import shutil
 import getpass
+import json
+from functools import reduce
 
 from docker import DockerClient
 from docker.models.images import Image
@@ -21,20 +27,23 @@ from app.config import AppConfig
 logger = LoggingFacility.get_instance().get_logger()
 
 _DOCKERFILE_TOSKOSERIZATION_PATH = 'dockerfiles'
-_DOCKERFILE_TOSKOSERIZATION_NAME = 'Dockerfile-toskoserization'
+_DOCKERFILE_TOSKOSERIZATION_TEMPLATE = 'Dockerfile-toskoserization'
 _MAX_PUSH_ATTEMPTS = 3
 
 
 class DockerImageManager():
 
-    def __init__(self, docker_url=None):        
+    def __init__(self, docker_url=None, verbose=False):        
         
         self._client = DockerClient(base_url=docker_url)
+        self._docker_url = docker_url
+        self._verbose = verbose
+
         try:
             self._client.ping()
         except APIError as err:
             logger.exception(err)
-            raise DockerOperationError('Failed to connect to the Docker Engine')
+            raise DockerOperationError('Failed to connect to the Docker Engine.')
     
     def get_docker_info(self):
         """ Returns info about the local docker engine """
@@ -47,91 +56,70 @@ class DockerImageManager():
         except APIError as err:
             logger.exception(err)
             raise DockerOperationError('Failed to retrieve the Docker Engine info')
-
-    def _validate_context(self, context_path):
-        """ Validate the application context. 
-        
-        e.g. if supervisord.conf exists, if there is at least one tosca software component
-        """
-
-        if not os.listdir(context_path):
-            logger.error('Invalid context: no components found')
-            raise ToscaFatalError(CommonErrorMessages._DEFAULT_FATAL_ERROR_MSG)
-
-        dir_files = [f for f in os.listdir(context_path) \
-            if os.path.isfile(os.path.join(context_path, f))]
-
-        if 'supervisord.conf' not in dir_files:
-            logger.error('Invalid context: supervisord.conf not found')
-            raise ToscaFatalError(CommonErrorMessages._DEFAULT_FATAL_ERROR_MSG)
     
 
-    def _image_authentication(self, src_image):
-        """ Handling Docker authentication if the image is hosted on a private repository """
+    def _image_authentication(self, src_image, src_tag=None):
+        """ Handling Docker authentication if the image is hosted on a private repository 
         
-        logger.warning('{} docker image may not exist or authentication is required'.format(src_image))
+        Args:
+            src_image (str): The original image that needs authentication for being fetched.
+            src_tag (str): The tag of the image above.
+        """
+        
+        logger.warning('[{0}:{1}] docker image may not exist or authentication is required'.format(src_image, src_tag))
         res = ''
         while res != 'YES':
-            res = (input('{} is correct? [Yes] Continue [No] Abort\n'.format(src_image))).upper()
+            res = (input('[{0}:{1}] is correct? [Yes] Continue [No] Abort\n'.format(src_image, src_tag))).upper()
             if res == 'NO':
                 logger.error(
-                    'Docker image {} cannot be found, the operation is aborted by the user.\n(Hint: Check the TOSCA manifest.)'\
-                        .format(src_image))
+                    'Docker image [{0}:{1}] cannot be found, the operation is aborted by the user.\n(Hint: Check the TOSCA manifest.)'\
+                        .format(src_image, src_tag))
                 raise OperationAbortedByUser(CommonErrorMessages._DEFAULT_OPERATION_ABORTING_ERROR_MSG)
                 
         attempts = 3
         while attempts > 0:
             logger.info('Authenticate with the Docker Repository..')
             try:
-                repository_url = input(
-                    'Enter the URL of the Docker Repository ' + \
-                    '(press ENTER for the Docker Hub): ')
-                username = input('Enter the username: ')
-                password = getpass.getpass('Enter the password: ')
-
-                if username and password:
-
-                    self._client.login(
-                        username=username,
-                        password=password,
-                        registry=repository_url
-                    )
-
-                    logger.info('Successfully authenticated.')
-                    
-                    # Check if image really exists
-                    self._client.images.pull(src_image)
-                    
-                    break
+                self._client.images.pull(
+                    src_image,
+                    tag=src_tag,
+                    auth_config=create_auth_interactive()
+                )
+                break
                 
             except APIError as err:
-                if 'misbehaving' in str(err):
-                    logger.info('Repository {} is invalid or not working'.format(repository_url))
-                elif 'Unauthorized' in str(err):
+                msg = str(err).upper()
+                if 'UNAUTHORIZED' in msg:
                     logger.info('Invalid username/password.')
-                elif 'Not Found' in str(err):
-                    logger.error('Docker image {0} cannot be fetched from repository {1}. It does not exist.'.format(
-                        src_image, repository_url))
-                    raise DockerOperationError('Failed to fetch the docker image {}. It does not exist.'.format(src_image))
                 else:
                     logger.exception(err)
                     raise ToscaFatalError(CommonErrorMessages._DEFAULT_FATAL_ERROR_MSG)
 
             attempts -= 1
-            logger.info('Authentication failed. You have {} more attempts.'.format(attempts))
+            logger.info('Authentication failed. You have [{}] more attempts.'.format(attempts))
 
         # Check authentication failure
         if attempts == 0:
-            logger.error('The user has used all the authentication attempts.')
+            logger.error('You have used all the authentication attempts. Abort.')
             raise DockerAuthenticationFailedError('Authentication failed. Abort.')
 
     @staticmethod
-    def generate_image_name(node_name):
-        """ Generate a name for a Docker Image """
+    def generate_image_name(default_image_name, default_tag='latest'):
+        """ Generate a full name [repository]/<user>/<name>:<tag> for a Docker Image.
+        
+        Args:
+            default_image_name (str): A default name for the image.
+            default_tag (str): An optional tag for the image (default: 'latest').
+        
+        Returns: 
+            full_name (str): The generated full name of the Docker Image.
 
-        logger.info('Generating the image name for [{}]'.format(node_name))
-
-        final_image_name = ''
+            e.g. 'myrepository/user/test:tag'
+        """
+    
+        logger.info('Generating a Docker Image name [Default Name: {0}][Default Tag: {1}]'.format(
+            default_image_name, default_tag))
+        full_name = ''
                 
         # repository
         repository = input('Enter the repository URL [ENTER for the Docker Hub]: ')
@@ -139,7 +127,7 @@ class DockerImageManager():
             logger.info('Using the Docker Hub as default repository')
         else:
             # TODO check if the repository is reachable
-            final_image_name += repository + '/'
+            full_name += repository + '/'
             
         # username
         username = ''
@@ -148,34 +136,41 @@ class DockerImageManager():
             if username == '0':
                 logger.warning('Operation aborted by the user.')
                 raise OperationAbortedByUser(CommonErrorMessages._DEFAULT_OPERATION_ABORTING_ERROR_MSG)
-        final_image_name += username + '/'
+        full_name += username + '/'
 
         # image name
-        rename = input('Enter a new image name [ENTER for {}]: '.format(node_name))
-        final_image_name += rename if rename else node_name
+        rename = input('Enter a new image name [ENTER for {}]: '.format(default_image_name))
+        full_name += rename if rename else default_image_name
+        full_name += ':'
 
         # tag
         tag = input('Enter the TAG name [ENTER for "latest"]: ')
-        if not tag:
-            tag = "latest"
+        full_name += tag if rename else default_tag
 
-        return {
-            'repository': final_image_name,
-            'tag': tag
-        }
+        return full_name
 
     
-    def _push_image(self, dst_image, auth=None, attempts = 0):
+    def _push_image(self, image, tag='latest', auth=None, attempts = 0):
+        """ Push an image to a remote Docker Registry.
+        
+        Args:
+            image (str): The name of the Docker Image to be pushed.
+            tag (str): An optional tag for the Docker Image (default: 'latest')
+            auth: An optional Dict for the authentication.
+            attempts (int): The number of unsuccessful authentication attempts.
+        """
 
         if attempts == _MAX_PUSH_ATTEMPTS:
-            err = 'Reached max attempts for pushing [{}]'.format(dst_image)
+            err = 'Reached max attempts for pushing [{0}] with tag [{1}]'.format(
+                image, tag)
             logger.error(err)
             raise ToscaFatalError(err)
 
-        logger.info('Pushing [{}] remotely'.format(dst_image))
+        logger.info('Pushing [{0}] with tag [{1}]'.format(image, tag))
         
         result = self._client.images.push(
-            dst_image,
+            image,
+            tag=tag,
             auth_config=auth, 
             stream=True, 
             decode=True
@@ -188,21 +183,126 @@ class DockerImageManager():
                     logger.info('Access to the repository denied. Authentication failed.')
                     auth = create_auth_interactive()
                     self._push_image(
-                        dst_image,
+                        image,
+                        tag=tag,
                         auth=auth,
                         attempts=(attempts + 1))
                 else:
                     logger.error('Unknown error during push of [{0}]: {1}'.format(
-                        dst_image, line['error']))
+                        image, line['error']))
                     raise ToscaFatalError(CommonErrorMessages._DEFAULT_FATAL_ERROR_MSG)
         
-        logger.info('{} successfully pushed.'.format(dst_image))
+        logger.info('Image [{0}] with tag [{1}] successfully pushed.'.format(image, tag))
+
+
+    def _validate_build(self, build_logs):
+        """ Validate the output of the building process.
+        
+        Args:
+            build_logs (str): The output logs of a docker image building process.
+        """
+
+        for log in build_logs:
+            if 'stream' in log and self._verbose:
+                print(log['stream'])
+            if 'error' in log:
+                logger.error('Error building the Docker Image:\n{}'.format(log['error']))
+                raise DockerOperationError('Failed to "toskosing" the Docker Image. Abort.')
+
+
+    def _toskose_image_availability(self, toskose_image, toskose_tag='latest'):
+        """ Check the availability of the official Docker Toskose image used
+            during the "toskosing" process.
+
+        Args:
+            toskose_image (str): The official Toskose Docker image.
+            toskose_tag (str): The tag of the image (default: 'latest').        
+        """
+
+        try:
+            _ = self._client.images.pull(
+                toskose_image, 
+                tag=toskose_tag)
+        except ImageNotFound:
+            logger.error('Failed to retrieve the official Toskose image [{0}:{1}]. Abort'.format(
+                toskose_image, toskose_tag))
+            raise DockerOperationError(
+                'The official Toskose image {0} not found. Try later.\nIf the problem persist, open an issue at {1}'.format(
+                    AppConfig._TOSKOSE_UNIT_IMAGE, AppConfig._APP_REPOSITORY))
+
+
+    @staticmethod
+    def _build_toskose_context(context_path):
+        """ Prepare the app's context with the toskose's stuff (e.g. dockerfiles)
+            that will be used in the "toskosing" process.
+        
+        Args:
+            context_path (str): the path containing the toskose's stuff.
+        """
+
+        try:
+            dockerfile_template_path = \
+                os.path.join(
+                    os.path.dirname(__file__), 
+                    _DOCKERFILE_TOSKOSERIZATION_PATH,
+                    _DOCKERFILE_TOSKOSERIZATION_TEMPLATE
+                )
+
+            # Copy the template dockerfile in the app's context
+            shutil.copy2(
+                dockerfile_template_path,
+                context_path
+            )
+        except Exception as err:
+            logger.exception(err)
+            raise ToscaFatalError(CommonErrorMessages._DEFAULT_FATAL_ERROR_MSG)
+
+
+    def _remove_previous_toskosed(self, image, tag='latest'):
+        """ Remove previous toskosed images. 
+        
+        Note: docker rmi doesn't remove an image if there are multiple tags 
+              referencing it.
+
+        Args:
+            image (str): The name of the Docker image.
+            tag (str): The tag of the Docker Image (default: 'latest').
+        """
+
+        try:
+
+            # Searching for previous toskosed image
+            logger.info('Searching for previous toskosed images [{0}:{1}]'.format(
+                image, tag))
+            image_found = self._client.images.get(image)
+
+            logger.info('Image [{0}] found. It\'s referenced by the following tags:\n{1}'.format(
+                image,
+                reduce(lambda x,y : x + '\n' + y, image_found.tags)
+                ))
+
+            full_name = image + ':' + tag
+            if full_name in image_found.tags:
+                self._client.images.remove(image=full_name, force=True)
+                logger.info('Removed [{0}] reference from [{1}] image'.format(
+                    full_name, image))
+                try:
+                    image_found = self._client.images.get(image)
+                    logger.info('Image [{0}][ID: {1}] still exist'.format(
+                        image, image_found.id))
+                except ImageNotFound:
+                    logger.info('Image [{0}][ID: {1}] doesn\'t have any references yet. Removed.'.format(
+                        image, image_found.id))
+        except ImageNotFound:
+            logger.info('No previous image found.')
 
     
     def toskose_image(self,
         src_image,
         dst_image,
         context_path,
+        src_tag='latest',
+        dst_tag='latest',
         enable_push=True,
         toskose_image=AppConfig._TOSKOSE_UNIT_IMAGE,
         toskose_tag=AppConfig._TOSKOSE_UNIT_IMAGE_TAG):
@@ -223,80 +323,58 @@ class DockerImageManager():
         
         Args:
             src_image (str): The name of the image to be "toskosed".
-            dst_image (str): The final name of the "toskosed" image.
+            dst_image (str): The name of the "toskosed" image.
             context_path (str): The path of the application context.
+            src_tag (str): The tag of the image to be "toskosed".
+            dst_tag (str): The tag of the "toskosed" image.
+            enable_push (bool): enable/disable pushing of the "toskosed" image. (default: True)
             toskose_image (str): The name of the (official) Toskose Docker image used for the process of "toskosing".
             toskose_tag (str): The name of the tag for the image above.
         """
 
-        # Validate the component(s) context
-        self._validate_context(context_path)
-
-        # Check if the (official) Toskose Docker Image is available
-        try:
-            _ = self._client.images.pull(
-                toskose_image, 
-                tag=toskose_tag)
-        except ImageNotFound:
-            logger.error('Failed to retrieve the official Toskose image')
-            raise DockerOperationError(
-                'The official Toskose image {0} not found. Try later.\nIf the problem persist, open an issue at {1}'.format(
-                    AppConfig._TOSKOSE_UNIT_IMAGE, AppConfig._APP_REPOSITORY))
+        # Check if the Toskose Docker image is available
+        self._toskose_image_availability(toskose_image, toskose_tag)
 
         # Check if the original image exists and needs authentication to be fetched
         # note: docker client does not distinguish between authentication error or invalid image name (?)
         try:
-            self._client.images.pull(src_image)
+            self._client.images.pull(src_image, src_tag)
         except ImageNotFound as err:
-            self._image_authentication(src_image) # it should be an authentication error
-                
-        # Remove the image if already exist
+            self._image_authentication(src_image, src_tag) # it should be an authentication error
+
+        # remove previous "toskosed" images (with the same tag)  
+        self._remove_previous_toskosed(dst_image, dst_tag)
         try:
-            # Searching for previous toskosed image
-            logger.info('Searching for previous toskosed images with the same name..')
-            self._client.images.get(dst_image)
+            # Build the toskose's context
+            self._build_toskose_context(context_path)
             
-            # Image found, remove it
-            self._client.images.remove(image=dst_image, force=True)   
-            logger.info('Previous image removed.')
-        except ImageNotFound:
-            logger.info('No previous image found.')
+            logger.info('Toskosing [{0}:{1}] image'.format(src_image, src_tag))
 
-        try:
-            # Dockerfile template for "toskosing" images
-            dockerfile_template_path = \
-                os.path.join(
-                    os.path.dirname(__file__), 
-                    _DOCKERFILE_TOSKOSERIZATION_PATH,
-                    _DOCKERFILE_TOSKOSERIZATION_NAME
-                )
-
-            # Copy the template dockerfile in the app's context
-            shutil.copy2(
-                dockerfile_template_path,
-                context_path
-            )
-            
-            logger.info('Toskosing {0} image..'.format(src_image))
-
-            build_args = {'TOSCA_SRC_IMAGE': src_image}
-            _ = self._client.images.build(
+            # Build the "toskosed" image
+            build_args = {'TOSCA_SRC_IMAGE': src_image+':'+src_tag}
+            image, logs = self._client.images.build(
                 path=context_path,
                 tag=dst_image,
                 buildargs=build_args,
-                dockerfile=_DOCKERFILE_TOSKOSERIZATION_NAME
-            )[0]
+                dockerfile=_DOCKERFILE_TOSKOSERIZATION_TEMPLATE,
+                rm=True,    # remove intermediate containers
+            )
+            self._validate_build(logs)
 
-            # remove original image tag
-            #self._client.images.remove(src_image, force=True)
+            # force the image tagging
+            #tagged = image.tag(dst_image, tag=dst_tag, force=True)
+            tagged = self._client.api.tag(image.id, dst_image, dst_tag, force=True)
+            if not tagged:
+                logger.error('Failed to tag the image [{0}:{1}] with ID [{2}]'.format(
+                    dst_image, dst_tag, image.id))
+            logger.info('[{0}:{1}] image successfully tagged.'.format(dst_image, dst_tag))
 
             # push the "toskosed" image
             if enable_push:
-                self._push_image(dst_image)
+                self._push_image(dst_image, tag=dst_tag)
             
-            logger.info('{0} successfully toskosed in {1}.'.format(
-                src_image, dst_image
-            ))
+            logger.info('[{0}:{1}] image successfully toskosed in [{2}:{3}].'.format(
+                src_image, src_tag, dst_image, dst_tag))
 
         except (BuildError, APIError) as err:
             logger.exception(err)
