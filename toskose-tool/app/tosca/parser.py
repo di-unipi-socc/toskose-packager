@@ -227,7 +227,7 @@ class ToscaParser:
         try:
 
             manifest_file = os.path.basename(self._manifest_path)
-            app_name, ext = os.path.splitext(manifest_file)
+            app_name, _ = os.path.splitext(manifest_file)
 
             # toscaparser Model for tosca-based applications
             # (Built-in validation for node_templates and required fields)
