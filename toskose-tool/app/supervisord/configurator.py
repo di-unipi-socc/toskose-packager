@@ -4,8 +4,11 @@ import copy
 from enum import Enum, auto
 from configparser import ConfigParser
 
+from app.tosca.model.relationships import HostedOn
+
 from app.common.logging import LoggingFacility
 from app.common.exception import SupervisordConfigGeneratorError
+from app.common.exception import ToscaFatalError
 from app.common.commons import CommonErrorMessages
 
 
@@ -16,6 +19,7 @@ _SUPERVISORD_UNIT_TEMPLATE_PATH = 'templates/supervisord.unit.conf'
 _BASE_COMMAND = '/bin/sh -c '
 _BASEDIR_STDOUT_LOGFILE = '/toskose/apps'
 
+# TODO better is they can be configured from external
 _SUPERVISORD_PROGRAM_TEMPLATE = collections.OrderedDict([
     ('command', None),
     ('process_name', None),
@@ -43,75 +47,98 @@ _SUPERVISORD_PROGRAM_TEMPLATE = collections.OrderedDict([
 
 
 class SupervisordTemplateType(Enum):
-    """ Supervisord config templates types
-    
-    - Unit: Supervisord config for "toskosed" images
-    """
     Unit = auto()
+    Manager = auto()
 
-class SupervisordConfigGenerator:
+def _build_unit_config(tosca_model=None, node_name=None, output_dir=None, 
+                       config_name=None):
+    """ 
+    Build the Supervisord configuration file for a toskose-unit container. 
+    
+    Args:
+        tosca_model (str): The model of the TOSCA-based application.
+        node_name (str): The name of the TOSCA node for which the conf is generated.
+        output_dir (str): The path where the Supervisord config will be writed in.
+        config_name (str): The name of the Supervisord config file generated (default: 'supervisord.conf')
+    """
 
-    def __init__(self, 
-        config_path, 
-        config_name='supervisord.conf'):
+    if tosca_model is None:
+        raise TypeError('The TOSCA model must be provided.')
+    if node_name is None:
+        raise TypeError('A container name must be provided.')
+    if output_dir is None:
+        raise TypeError('An output path must be provided.')
+    if output_dir:
+        if not os.path.exists(output_dir):
+            raise ValueError('The given output path does\'s not exist')
 
-        self._config_path = config_path
-        self._config_name = config_name
+    if config_name is None:
+        config_name = 'supervisord.conf'
 
-        self._config = ConfigParser()
+    if next((x for x in tosca_model.containers if x.name == node_name), None) is None:
+        logger.error('Tosca container node [{0}] doesn\'t exist in the model representing [{1}] application'.format(
+            node_name, tosca_model.name))
+        raise ToscaFatalError(CommonErrorMessages._DEFAULT_FATAL_ERROR_MSG)
 
-    def build(self, type, **kwargs):
-        """ Build the Supervisord config """
+    logger.debug('Building the supervisord.conf for [{0}] of type [{1}]'.format(node_name, type))
 
-        try:
+    try:
 
-            if type == SupervisordTemplateType.Unit:
-                self._config.read(os.path.join(os.path.dirname(__file__), _SUPERVISORD_UNIT_TEMPLATE_PATH))
-                self._build_unit(**kwargs)
-            else:
-                raise SupervisordConfigGeneratorError('Supervisord Configuration type not recognized')
+        config = ConfigParser()
+        config.read(os.path.join(os.path.dirname(__file__), _SUPERVISORD_UNIT_TEMPLATE_PATH))
+        
+        for software in tosca_model.software:
+            if isinstance(software.host, HostedOn) and software.host.to == node_name:
+                for inter_group_name, inter_group_content in software.interfaces.items():
+                    # multiple interfaces groups can co-exists, not only the "standard"
+                    for interface_name, interface_content in inter_group_content.items():
+                        # TODO may insert also the inter_group_name in section_name? 
+                        # conflicts with toskose-manager api?
+                        section_name = 'program:{0}-{1}'.format(software.name, interface_name)
+                        
+                        # change the path of the lifecycle operation according to the container context
+                        command = os.path.join(
+                            '/toskose/apps/{software_node}/scripts'.format(software_node=software.name), 
+                            os.path.basename(interface_content['cmd'].file_path)
+                        )
 
-        except Exception as err:
-            logger.exception(err)
-            raise SupervisordConfigGeneratorError(CommonErrorMessages._DEFAULT_FATAL_ERROR_MSG)
+                        # supervisord configuration file base template
+                        template = dict(_SUPERVISORD_PROGRAM_TEMPLATE)
+                        template_updated = {
+                            'command': _BASE_COMMAND + '\'' + command + '\'',
+                            'process_name': '{0}-{1}'.format(software.name, interface_name),
+                            'stdout_logfile': os.path.join(
+                                _BASEDIR_STDOUT_LOGFILE,
+                                software.name,
+                                'logs',
+                                '{0}-{1}.log'.format(software.name, interface_name)
+                            ),
+                        }
 
-    def _build_unit(self, **kwargs):
+                        template.update(template_updated)
+                        config[section_name] = template
+        
+        config_file_path = os.path.join(output_dir, config_name)
 
-        components_data = kwargs['components_data']
+        # Write the Supervisord config
+        with open(config_file_path, "w") as config_file:
+            config.write(config_file)
 
-        try:
+    except Exception as err:
+        logger.exception(err)
+        raise SupervisordConfigGeneratorError(CommonErrorMessages._DEFAULT_FATAL_ERROR_MSG)
 
-            for component_data in components_data:
-                name = component_data['name']
-                lifecycle_operations = component_data['interfaces']
-                for operation, command in lifecycle_operations.items():
-                    section_name = 'program:{0}-{1}'.format(name, operation)
-                    template = dict(_SUPERVISORD_PROGRAM_TEMPLATE)
-                    template_updated = {
-                        'command': _BASE_COMMAND + '\'' + command + '\'',
-                        'process_name': '{0}-{1}'.format(name, operation),
-                        'stdout_logfile': os.path.join(
-                            _BASEDIR_STDOUT_LOGFILE,
-                            name,
-                            'logs',
-                            '{0}-{1}.log'.format(name, operation)
-                        ),
-                    }
+def build_config(type, **kwargs):
+    """ Generate the Supervisord configuration file. 
+    
+    Args:
+        type (Enum): The type of Supervisord configuration to be generated.
+            - Unit: Supervisord configuration for the toskose-unit component.
+            - Manager: Supervisord configuration for the toskose-manager component.
+    """
 
-                    template.update(template_updated)
-
-                    self._config[section_name] = template
-
-            if not os.path.exists(self._config_path):
-                logger.error('{0} not exists'.format(self._config_path))
-                raise SupervisordConfigGeneratorError(CommonErrorMessages._DEFAULT_FATAL_ERROR_MSG)
-            
-            config_file_path = os.path.join(self._config_path, self._config_name)
-
-            # Write the Supervisord config
-            with open(config_file_path, "w") as config_file:
-                self._config.write(config_file)
-
-        except Exception as err:
-            logger.exception(err)
-            raise SupervisordConfigGeneratorError(CommonErrorMessages._DEFAULT_FATAL_ERROR_MSG)
+    if type == SupervisordTemplateType.Unit:
+        _build_unit_config(**kwargs)
+    else:
+        logger.error('Supervisord Configuration type [{}] is invalid'.format(type))
+        raise SupervisordConfigGeneratorError(CommonErrorMessages._DEFAULT_SUPERVISORD_CONFIG_GEN_ERROR_MSG)
