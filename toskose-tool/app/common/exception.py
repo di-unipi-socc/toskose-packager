@@ -29,7 +29,7 @@ class ToscaParsingError(BaseToskoseException):
     def __init__(self, message):
         super().__init__(message)
 
-class ToscaValidationError(BaseToskoseException):
+class ValidationError(BaseToskoseException):
     """ Raised when the TOSCA .CSAR/yml file is not valid """
 
     def __init__(self, message):
@@ -54,7 +54,19 @@ class SupervisordConfigGeneratorError(BaseToskoseException):
         super().__init__(message)
 
 class DockerOperationError(BaseToskoseException):
-    """ Raised when an operation with the Docker Engine is failed """
+    """ Raised when an operation with the docker engine is failed """
+
+    def __init__(self, message):
+        super().__init__(message)
+
+class DockerAuthenticationFailedError(BaseToskoseException):
+    """ Raised when the authentication concerning Docker failed """
+
+    def __init__(self, message):
+        super().__init__(message)
+
+class OperationAbortedByUser(BaseToskoseException):
+    """ Raised when the user decides to abort an operation. """
 
     def __init__(self, message):
         super().__init__(message)

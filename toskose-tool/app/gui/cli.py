@@ -4,7 +4,7 @@ import click
 # from . import __version__
 
 #from app.toskose import Toskose
-from app.toskoserizator import Toskoserizator
+from app.toskose import Toskoserizator
 from app.common.commons import Alerts
 from app.gui.effects import print_notification_cli
 

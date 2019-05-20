@@ -31,7 +31,7 @@ _DOCKERFILE_TOSKOSERIZATION_TEMPLATE = 'Dockerfile-toskoserization'
 _MAX_PUSH_ATTEMPTS = 3
 
 
-class DockerImageManager():
+class DockerManager():
 
     def __init__(self, docker_url=None, verbose=False):        
         
@@ -346,7 +346,7 @@ class DockerImageManager():
         self._remove_previous_toskosed(dst_image, dst_tag)
         try:
             # Build the toskose's context
-            self._build_toskose_context(context_path)
+            DockerManager._build_toskose_context(context_path)
             
             logger.info('Toskosing [{0}:{1}] image'.format(src_image, src_tag))
 
