@@ -10,12 +10,11 @@ from docker.errors import ImageNotFound
 import app.docker.manager # used for mock inputs
 import unittest.mock as mock
 
-from app.docker.manager import DockerImageManager
+from app.docker.manager import DockerManager
 from app.common.exception import DockerOperationError
 from app.common.exception import DockerAuthenticationFailedError
 from app.common.exception import OperationAbortedByUser
-from app.common.exception import ToscaFatalError
-from app.config import AppConfig
+from app.common.exception import FatalError
 
 
 src_image = 'stephenreed/jenkins-java8-maven-git'
@@ -35,7 +34,7 @@ def dit():
     The obj is yielded and then it's injected as an argument to tests.
     Finally the manager obj is gracefully closed.
     """
-    dit = DockerImageManager()
+    dit = DockerManager()
     yield dit
     dit.close()    
 
@@ -51,7 +50,7 @@ def test_image_name_generation_default():
     ]
 
     with mock.patch('builtins.input', side_effect=user_input):
-        assert DockerImageManager.generate_image_name('node-name') == \
+        assert DockerManager.generate_image_name('node-name') == \
             'user/node-name:latest'
 
 
@@ -62,7 +61,7 @@ def test_image_name_generation_abort():
     user_input = ['','0']
     with pytest.raises(OperationAbortedByUser):
         with mock.patch('builtins.input', side_effect=user_input):
-            DockerImageManager.generate_image_name('node-name')
+            DockerManager.generate_image_name('node-name')
 
 
 @pytest.mark.parametrize(
@@ -76,7 +75,7 @@ def test_image_name_generation_param(user_input):
     """ Test the Docker Image generation routine with multiple inputs. """
     
     with mock.patch('builtins.input', side_effect=user_input):
-        assert DockerImageManager.generate_image_name('node-name') == \
+        assert DockerManager.generate_image_name('node-name') == \
             '{0}/{1}/{2}:{3}'.format(*user_input) # unpack args
 
 
@@ -158,7 +157,7 @@ def test_auth_push_fail_attempts(dit):
     """ Test the "toskose" image process with authentication max attempts reached during a push to a private repo. """
 
     logins = [('a','1'), ('b','2'), ('c','3'), ('d','4')]
-    with pytest.raises(ToscaFatalError):
+    with pytest.raises(FatalError):
         for login in logins:
            with mock.patch('getpass.getuser', return_value=login[0]):
                 with mock.patch('getpass.getpass', return_value=login[1]): 

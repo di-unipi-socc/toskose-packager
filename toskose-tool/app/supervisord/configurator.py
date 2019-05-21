@@ -8,7 +8,7 @@ from app.tosca.model.relationships import HostedOn
 
 from app.common.logging import LoggingFacility
 from app.common.exception import SupervisordConfigGeneratorError
-from app.common.exception import ToscaFatalError
+from app.common.exception import FatalError
 from app.common.commons import CommonErrorMessages
 
 
@@ -78,7 +78,7 @@ def _build_unit_config(tosca_model=None, node_name=None, output_dir=None,
     if next((x for x in tosca_model.containers if x.name == node_name), None) is None:
         logger.error('Tosca container node [{0}] doesn\'t exist in the model representing [{1}] application'.format(
             node_name, tosca_model.name))
-        raise ToscaFatalError(CommonErrorMessages._DEFAULT_FATAL_ERROR_MSG)
+        raise FatalError(CommonErrorMessages._DEFAULT_FATAL_ERROR_MSG)
 
     logger.debug('Building the supervisord.conf for [{0}] of type [{1}]'.format(node_name, type))
 

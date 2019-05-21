@@ -14,14 +14,14 @@ from docker.errors import APIError
 from docker.errors import BuildError
 from docker.errors import ImageNotFound
 
+import app.constants as constants
 from app.common.logging import LoggingFacility
 from app.common.commons import CommonErrorMessages, create_auth_interactive
 from app.common.exception import DockerOperationError
 from app.common.exception import ValidationError
-from app.common.exception import ToscaFatalError
+from app.common.exception import FatalError
 from app.common.exception import OperationAbortedByUser
 from app.common.exception import DockerAuthenticationFailedError
-from app.config import AppConfig
 
 
 logger = LoggingFacility.get_instance().get_logger()
@@ -93,7 +93,7 @@ class DockerManager():
                     logger.info('Invalid username/password.')
                 else:
                     logger.exception(err)
-                    raise ToscaFatalError(CommonErrorMessages._DEFAULT_FATAL_ERROR_MSG)
+                    raise FatalError(CommonErrorMessages._DEFAULT_FATAL_ERROR_MSG)
 
             attempts -= 1
             logger.info('Authentication failed. You have [{}] more attempts.'.format(attempts))
@@ -164,7 +164,7 @@ class DockerManager():
             err = 'Reached max attempts for pushing [{0}] with tag [{1}]'.format(
                 image, tag)
             logger.error(err)
-            raise ToscaFatalError(err)
+            raise FatalError(err)
 
         logger.info('Pushing [{0}] with tag [{1}]'.format(image, tag))
         
@@ -190,7 +190,7 @@ class DockerManager():
                 else:
                     logger.error('Unknown error during push of [{0}]: {1}'.format(
                         image, line['error']))
-                    raise ToscaFatalError(CommonErrorMessages._DEFAULT_FATAL_ERROR_MSG)
+                    raise FatalError(CommonErrorMessages._DEFAULT_FATAL_ERROR_MSG)
         
         logger.info('Image [{0}] with tag [{1}] successfully pushed.'.format(image, tag))
 
@@ -228,7 +228,7 @@ class DockerManager():
                 toskose_image, toskose_tag))
             raise DockerOperationError(
                 'The official Toskose image {0} not found. Try later.\nIf the problem persist, open an issue at {1}'.format(
-                    AppConfig._TOSKOSE_UNIT_IMAGE, AppConfig._APP_REPOSITORY))
+                    constants.TOSKOSE_UNIT_IMAGE, constants.APP_REPOSITORY))
 
 
     @staticmethod
@@ -255,7 +255,7 @@ class DockerManager():
             )
         except Exception as err:
             logger.exception(err)
-            raise ToscaFatalError(CommonErrorMessages._DEFAULT_FATAL_ERROR_MSG)
+            raise FatalError(CommonErrorMessages._DEFAULT_FATAL_ERROR_MSG)
 
 
     def _remove_previous_toskosed(self, image, tag='latest'):
@@ -304,8 +304,8 @@ class DockerManager():
         src_tag='latest',
         dst_tag='latest',
         enable_push=True,
-        toskose_image=AppConfig._TOSKOSE_UNIT_IMAGE,
-        toskose_tag=AppConfig._TOSKOSE_UNIT_IMAGE_TAG):
+        toskose_image=constants.TOSKOSE_UNIT_IMAGE,
+        toskose_tag=constants.TOSKOSE_UNIT_IMAGE_TAG):
         """  The process of "toskosing" the component(s) of a multi-component TOSCA-defined application.
         
         The "toskosing" process consists in merging contexts (e.g. artifacts, lifecycle scripts) of TOSCA software 

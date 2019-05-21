@@ -8,10 +8,10 @@ from app.common.logging import LoggingFacility
 from app.common.commons import unpack_archive
 from app.common.commons import CommonErrorMessages
 from app.common.commons import suppress_stderr
-from app.common.exception import ToscaFileNotFoundError
+from app.common.exception import FileNotFoundError
 from app.common.exception import ValidationError
-from app.common.exception import ToscaMalformedCsarError
-from app.common.exception import ToscaFatalError
+from app.common.exception import MalformedCsarError
+from app.common.exception import FatalError
 
 
 logger = LoggingFacility.get_instance().get_logger()
@@ -39,7 +39,7 @@ def validate_csar(csar_path):
     if not os.path.isfile(csar_path):
         err_msg = 'Missing .CSAR archive file'
         logger.error(err_msg)
-        raise ToscaFileNotFoundError(err_msg)
+        raise FileNotFoundError(err_msg)
 
     # file extension
     if not csar_path.lower().endswith(_CSAR_ADMITTED_EXTENSIONS):
@@ -48,13 +48,13 @@ def validate_csar(csar_path):
             if ext \
             else 'file extension is not recognized'
         logger.error(err_msg)
-        raise ToscaFileNotFoundError(err_msg)
+        raise FileNotFoundError(err_msg)
 
     # validate archive file
     if not zipfile.is_zipfile(csar_path):
         err_msg = '{0} is an invalid or corrupted archive'.format(csar_path)
         logger.error(err_msg)
-        raise ToscaFileNotFoundError(err_msg)
+        raise FileNotFoundError(err_msg)
 
     logger.debug('Validating [{}]'.format(csar_path))
     csar_metadata = {}
@@ -66,7 +66,7 @@ def validate_csar(csar_path):
 
             if _TOSCA_METADATA_PATH not in filelist:
                 logger.error('{0} does not contain a valid TOSCA.meta'.format(csar_path))
-                raise ToscaMalformedCsarError(CommonErrorMessages._DEFAULT_MALFORMED_CSAR_ERROR_MSG)
+                raise MalformedCsarError(CommonErrorMessages._DEFAULT_MALFORMED_CSAR_ERROR_MSG)
 
             # validate TOSCA.meta
             try:
@@ -77,24 +77,24 @@ def validate_csar(csar_path):
                 if type(csar_metadata) is not dict:
                     logger.error('{0} is not a valid dictionary'.format(
                         _TOSCA_METADATA_PATH))
-                    raise ToscaMalformedCsarError(CommonErrorMessages._DEFAULT_MALFORMED_CSAR_ERROR_MSG)
+                    raise MalformedCsarError(CommonErrorMessages._DEFAULT_MALFORMED_CSAR_ERROR_MSG)
 
             except yaml.YAMLError as err:
                 logger.exception(err)
-                raise ToscaFatalError(CommonErrorMessages._DEFAULT_FATAL_ERROR_MSG)
+                raise FatalError(CommonErrorMessages._DEFAULT_FATAL_ERROR_MSG)
 
             # validate tosca metadata
             for key in _TOSCA_METADATA_REQUIRED_KEYS:
                 if key not in csar_metadata:
                     logger.error('Missing {0} in {1}'.format(key, _TOSCA_METADATA_PATH))
-                    raise ToscaMalformedCsarError(CommonErrorMessages._DEFAULT_MALFORMED_CSAR_ERROR_MSG)
+                    raise MalformedCsarError(CommonErrorMessages._DEFAULT_MALFORMED_CSAR_ERROR_MSG)
 
             # validate tosca manifest file
             manifest = csar_metadata.get(_TOSCA_METADATA_MANIFEST_KEY)
             if manifest is None or manifest not in filelist:
                 logger.error('{0} contains an invalid manifest reference or it does not exist'.format(
                     _TOSCA_METADATA_PATH))
-                raise ToscaMalformedCsarError(CommonErrorMessages._DEFAULT_MALFORMED_CSAR_ERROR_MSG)
+                raise MalformedCsarError(CommonErrorMessages._DEFAULT_MALFORMED_CSAR_ERROR_MSG)
 
             # validate other tosca metadata
             for option in _TOSCA_METADATA_OPTIONAL_KEYS:

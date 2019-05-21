@@ -5,8 +5,7 @@ import datetime
 import logging
 import logging.handlers
 
-from app.config import AppConfig
-
+import app.constants as constants
 
 class LoggingFacility:
     """ A singleton containing the logging settings """
@@ -36,7 +35,7 @@ class LoggingFacility:
         self.formatter_stream = logging.Formatter('%(message)s')
 
         """ Output path """
-        # logs_path = AppConfig._LOGS_PATH
+        # logs_path = constants.LOGS_PATH
         # if not logs_path:
         #     """ logs path not set -- use default """
         

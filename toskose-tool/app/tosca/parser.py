@@ -12,7 +12,7 @@ from toscaparser.common.exception import ValidationError
 
 from app.common.commons import CommonErrorMessages
 from app.common.logging import LoggingFacility
-from app.common.exception import ToscaParsingError, ToscaFatalError
+from app.common.exception import ParsingError, FatalError
 
 from app.tosca.model.template import Template
 from app.tosca.model.nodes import Container, Software, Volume
@@ -243,13 +243,13 @@ class ToscaParser:
             if not repositories:
                 logger.error('No repositories found in {}'.format(
                     manifest_file))
-                raise ToscaParsingError(CommonErrorMessages._DEFAULT_PARSING_ERROR_MSG)
+                raise ParsingError(CommonErrorMessages._DEFAULT_PARSING_ERROR_MSG)
 
             # Check Topology Template
             topology_template = tosca.tpl.get('topology_template')
             if not topology_template:
                 logger.error('No topology template found in {}'.format(manifest_file))
-                raise ToscaParsingError(CommonErrorMessages._DEFAULT_PARSING_ERROR_MSG)
+                raise ParsingError(CommonErrorMessages._DEFAULT_PARSING_ERROR_MSG)
 
             # Resolve TOSCA functions
             ToscaParser._parse_functions(tosca, inputs, base_path)
@@ -285,7 +285,7 @@ class ToscaParser:
                         if not isinstance(artifacts, dict):
                             logger.error('Artifacts from node [{0}] of type [{1}] is invalid, only a dict is allowed.'.format(
                                 node.name, node.type))
-                            raise ToscaParsingError(CommonErrorMessages._DEFAULT_PARSING_ERROR_MSG)
+                            raise ParsingError(CommonErrorMessages._DEFAULT_PARSING_ERROR_MSG)
                         
                         for k, v in artifacts.items():
                             
@@ -294,7 +294,7 @@ class ToscaParser:
                                 if not isinstance(v, dict):
                                     logger.error('Docker artifact from node [{0}] of type [{1}] is invalid, only a dict is allowed.'.format(
                                         node.name, node.type))
-                                    raise ToscaParsingError(CommonErrorMessages._DEFAULT_PARSING_ERROR_MSG)
+                                    raise ParsingError(CommonErrorMessages._DEFAULT_PARSING_ERROR_MSG)
 
                                 logger.debug('Parsing the Docker artifact from node [{0}] of type [{1}]'.format(node.name, node.type))
                             
@@ -314,7 +314,7 @@ class ToscaParser:
                                 if image_fields_error:
                                     logger.error('Failed to parse the docker artifact from node [{0}] of type [{1}]: {2}'.format(
                                         node.name, node.type, image_fields_error))
-                                    raise ToscaParsingError(CommonErrorMessages._DEFAULT_PARSING_ERROR_MSG)
+                                    raise ParsingError(CommonErrorMessages._DEFAULT_PARSING_ERROR_MSG)
 
                                 # handling the artifact
                                 if artifact_type == ToscaNodeArtifactTypes.DOCKERFILE or artifact_type == ToscaNodeArtifactTypes.DOCKERFILE_EXE:
@@ -338,12 +338,12 @@ class ToscaParser:
                                 else:
                                     logger.error('Docker artifact from node [{0}] of type [{1}] has an unknown type'.format(
                                         node.name, node.type))
-                                    raise ToscaParsingError(CommonErrorMessages._DEFAULT_PARSING_ERROR_MSG)
+                                    raise ParsingError(CommonErrorMessages._DEFAULT_PARSING_ERROR_MSG)
 
                             else:
                                 logger.error('Missing the Docker section in the node [{0}] of type [{1}]'.format(
                                     node.name, node.type))
-                                raise ToscaParsingError(CommonErrorMessages._DEFAULT_PARSING_ERROR_MSG)
+                                raise ParsingError(CommonErrorMessages._DEFAULT_PARSING_ERROR_MSG)
 
                     # properties
                     logger.debug('Collecting properties from node [{0}] of type [{1}]'.format(node.name, node.type))
@@ -353,7 +353,7 @@ class ToscaParser:
                         if not isinstance(properties, dict):
                             logger.error('Properties from node [{0}] of type [{1}] is invalid, only a dict is allowed.'.format(
                                 node.name, node.type))
-                            raise ToscaParsingError(CommonErrorMessages._DEFAULT_PARSING_ERROR_MSG)
+                            raise ParsingError(CommonErrorMessages._DEFAULT_PARSING_ERROR_MSG)
 
                         # handling properties
                         if 'env_variable' in properties:
@@ -408,7 +408,7 @@ class ToscaParser:
                     
                 else:
                     logger.error('Node type {} not supported'.format(node.type))
-                    raise ToscaParsingError(CommonErrorMessages._DEFAULT_PARSING_ERROR_MSG)
+                    raise ParsingError(CommonErrorMessages._DEFAULT_PARSING_ERROR_MSG)
 
                 # Requirements
                 def get_req_type(req):
@@ -445,7 +445,7 @@ class ToscaParser:
 
         except ValueError as err:
             logger.exception(err)
-            raise ToscaParsingError(CommonErrorMessages._DEFAULT_PARSING_ERROR_MSG)
+            raise ParsingError(CommonErrorMessages._DEFAULT_PARSING_ERROR_MSG)
         
         # an error is occurred during the built-in validation of toscaparser's ToscaTemplate
         except ValidationError as err:
@@ -461,4 +461,4 @@ class ToscaParser:
             else:
                 logger.error('An unknown error occurred during the validation of the manifest: {}'.format(err))
             
-            raise ToscaParsingError(CommonErrorMessages._DEFAULT_PARSING_ERROR_MSG)
+            raise ParsingError(CommonErrorMessages._DEFAULT_PARSING_ERROR_MSG)

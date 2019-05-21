@@ -11,19 +11,19 @@ class BaseToskoseException(Exception):
     def __str__(self):
         return self.message
 
-class ToscaFileNotFoundError(BaseToskoseException):
+class FileNotFoundError(BaseToskoseException):
     """ Raised when the TOSCA .CSAR/.yml file does not exist """
     
     def __init__(self, message):
         super().__init__(message)
 
-class ToscaMalformedCsarError(BaseToskoseException):
+class MalformedCsarError(BaseToskoseException):
     """ Raised when a TOSCA .CSAR archive contains malformed data """
 
     def __init__(self, message):
         super().__init__(message)
 
-class ToscaParsingError(BaseToskoseException):
+class ParsingError(BaseToskoseException):
     """ Raised when the parsing of the TOSCA .CSAR/.yml file fails """
 
     def __init__(self, message):
@@ -35,13 +35,13 @@ class ValidationError(BaseToskoseException):
     def __init__(self, message):
         super().__init__(message)
 
-class ToscaTranslationError(BaseToskoseException):
+class TranslationError(BaseToskoseException):
     """ Raised when an error occurred during the translation of a TOSCA application """
 
     def __init__(self, message):
         super().__init__(message)
 
-class ToscaFatalError(BaseToskoseException):
+class FatalError(BaseToskoseException):
     """ Raised when a fatal error is occurred """
 
     def __init__(self, message):

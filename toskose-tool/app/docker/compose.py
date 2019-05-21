@@ -1,11 +1,10 @@
 import os
-#import yaml
 import ruamel.yaml
 from ruamel.yaml.scalarstring import SingleQuotedScalarString, DoubleQuotedScalarString
 
 from app.common.logging import LoggingFacility
 from app.common.commons import CommonErrorMessages
-from app.common.exception import ToscaFatalError, ToscaTranslationError
+from app.common.exception import FatalError, TranslationError
 from app.tosca.model.relationships import HostedOn
 from app.tosca.model.artifacts import File
 
@@ -184,7 +183,7 @@ def _dump_compose(output_path, compose):
         
         except Exception as err:
             logger.error('Failed to generate the docker-compose file: {}'.format(err))
-            raise ToscaTranslationError(CommonErrorMessages._DEFAULT_TRANSLATION_ERROR_MSG)
+            raise TranslationError(CommonErrorMessages._DEFAULT_TRANSLATION_ERROR_MSG)
 
     
 def generate_compose(tosca_model=None, output_path=None, file_name=None, version=None):
