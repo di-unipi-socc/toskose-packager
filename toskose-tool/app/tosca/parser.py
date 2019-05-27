@@ -62,30 +62,22 @@ def get_attributes(args, nodes):
 class ToscaParser:
     """ A parser for TOSCA-based applications. """
 
-    def __init__(self, manifest_path):
-        self._manifest_path = manifest_path
-        self._template = None
+    def __init__(self):
+        pass
 
-    @property
-    def manifest_path(self):
-        """ The path to the manifest file of a TOSCA-based application. """
-        return self._manifest_path
-
-    @property
-    def model(self):
-        """ The model representing a TOSCA-based application. """
-        return self._template
-
+    @staticmethod
     def _add_pointer(tpl):
         for node in tpl.nodes:
             for rel in node.relationships:
                 rel.to = tpl[rel.to]
 
+    @staticmethod
     def _add_back_links(tpl):
         for node in tpl.nodes:
             for rel in node.relationships:
                 rel.to.up_requirements.append(rel)
 
+    @staticmethod
     def _add_extension(tpl):
         """
         This function add the following extension on the template:
@@ -218,20 +210,22 @@ class ToscaParser:
             for k, v in tosca_outputs.items():
                 parse_node(k, v, tosca_inputs)
 
-    def build(self, inputs=None):
+    def build_model(self, manifest_path, inputs=None):
         """ Build the model representing the TOSCA-based application. """
+
+        if not os.path.exists(manifest_path):
+            raise ValueError('The Manifest file {} doesn\'t exists'.format(manifest_path))
 
         if inputs is None:
             inputs = {}
 
         try:
-
-            manifest_file = os.path.basename(self._manifest_path)
+            manifest_file = os.path.basename(manifest_path)
             app_name, _ = os.path.splitext(manifest_file)
 
             # toscaparser Model for tosca-based applications
             # (Built-in validation for node_templates and required fields)
-            tosca = ToscaTemplate(self._manifest_path)
+            tosca = ToscaTemplate(manifest_path)
 
             # Note: tosca.path is the path to the manifest file
             base_path = '/'.join(tosca.path.split('/')[:-1])
@@ -255,16 +249,17 @@ class ToscaParser:
             ToscaParser._parse_functions(tosca, inputs, base_path)
             
             # THE model (our custom model)
-            self._template = Template(app_name)
+            template = Template(app_name)
 
             if hasattr(tosca, 'description'):
-                self._template.description = tosca.tpl.get('description')
-
+                template.description = tosca.tpl.get('description')
             if hasattr(tosca, 'outputs'):
-                self._template.outputs = tosca.outputs
-
+                template.outputs = tosca.outputs
             if hasattr(tosca, 'policies'):
                 pass
+
+            template.tmp_dir = os.path.dirname(os.path.abspath(manifest_path))
+            template.manifest_path = manifest_path
 
             # Parsing Tosca Nodes
             for node in tosca.nodetemplates:
@@ -323,17 +318,15 @@ class ToscaParser:
                                 elif artifact_type == ToscaNodeArtifactTypes.IMAGE or artifact_type == ToscaNodeArtifactTypes.IMAGE_EXE:
                                     logger.debug('Parsing the Docker Image of the Docker artifact from node [{0}] of type [{1}]'.format(node.name, node.type))
 
-                                    #
                                     nodeObj.image = DockerImageExecutable(image_name) \
                                         if (artifact_type == ToscaNodeArtifactTypes.IMAGE_EXE) \
                                         else DockerImage(image_name)
 
-                                    #
                                     if repository:
                                         p = re.compile('(https://|http://)')
                                         repository = p.sub('', repositories[repository]).strip('/')
                                         if repository != _DOCKER_HUB_URL_DEFAULT:
-                                            nodeObj.image = '/'.join([repo.strip('/'), conf.image.format.strip('/')])
+                                            nodeObj.image = '/'.join([repository.strip('/'), nodeObj.image.format.strip('/')])
 
                                 else:
                                     logger.error('Docker artifact from node [{0}] of type [{1}] has an unknown type'.format(
@@ -402,7 +395,8 @@ class ToscaParser:
                                         operation['cmd'].path, operation['cmd'].file))
                                 if 'inputs' in v:
                                     operation['inputs'] = v['inputs']
-                                    logger.debug('Detected Inputs. {}'.format(operation['inputs']))
+                                    logger.debug('Detected Inputs: {}'.format(
+                                        { k: (v.file_path if isinstance(v, File) else v) for k, v in operation['inputs'].items()}))
 
                         nodeObj.interfaces = parsed_interfaces
                     
@@ -433,15 +427,17 @@ class ToscaParser:
                         nodeObj.add_volume(target, location)
 
                 # each node maintains a copy of the template (?)
-                nodeObj.tpl = self._template
+                nodeObj.tpl = template
 
-                self._template.push(nodeObj)
+                template.push(nodeObj)
 
-                # ToscaParser._add_pointer(self._template)
+                # ToscaParser._add_pointer(template)
                 # TODO it doesn't work - need a fix (NoneType on relationship.to)
-                # ToscaParser._add_back_links(self._template)
+                # ToscaParser._add_back_links(template)
                 # TODO it doesn't work - need a fix (NoneType on host_container)
-                # ToscaParser._add_extension(self._template)
+                # ToscaParser._add_extension(template)
+
+            return template
 
         except ValueError as err:
             logger.exception(err)
