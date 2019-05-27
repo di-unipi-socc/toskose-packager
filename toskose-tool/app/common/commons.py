@@ -41,10 +41,24 @@ def create_auth(username, password):
     }
 
 
-def create_auth_interactive():
-    username = getpass.getuser()
-    password = getpass.getpass()
+def create_auth_interactive(user_text=None, pw_text=None):
+
+    if user_text is None:
+        user_text = ''
+    if pw_text is None:
+        pw_text = ''
+    
+    username = input(user_text)
+    password = getpass.getpass(prompt=pw_text)
     return create_auth(username, password)
+
+
+def create_input_with_dflt(text=None, dflt=None):
+
+    if text is not None and dflt is not None:
+        text = '{0} [ENTER for {1}]'.format(text, dflt)
+
+    return input(text)
 
 
 class Alerts(Enum):
