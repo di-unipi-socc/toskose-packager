@@ -80,7 +80,7 @@ def _build_unit_config(tosca_model=None, node_name=None, output_dir=None,
             node_name, tosca_model.name))
         raise FatalError(CommonErrorMessages._DEFAULT_FATAL_ERROR_MSG)
 
-    logger.debug('Building the supervisord.conf for [{0}] of type [{1}]'.format(node_name, type))
+    logger.debug('Building the supervisord.conf for [{0}] node'.format(node_name))
 
     try:
 
