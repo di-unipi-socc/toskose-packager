@@ -1,5 +1,8 @@
 # the image to be "toskosed"
 ARG TOSCA_SRC_IMAGE
+ARG TOSKOSE_BASE_IMG
+
+FROM ${TOSKOSE_BASE_IMG} as base
 
 # "toskose" a given image
 FROM ${TOSCA_SRC_IMAGE} as toskosed
@@ -7,7 +10,8 @@ FROM ${TOSCA_SRC_IMAGE} as toskosed
 # copy the toskose-unit's supervisord bundle (supervisord + python 2.7.15)
 WORKDIR /
 # check: copy from remote image (no need to declare toskose_unit as an empty from)
-COPY --from=diunipisocc/toskose-unit:latest /toskose/ /toskose/
+# COPY --from=diunipisocc/toskose-unit:latest /toskose/ /toskose/
+COPY --from=base /toskose/ /toskose/
 
 # copy lifecyle scripts and artifacts of apps hosted by this image
 COPY . /tmp/toskose/apps
