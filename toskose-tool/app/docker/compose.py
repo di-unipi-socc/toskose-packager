@@ -186,7 +186,7 @@ def _dump_compose(output_path, compose):
             raise TranslationError(CommonErrorMessages._DEFAULT_TRANSLATION_ERROR_MSG)
 
     
-def generate_compose(tosca_model=None, output_path=None, file_name=None, version=None):
+def generate_compose(tosca_model, output_path, file_name=None, version=None):
     """ 
     Generate the docker-compose template.
 
@@ -197,10 +197,6 @@ def generate_compose(tosca_model=None, output_path=None, file_name=None, version
         version (str): The version of the docker-compose.
     """
 
-    if tosca_model is None:
-        raise TypeError('The TOSCA model must be provided.')
-    if output_path is None or not os.path.exists(output_path):
-        raise TypeError('The output path must be provided.')
     if not os.path.exists(output_path):
         raise ValueError('The output path must exists.')
     if file_name is None:
