@@ -6,7 +6,6 @@ import os
 import tempfile
 import zipfile
 import shutil
-import toml
 import ruamel.yaml
 from collections import OrderedDict
 
