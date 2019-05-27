@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.com/matteobogo/toskose.svg?token=jguSttdQLntpxgiqp3py&branch=master)](https://travis-ci.com/matteobogo/toskose)
+
 # toskose
 toskose is a tool for translating a TOSCA-based configuration into docker-compose.
 
