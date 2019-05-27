@@ -5,7 +5,7 @@ import datetime
 import logging
 import logging.handlers
 
-import app.constants as constants
+import app.common.constants as constants
 
 class LoggingFacility:
     """ A singleton containing the logging settings """

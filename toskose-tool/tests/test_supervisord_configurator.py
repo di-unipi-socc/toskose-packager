@@ -21,20 +21,19 @@ def test_supervisord_unit_generation(data):
     with tempfile.TemporaryDirectory() as tmp_dir:
         manifest_path = helpers.compute_manifest_path(
             tmp_dir,
-            data['manifest_path'])
+            data['csar_path'])
         
-        tp = ToscaParser(manifest_path)
-        tp.build()
+        model = ToscaParser().build_model(manifest_path)
 
-        root_dir = os.path.join(tmp_dir, tp.model.name)
+        root_dir = os.path.join(tmp_dir, model.name)
         os.makedirs(root_dir)
-        for container in tp.model.containers:
+        for container in model.containers:
             
             node_dir = os.path.join(root_dir, container.name)
             os.makedirs(node_dir)
 
             build_config(SupervisordTemplateType.Unit,
-                tosca_model=tp.model,
+                tosca_model=model,
                 node_name=container.name,
                 output_dir=node_dir)
         

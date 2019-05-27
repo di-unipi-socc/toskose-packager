@@ -8,27 +8,34 @@ import tests.helpers as helpers
 import tests.commons as commons
 
 from app.common.commons import unpack_archive
-from app.toskose import Toskoserizator
 from app.docker.compose import generate_compose
 from app.tosca.parser import ToscaParser
+from app.context import build_app_context
+from app.toskose import Toskoserizator
+from app.configurator import Configurator
 
 
 @pytest.mark.parametrize('data', commons.apps_data)
 def test_compose_generation(data):
     with tempfile.TemporaryDirectory() as tmp_dir:
-        manifest_path = helpers.compute_manifest_path(
-            tmp_dir,    # also unpack the csar archive
-            data['manifest_path'])
+        with tempfile.TemporaryDirectory() as ctx_dir:
+            manifest_path = helpers.compute_manifest_path(
+                tmp_dir,    # also unpack the csar archive
+                data['csar_path'])
 
-        tp = ToscaParser(manifest_path)
-        tp.build()
+            model = ToscaParser().build_model(manifest_path)
 
-        Toskoserizator._build_app_context(
-            manifest_path, 
-            commons.output_tmp_path, 
-            tp.model)
+            tsk = Toskoserizator()
+            tsk._toskose_model(model, data['toskose_config'])
 
-        # toskosing images process - skipped
+            build_app_context(
+                ctx_dir, 
+                model)
 
-        generate_compose(tp.model, commons.output_tmp_path)
+            # toskosing images process - skipped
+            
+            if not os.path.exists(commons.output_tmp_path):
+                os.makedirs(commons.output_tmp_path)
+            
+            generate_compose(model, commons.output_tmp_path)
         

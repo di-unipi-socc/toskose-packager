@@ -10,11 +10,19 @@ from docker.errors import ImageNotFound
 import app.docker.manager # used for mock inputs
 import unittest.mock as mock
 
+import tests.helpers as helpers
+import tests.commons as commons
+
+import app.common.constants as constants
+from app.docker.manager import ToskosingProcessType
 from app.docker.manager import DockerManager
+from app.docker.manager import generate_image_name_interactive
+from app.docker.manager import separate_full_image_name
 from app.common.exception import DockerOperationError
 from app.common.exception import DockerAuthenticationFailedError
 from app.common.exception import OperationAbortedByUser
 from app.common.exception import FatalError
+from app.tosca.model.artifacts import ToskosedImage
 
 
 src_image = 'stephenreed/jenkins-java8-maven-git'
@@ -39,44 +47,52 @@ def dit():
     dit.close()    
 
 
+@pytest.mark.parametrize('data', [
+    ['', 'user', 'image', ''],
+    ['url:port', 'user', 'image', 'tag']
+])
+def test_image_name_interactive(data):
+    """ Test the Docker Image name generation interactively routine. """
+
+    with mock.patch('builtins.input', side_effect=data):
+        with mock.patch('getpass.getpass', return_value='password'):
+            image_data = generate_image_name_interactive()
+            tks_img = ToskosedImage(**image_data)
+
+            assert tks_img.full_name == '{0}{1}/{2}{3}'.format(
+                data[0] + '/' if data[0] else data[0],
+                data[1], data[2],
+                ':' + data[3] if data[3] else data[3]
+            )
+
+            data.insert(2, 'password')
+            for k,v in image_data.items():
+                if image_data[k] is None:
+                    image_data[k] = ''
+            
+            assert image_data == dict(zip(
+                constants.DOCKER_IMAGE_REQUIRED_DATA, 
+                data))
+
+
 def test_image_name_generation_default():
     """ Test the Docker Image name generation routine. """
 
+    keys = [ 'repository', 'user', 'password', 'name', 'tag']
     user_input = [
         '',         # repository (default: Docker Hub)
         'user',     # user (required)
-        '',         # image name (default: tosca container node name)
+        'image',    # image name (required)
         '',         # tag (default: latest)
     ]
 
     with mock.patch('builtins.input', side_effect=user_input):
-        assert DockerManager.generate_image_name('node-name') == \
-            'user/node-name:latest'
-
-
-def test_image_name_generation_abort():
-    """ Test the Docker Image name generation routine aborted by the user. """
-    
-    # abort user input
-    user_input = ['','0']
-    with pytest.raises(OperationAbortedByUser):
-        with mock.patch('builtins.input', side_effect=user_input):
-            DockerManager.generate_image_name('node-name')
-
-
-@pytest.mark.parametrize(
-    'user_input',
-    [
-        ['test','admin','test-image','1.0.1'],
-        ['test1', 'user', 'test-image', '2.1.1'],
-    ]
-)
-def test_image_name_generation_param(user_input):
-    """ Test the Docker Image generation routine with multiple inputs. """
-    
-    with mock.patch('builtins.input', side_effect=user_input):
-        assert DockerManager.generate_image_name('node-name') == \
-            '{0}/{1}/{2}:{3}'.format(*user_input) # unpack args
+        with mock.patch('getpass.getpass', return_value='password'):
+            generated = generate_image_name_interactive() 
+            user_input.insert(2, 'password')
+            user_input = [None if x == '' else x for x in user_input]
+            
+            assert generated == dict(zip(keys, user_input))
 
 
 def test_image_auth_not_correct(dit):
@@ -93,17 +109,14 @@ def test_image_auth_not_correct(dit):
 def test_image_auth_max_attempts(dit):
     """ Test the authentication subroutine for private repos pull with max attempts reached (auth failure). """
     
-    src_image='asdasdsdsdsdasas'
-    logins = [('a','1'), ('b','2'), ('c','3'), ('d','4')]
+    src_image='sasaasasasas'
     with pytest.raises(DockerAuthenticationFailedError):
-        with mock.patch('builtins.input', return_value='YES'):
-            for login in logins:
-                with mock.patch('getpass.getuser', return_value=login[0]):
-                    with mock.patch('getpass.getpass', return_value=login[1]): 
-                        dit._image_authentication(
-                            src_image,
-                            src_tag
-                        )
+        with mock.patch('builtins.input', side_effect=['YES']):
+            dit._image_authentication(
+                src_image,
+                src_tag,
+                auth={'username': 'user', 'password': 'password'}
+            )
 
 
 # def test_image_auth(dit):
@@ -127,8 +140,11 @@ def test_toskose_unit_wrong(dit):
     with pytest.raises(DockerOperationError):
         dit.toskose_image(
             src_image,
+            src_tag,
             dst_image,
+            dst_tag,
             context_path,
+            ToskosingProcessType.TOSKOSE_UNIT,
             toskose_image=wrong_toskose_image
         )
 
@@ -136,13 +152,13 @@ def test_toskose_unit_wrong(dit):
 def test_toskose_image(dit):
     """ Test the "toskose" image process without pushing the generated image. """
     
-    #dit._verbose = True
     dit.toskose_image(
         src_image,
+        src_tag,
         dst_image,
+        dst_tag,
         context_path,
-        src_tag=src_tag,
-        dst_tag=dst_tag,
+        ToskosingProcessType.TOSKOSE_UNIT,
         enable_push=False
     )
     
@@ -156,18 +172,17 @@ def test_toskose_image(dit):
 def test_auth_push_fail_attempts(dit):
     """ Test the "toskose" image process with authentication max attempts reached during a push to a private repo. """
 
-    logins = [('a','1'), ('b','2'), ('c','3'), ('d','4')]
     with pytest.raises(FatalError):
-        for login in logins:
-           with mock.patch('getpass.getuser', return_value=login[0]):
-                with mock.patch('getpass.getpass', return_value=login[1]): 
-                    dit.toskose_image(
-                        src_image,
-                        dst_image,
-                        context_path,
-                        src_tag=src_tag,
-                        dst_tag=dst_tag
-                    )
+        with mock.patch('builtins.input', return_value='user'):
+            with mock.patch('getpass.getpass', return_value='password'): 
+                dit.toskose_image(
+                    src_image,
+                    src_tag,
+                    dst_image,
+                    dst_tag,
+                    context_path,
+                    ToskosingProcessType.TOSKOSE_UNIT
+                )
 
 
 # def test_auth(dit):
@@ -179,6 +194,18 @@ def test_auth_push_fail_attempts(dit):
 #             dst_image = 'enter-private-test-repository:tag'
 #             dit.toskose_image(
 #                 src_image,
+#                 src_tag,  
 #                 dst_image,
+#                 dst_tag,
 #                 context_path
 #             )
+
+
+@pytest.mark.parametrize('data', [
+    {'repository': None, 'user': 'user', 'password': 'password', 'name': 'image', 'tag': None},
+    {'repository': 'myrepo:1000', 'user': 'user', 'password': 'password', 'name': 'image', 'tag': '1.0.1'}
+])
+def test_separate_full_image_name(data):
+    tks_img = ToskosedImage(**data)
+    del data['password']
+    assert separate_full_image_name(tks_img.full_name) == data

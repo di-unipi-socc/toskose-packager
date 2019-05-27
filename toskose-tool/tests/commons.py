@@ -9,11 +9,51 @@ supervisord_config_common_sections = [
 
 apps_data = [
     {
-        'manifest_path': helpers.full_path('thinking-app/thinking.csar'),
+        'base_dir': helpers.full_path('thinking-app'),
+        'csar_path': helpers.full_path('thinking-app/thinking.csar'),
+        'toskose_config': helpers.full_path('thinking-app/toskose.yml'),
         'name': 'thinking',
         'containers': ['maven','node', 'mongodb'],
         'software': ['api', 'gui'],
         'volumes': ['dbvolume'],
+        'toskose_config_input': {
+            'maven': {
+                'docker': {
+                    'repository': None,
+                    'user': 'test',
+                    #'password': 'password',
+                    'name': 'maven-toskosed',
+                    'tag': '1.0',
+                },
+            },
+            'node': {
+                'docker': {
+                    'repository': None,
+                    'user': 'test',
+                    #'password': 'password',
+                    'name': 'node-toskosed',
+                    'tag': '0.4.2',
+                },
+            },
+            'mongodb': {
+                'docker': {
+                    'repository': None,
+                    'user': 'test',
+                    #'password': 'password',
+                    'name': 'mongodb-toskosed',
+                    'tag': '2.1.1',
+                },
+            },
+            'toskose-manager': {
+                'docker': {
+                    'repository': None,
+                    'user': 'test',
+                    #'password': 'password',
+                    'name': 'toskose-manager',
+                    'tag': 'latest',
+                },
+            }
+        },
         'supervisord': {
             'maven': {
                 'api-create': {
@@ -73,4 +113,9 @@ supervisord_envs = [
     'SUPERVISORD_HTTP_USER',
     'SUPERVISORD_HTTP_PASSWORD',
     'SUPERVISORD_LOG_LEVEL'
+]
+toskose_manager_envs = [
+    'HTTP_PORT',
+    'HTTP_USER',
+    'HTTP_PASSWORD'
 ]
