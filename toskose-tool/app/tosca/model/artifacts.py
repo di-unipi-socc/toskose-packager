@@ -76,3 +76,28 @@ class DockerfileExecutable(Dockerfile):
 
     def __str__(self):
         return 'DockerfileExecutable'
+
+
+class ToskosedImage(DockerImage):
+    """ Represent a "toskosed" image.
+    
+    [repository/]user/image_name[:tag]
+    """
+
+    def __init__ (self, name, user, password, **kwargs):
+        self.name = name
+        self.user = user
+        self.password = password
+        
+        self.repository = kwargs.get('repository')
+        self.tag = kwargs.get('tag')
+        if self.tag is not None:
+            self.tag = str(kwargs['tag'])
+
+    @property
+    def full_name(self):
+        """ Return the Docker Image name including the tag (if any). """
+        repository = '' if self.repository is None else '{}/'.format(self.repository)
+        tag = '' if self.tag is None else ':{}'.format(self.tag)
+
+        return '{0}{1}/{2}{3}'.format(repository, self.user, self.name, tag) 

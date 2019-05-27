@@ -10,32 +10,12 @@ class Template:
 
     def __init__(self, name):
         self._nodes = {}
-        self._name = name
-        self._description = 'No description.'
+        self.name = name
+        self.description = 'No description.'
         self._outputs = []
         self.tmp_dir = None
-
-    @property
-    def name(self):
-        return self._name
-
-    @property
-    def description(self):
-        return self._description
-
-    @description.setter
-    def description(self, description):
-        if description or description != '':
-            self._description = description
-
-    @property
-    def outputs(self):
-        return self._outputs
-
-    @outputs.setter
-    def outputs(self, outputs):
-        if outputs:
-            self._outputs = outputs
+        self.manifest_path = None
+        self.toskose_config_path = None
 
     @property
     def nodes(self):

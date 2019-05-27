@@ -3,7 +3,7 @@ Nodes module
 '''
 from app.tosca.model import protocol
 from app.tosca.model.artifacts import (Artifact, Dockerfile, DockerfileExecutable,
-                        DockerImage, DockerImageExecutable, File)
+                        DockerImage, DockerImageExecutable, ToskosedImage, File)
 from app.tosca.model.relationships import AttachesTo, ConnectsTo, DependsOn, HostedOn
 
 
@@ -111,21 +111,22 @@ class Root(object):
 
 class Container(Root):
 
-    def __init__(self, name):
+    def __init__(self, name, is_manager=False):
         super(Container, self).__init__(name)
         # attributes
         self.id = None
         self.env = None
         self.cmd = None
         self.ports = None
-        self.share_data = {}        
+        self.share_data = {} 
+        self.is_manager = is_manager
 
         self._ATTRIBUTE = {
             'id': lambda: self.id,
             'ports': lambda: self.ports,
             'env_variable': lambda: self.env,
             'command': lambda: self.cmd,
-            'share_data': lambda: self.share_data
+            'share_data': lambda: self.share_data,
         }
         self._overlay = []
 
@@ -145,6 +146,15 @@ class Container(Root):
     def image(self, img):
         assert isinstance(img, (DockerImage, Dockerfile))
         self.artifacts = [img]
+
+    @property
+    def toskosed_image(self):
+        return self.artifacts[-1]
+
+    @toskosed_image.setter
+    def toskosed_image(self, img):
+        assert isinstance(img, ToskosedImage)
+        self.artifacts.append(img)
 
     @property
     def executable(self):
