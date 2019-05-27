@@ -60,7 +60,7 @@ def test_toskose_model(data):
             if container.name == 'toskose-manager':
                 pass
             else:
-                supervisord_data = config['nodes'][container.name]['supervisord']
+                supervisord_data = config['nodes'][container.name]['api']
                 for k,v in supervisord_data.items():
                     rev_key = 'SUPERVISORD_{}'.format(k.upper())
                     if rev_key in container.env:
