@@ -1,8 +1,0 @@
-.git
-.dockerignore
-__pycache__
-venv/
-logs/
-Dockerfile
-Dockerfile.old
-boot-dev.sh
