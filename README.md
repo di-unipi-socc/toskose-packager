@@ -1,4 +1,6 @@
 [![Build Status](https://travis-ci.com/matteobogo/toskose.svg?token=jguSttdQLntpxgiqp3py&branch=master)](https://travis-ci.com/matteobogo/toskose)
+[![Bintray](https://img.shields.io/badge/python-3.7.1-blue.svg)](https://www.python.org/downloads/release/python-371/)
+
 
 # toskose
 toskose is a tool for translating a TOSCA-based configuration into docker-compose.
