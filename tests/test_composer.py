@@ -12,7 +12,7 @@ from app.docker.compose import generate_compose
 from app.tosca.parser import ToscaParser
 from app.context import build_app_context
 from app.toskose import Toskoserizator
-from app.configurator import Configurator
+from app.configurator import Loader
 
 
 @pytest.mark.parametrize('data', commons.apps_data)

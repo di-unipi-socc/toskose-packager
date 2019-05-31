@@ -9,7 +9,7 @@ import tests.commons as commons
 from app.toskose import Toskoserizator
 from app.toskose import ToscaParser
 from app.context import build_app_context
-from app.configurator import Configurator
+from app.configurator import Loader
 from app.docker.manager import ToskosingProcessType
 
 
@@ -52,10 +52,13 @@ def test_toskose_images(model_fixture, data):
                 )
 
 
+@pytest.fixture()
+def tsk():
+    return Toskoserizator()
+
 @pytest.mark.parametrize('data', commons.apps_data)
-def test_toskoserizator(data):
-    t = Toskoserizator()
-    t.toskosed(
+def test_toskoserizator(tsk, data):
+    tsk.toskosed(
         data['csar_path'],
         data['toskose_config'],
         enable_push=False

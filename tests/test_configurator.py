@@ -6,14 +6,14 @@ import tests.commons as commons
 import tests.helpers as helpers
 
 from app.common.exception import ParsingError
-from app.configurator import Configurator
+from app.configurator import Loader
 from app.tosca.parser import ToscaParser
 
 
 @pytest.mark.parametrize('data', commons.apps_data)
 def test_data_load(data):
     
-    cfg = Configurator()
+    cfg = Loader()
     config = cfg.load(os.path.join(data['base_dir'], 'toskose.yml'))
     
 
@@ -23,7 +23,7 @@ def test_config_validation(data):
 
 def test_data_load_not_exist():
     with pytest.raises(ValueError):
-        Configurator().load('abcderfgh.yml')
+        Loader().load('abcderfgh.yml')
 
 
 @pytest.mark.parametrize('data', commons.apps_data)

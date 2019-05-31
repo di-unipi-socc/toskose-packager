@@ -85,7 +85,7 @@ def build_app_context(context_path, tosca_model):
 
             else:
                 for software in tosca_model.software:
-                    # searching the software nodes hosted on the current containe
+                    # searching the software nodes hosted on the current container
                     if isinstance(software.host, HostedOn) and software.host.to == container.name:
                         software_dir = os.path.join(node_dir, software.name)
                         

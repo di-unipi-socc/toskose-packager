@@ -6,13 +6,12 @@ from app.common.logging import LoggingFacility
 from app.common.exception import ParsingError
 
 
-
 logger = LoggingFacility.get_instance().get_logger()
 
 
-class Configurator:
+class Loader:
     """
-    The DataLoader class is used to load and parse the Toskose YAML configuration
+    The Loader class is used to load and parse YAML configurations
     from a given file name.
     """
 

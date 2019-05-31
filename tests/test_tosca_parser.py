@@ -14,7 +14,7 @@ from toscaparser.tosca_template import ToscaTemplate
 
 import app.common.constants as constants
 from app.tosca.parser import ToscaParser
-from app.configurator import Configurator
+from app.configurator import Loader
 from app.tosca.validator import validate_csar
 from app.common.commons import unpack_archive
 from app.toskose import Toskoserizator
@@ -49,7 +49,7 @@ def test_toskose_model(data):
 
         model = ToscaParser().build_model(manifest_path)
 
-        config = Configurator().load(data['toskose_config'])
+        config = Loader().load(data['toskose_config'])
 
         tsk = Toskoserizator()
         tsk._toskose_model(model, data['toskose_config'])
@@ -131,7 +131,7 @@ def test_toskose_model_config_gen(data):
             with mock.patch('getpass.getpass', return_value='password'): 
                 config_path = tsk._generate_default_config(model)
 
-                cfg = Configurator()
+                cfg = Loader()
                 config = cfg.load(config_path)
 
                 if not 'nodes' in config:
