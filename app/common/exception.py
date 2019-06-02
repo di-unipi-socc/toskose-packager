@@ -30,7 +30,13 @@ class ParsingError(BaseToskoseException):
         super().__init__(message)
 
 class ValidationError(BaseToskoseException):
-    """ Raised when the TOSCA .CSAR/yml file is not valid """
+    """ Raised when the configuration file is not valid """
+
+    def __init__(self, message):
+        super().__init__(message)
+
+class PartialValidationError(BaseToskoseException):
+    """ Raised when the configuration file is partially valid. """
 
     def __init__(self, message):
         super().__init__(message)
