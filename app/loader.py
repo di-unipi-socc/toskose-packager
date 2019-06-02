@@ -44,6 +44,10 @@ class Loader:
         loading_function = ruamel.yaml.load
         loading_args = { 'Loader': ruamel.yaml.Loader }
 
+        ordered = kwargs.get('ordered', False)
+        if ordered:
+            loading_args['Loader'] = ruamel.yaml.RoundTripLoader
+
         trip_load = kwargs.get('print', False)
         if trip_load == True:
             loading_function = ruamel.yaml.round_trip_load
@@ -80,6 +84,7 @@ class Loader:
         dumper = ruamel.yaml.Dumper
         if ordered:
             dumper = ruamel.yaml.RoundTripDumper
+            data = ruamel.yaml.comments.CommentedMap(data)
 
         logger.debug('Dumping data to {}'.format(path))
         try:
