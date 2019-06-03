@@ -34,7 +34,7 @@ def test_supervisord_unit_generation(data):
 
             build_config(SupervisordTemplateType.Unit,
                 tosca_model=model,
-                node_name=container.name,
+                container=container,
                 output_dir=node_dir)
         
             config = ConfigParser()

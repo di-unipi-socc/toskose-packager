@@ -9,7 +9,7 @@ import tests.commons as commons
 from app.toskose import Toskoserizator
 from app.toskose import ToscaParser
 from app.context import build_app_context
-from app.configurator import Loader
+from app.loader import Loader
 from app.docker.manager import ToskosingProcessType
 
 
@@ -35,9 +35,13 @@ def test_toskose_images(model_fixture, data):
 
             for container in model.containers:
                 
-                template = \
-                ToskosingProcessType.TOSKOSE_MANAGER if container.is_manager \
-                    else ToskosingProcessType.TOSKOSE_UNIT
+                if container.is_manager:
+                    template = ToskosingProcessType.TOSKOSE_MANAGER
+                elif container.hosted:
+                    # if the container hosts sw components then it need to be toskosed
+                    template = ToskosingProcessType.TOSKOSE_UNIT
+                else:
+                    template = ToskosingProcessType.TOSKOSE_FREE
 
                 ctx_path = os.path.join(tmp_ctx, model.name, container.name)
                 

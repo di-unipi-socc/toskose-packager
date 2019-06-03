@@ -12,7 +12,7 @@ from app.docker.compose import generate_compose
 from app.tosca.parser import ToscaParser
 from app.context import build_app_context
 from app.toskose import Toskoserizator
-from app.configurator import Loader
+from app.loader import Loader
 
 
 @pytest.mark.parametrize('data', commons.apps_data)
@@ -24,13 +24,15 @@ def test_compose_generation(data):
                 data['csar_path'])
 
             model = ToscaParser().build_model(manifest_path)
-
             tsk = Toskoserizator()
-            tsk._toskose_model(model, data['toskose_config'])
 
-            build_app_context(
-                ctx_dir, 
-                model)
+            config_path = tsk._generate_default_config(
+                model, 
+                uncompleted_config=data['toskose_config'],
+            )
+
+            tsk._toskose_model(model, config_path)
+            build_app_context(ctx_dir, model)
 
             # toskosing images process - skipped
             

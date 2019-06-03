@@ -11,48 +11,62 @@ apps_data = [
     {
         'base_dir': helpers.full_path('thinking-app'),
         'csar_path': helpers.full_path('thinking-app/thinking.csar'),
-        'toskose_config': helpers.full_path('thinking-app/toskose.yml'),
+        'toskose_config': helpers.full_path(
+            'thinking-app/configurations/toskose.yml'),
+        'uncompleted_toskose_config': helpers.full_path(
+            'thinking-app/configurations/uncompleted_toskose.yml'),
+        'invalid_toskose_config': helpers.full_path(
+            'thinking-app/configurations/invalid_toskose.yml'),
+        'missing_node_toskose_config': helpers.full_path(
+            'thinking-app/configurations/missing_node_toskose.yml'),
+        'missing_docker_toskose_config': helpers.full_path(
+            'thinking-app/configurations/missing_docker_toskose.yml'),
         'name': 'thinking',
         'containers': ['maven','node', 'mongodb'],
         'software': ['api', 'gui'],
         'volumes': ['dbvolume'],
+        'toskose_config_manager_input': {
+            'http_port': 10001,
+            'http_user': 'admin',
+            'http_password': 'admin',
+            'mode': 'production',
+            'secret_key': 'secret',
+            'docker': {
+                'name': 'thinking-manager',
+                'tag': '1.0',
+                'registry_password': None
+            }
+        },
         'toskose_config_input': {
             'maven': {
+                'http_port': 9001,
+                'http_user': 'admin',
+                'http_password': 'admin',
+                'log_level': 'INFO',
                 'docker': {
-                    'repository': None,
-                    'user': 'test',
-                    #'password': 'password',
-                    'name': 'maven-toskosed',
+                    'name': 'test/maven-toskosed',
                     'tag': '1.0',
+                    'registry_password': None,
                 },
             },
             'node': {
+                'http_port': 9002,
+                'http_user': 'admin',
+                'http_password': 'admin',
+                'log_level': 'INFO',
                 'docker': {
-                    'repository': None,
-                    'user': 'test',
-                    #'password': 'password',
-                    'name': 'node-toskosed',
+                    'name': 'test/node-toskosed',
                     'tag': '0.4.2',
+                    'registry_password': None,
                 },
             },
             'mongodb': {
                 'docker': {
-                    'repository': None,
-                    'user': 'test',
-                    #'password': 'password',
-                    'name': 'mongodb-toskosed',
+                    'name': 'test/mongodb-toskosed',
                     'tag': '2.1.1',
+                    'registry_password': None,
                 },
             },
-            'toskose-manager': {
-                'docker': {
-                    'repository': None,
-                    'user': 'test',
-                    #'password': 'password',
-                    'name': 'toskose-manager',
-                    'tag': 'latest',
-                },
-            }
         },
         'supervisord': {
             'maven': {
