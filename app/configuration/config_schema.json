@@ -23,13 +23,13 @@
 
                 },
                 "tag": {
-                    "type": ["null", "string"],
+                    "type": "string",
                     "minLength": 1,
                     "maxLength": 255,
                     "description": "The tag of the toskosed image name"
                 },
                 "registry_password": {
-                    "type": ["null", "string"],
+                    "type": "string",
                     "minLength": 1,
                     "maxLength": 255,
                     "description": "The password for the Docker Registry"
@@ -37,9 +37,6 @@
             },
             "additionalProperties": false,
             "required": [ "name", "tag" ]
-        },
-        "node": {
-            
         }
     },
     "type": "object",
@@ -65,61 +62,6 @@
                     "description": "A representation of a container node",
                     "type": "object",
                     "properties": {
-                        "api": {
-                            "type": "object",
-                            "properties": {
-                                "http_port": {
-                                    "type": "integer",
-                                    "minimum": 0,
-                                    "maximum": 65535,
-                                    "description": "The HTTP port of the node API"
-                                },
-                                "http_user": {
-                                    "type": "string",
-                                    "minLength": 1,
-                                    "maxLength": 255,
-                                    "description": "The user of the node API"
-                                },
-                                "http_password": {
-                                    "type": "string",
-                                    "minLength": 1,
-                                    "maxLength": 255,
-                                    "description": "The password of the node API"
-                                },
-                                "log_level": {
-                                    "type": "string",
-                                    "minLength": 1,
-                                    "maxLength": 255,
-                                    "description": "The log level for the node"
-                                }
-                            },
-                            "additionalProperties": false,
-                            "required": [ "http_port", "http_user", "http_password", "log_level" ]
-                        },
-                        "docker": { "$ref": "#/definitions/node" }
-                    },
-                    "additionalProperties": false,
-                    "required": [ "api", "docker" ]
-                }
-            },
-            "additionalProperties": false
-        },
-        "manager": {
-            "type": "object",
-            "description": "The manager node of the application",
-            "properties": {
-                "api": {
-                    "type": "object",
-                    "properties": {
-                        "mode": {
-                            "type": "string",
-                            "enum": ["production", "testing"]
-                        },
-                        "secret_key": {
-                            "type": "string",
-                            "minLength": 1,
-                            "description": "The secret key used by the API. (e.g. cookies generation)"
-                        },
                         "http_port": {
                             "type": "integer",
                             "minimum": 0,
@@ -137,15 +79,56 @@
                             "minLength": 1,
                             "maxLength": 255,
                             "description": "The password of the node API"
-                        }
+                        },
+                        "log_level": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 255,
+                            "description": "The log level for the node"
+                        },
+                        "docker": { "$ref": "#/definitions/docker" }
                     },
                     "additionalProperties": false,
-                    "required": [ "mode", "secret_key", "http_port", "http_user", "http_password" ]
+                    "required": [ "docker" ]
+                }
+            },
+            "additionalProperties": false
+        },
+        "manager": {
+            "type": "object",
+            "description": "The manager node of the application",
+            "properties": {
+                "mode": {
+                    "type": "string",
+                    "enum": ["production", "testing"]
+                },
+                "secret_key": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "The secret key used by the API. (e.g. cookies generation)"
+                },
+                "http_port": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 65535,
+                    "description": "The HTTP port of the node API"
+                },
+                "http_user": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 255,
+                    "description": "The user of the node API"
+                },
+                "http_password": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 255,
+                    "description": "The password of the node API"
                 },
                 "docker": { "$ref": "#/definitions/docker" }
             },
             "additionalProperties": false,
-            "required": [ "api", "docker" ]
+            "required": [ "docker" ]                
         }
     },
     "additionalProperties": false,
