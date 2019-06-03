@@ -50,22 +50,22 @@ class SupervisordTemplateType(Enum):
     Unit = auto()
     Manager = auto()
 
-def _build_unit_config(tosca_model=None, node_name=None, output_dir=None, 
+def _build_unit_config(tosca_model=None, container=None, output_dir=None, 
                        config_name=None):
     """ 
     Build the Supervisord configuration file for a toskose-unit container. 
     
     Args:
         tosca_model (str): The model of the TOSCA-based application.
-        node_name (str): The name of the TOSCA node for which the conf is generated.
+        container (object): The container node for which the conf is generated.
         output_dir (str): The path where the Supervisord config will be writed in.
         config_name (str): The name of the Supervisord config file generated (default: 'supervisord.conf')
     """
 
     if tosca_model is None:
         raise TypeError('The TOSCA model must be provided.')
-    if node_name is None:
-        raise TypeError('A container name must be provided.')
+    if container is None:
+        raise TypeError('A container must be provided.')
     if output_dir is None:
         raise TypeError('An output path must be provided.')
     if output_dir:
@@ -75,48 +75,47 @@ def _build_unit_config(tosca_model=None, node_name=None, output_dir=None,
     if config_name is None:
         config_name = 'supervisord.conf'
 
-    if next((x for x in tosca_model.containers if x.name == node_name), None) is None:
+    if next((x for x in tosca_model.containers if x.name == container.name), None) is None:
         logger.error('Tosca container node [{0}] doesn\'t exist in the model representing [{1}] application'.format(
-            node_name, tosca_model.name))
+            container.name, tosca_model.name))
         raise FatalError(CommonErrorMessages._DEFAULT_FATAL_ERROR_MSG)
 
-    logger.debug('Building the supervisord.conf for [{0}] node'.format(node_name))
+    logger.debug('Building the supervisord.conf for [{0}] node'.format(container.name))
 
     try:
 
         config = ConfigParser()
         config.read(os.path.join(os.path.dirname(__file__), _SUPERVISORD_UNIT_TEMPLATE_PATH))
         
-        for software in tosca_model.software:
-            if isinstance(software.host, HostedOn) and software.host.to == node_name:
-                for inter_group_name, inter_group_content in software.interfaces.items():
-                    # multiple interfaces groups can co-exists, not only the "standard"
-                    for interface_name, interface_content in inter_group_content.items():
-                        # TODO may insert also the inter_group_name in section_name? 
-                        # conflicts with toskose-manager api?
-                        section_name = 'program:{0}-{1}'.format(software.name, interface_name)
-                        
-                        # change the path of the lifecycle operation according to the container context
-                        command = os.path.join(
-                            '/toskose/apps/{software_node}/scripts'.format(software_node=software.name), 
-                            os.path.basename(interface_content['cmd'].file_path)
-                        )
+        for software in container.hosted:
+            for inter_group_name, inter_group_content in software.interfaces.items():
+                # multiple interfaces groups can co-exists, not only the "standard"
+                for interface_name, interface_content in inter_group_content.items():
+                    # TODO may insert also the inter_group_name in section_name? 
+                    # conflicts with toskose-manager api?
+                    section_name = 'program:{0}-{1}'.format(software.name, interface_name)
+                    
+                    # change the path of the lifecycle operation according to the container context
+                    command = os.path.join(
+                        '/toskose/apps/{software_node}/scripts'.format(software_node=software.name), 
+                        os.path.basename(interface_content['cmd'].file_path)
+                    )
 
-                        # supervisord configuration file base template
-                        template = dict(_SUPERVISORD_PROGRAM_TEMPLATE)
-                        template_updated = {
-                            'command': _BASE_COMMAND + '\'' + command + '\'',
-                            'process_name': '{0}-{1}'.format(software.name, interface_name),
-                            'stdout_logfile': os.path.join(
-                                _BASEDIR_STDOUT_LOGFILE,
-                                software.name,
-                                'logs',
-                                '{0}-{1}.log'.format(software.name, interface_name)
-                            ),
-                        }
+                    # supervisord configuration file base template
+                    template = dict(_SUPERVISORD_PROGRAM_TEMPLATE)
+                    template_updated = {
+                        'command': _BASE_COMMAND + '\'' + command + '\'',
+                        'process_name': '{0}-{1}'.format(software.name, interface_name),
+                        'stdout_logfile': os.path.join(
+                            _BASEDIR_STDOUT_LOGFILE,
+                            software.name,
+                            'logs',
+                            '{0}-{1}.log'.format(software.name, interface_name)
+                        ),
+                    }
 
-                        template.update(template_updated)
-                        config[section_name] = template
+                    template.update(template_updated)
+                    config[section_name] = template
         
         config_file_path = os.path.join(output_dir, config_name)
 
