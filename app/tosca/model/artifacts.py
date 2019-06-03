@@ -37,10 +37,14 @@ class File(Artifact):
 
 class DockerImage(Artifact):
 
-    def __init__(self, attr):
+    def __init__(self, attr=None):
         super(DockerImage, self).__init__('')
-        self.name, self.tag = attr.split(':') if ':' in attr \
-            else (attr, 'latest')
+        if attr is None:
+            self.name = None
+            self.tag = None
+        else:
+            self.name, self.tag = attr.split(':') if ':' in attr \
+                else (attr, 'latest')
 
     @property
     def format(self):
@@ -84,20 +88,29 @@ class ToskosedImage(DockerImage):
     [repository/]user/image_name[:tag]
     """
 
-    def __init__ (self, name, user, password, **kwargs):
+    def __init__ (self, name, tag=None, registry_password=None,
+                  base_name=None, base_tag=None):
         self.name = name
-        self.user = user
-        self.password = password
-        
-        self.repository = kwargs.get('repository')
-        self.tag = kwargs.get('tag')
-        if self.tag is not None:
-            self.tag = str(kwargs['tag'])
+        self.registry_password = registry_password
+        self.tag = str(tag) if tag is not None else 'latest'
+
+        # base toskose image
+        # used by toskose for the "toskosing" process
+        self.base_name = base_name        
+        self.base_tag = base_tag
+
+    @staticmethod
+    def _build_image_name(name, tag):
+        return '{0}:{1}'.format(name, tag) 
 
     @property
     def full_name(self):
         """ Return the Docker Image name including the tag (if any). """
-        repository = '' if self.repository is None else '{}/'.format(self.repository)
-        tag = '' if self.tag is None else ':{}'.format(self.tag)
 
-        return '{0}{1}/{2}{3}'.format(repository, self.user, self.name, tag) 
+        return ToskosedImage._build_image_name(self.name, self.tag)
+
+    @property
+    def full_name_base(self):
+        """ Return the Docker base Image name including the tag (if any). """
+
+        return ToskosedImage._build_image_name(self.base_name, self.base_tag) 

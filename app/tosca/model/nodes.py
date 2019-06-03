@@ -120,6 +120,7 @@ class Container(Root):
         self.ports = None
         self.share_data = {} 
         self.is_manager = is_manager
+        self.hosted = []
 
         self._ATTRIBUTE = {
             'id': lambda: self.id,
@@ -136,7 +137,8 @@ class Container(Root):
 
     @property
     def full_name(self):
-        return 'tosker_{}.{}'.format(self.tpl.name, self.name)
+        if not self.is_manager:
+            return 'tosker_{}.{}'.format(self.tpl.name, self.name)
 
     @property
     def image(self):
@@ -151,11 +153,6 @@ class Container(Root):
     def toskosed_image(self):
         return self.artifacts[-1]
 
-    @toskosed_image.setter
-    def toskosed_image(self, img):
-        assert isinstance(img, ToskosedImage)
-        self.artifacts.append(img)
-
     @property
     def executable(self):
         return isinstance(self.image, (DockerImageExecutable,
@@ -164,6 +161,10 @@ class Container(Root):
     @property
     def connection(self):
         return (i.format for i in self._connection + self._overlay)
+
+    def add_hosted_node(self, item):
+        if isinstance(item, Software):
+            self.hosted.append(item)
 
     def add_overlay(self, item, alias=None):
         if not isinstance(item, ConnectsTo):

@@ -83,70 +83,71 @@ def build_app_context(context_path, tosca_model):
                 logger.debug('Copied the tosca manifest [{0}] in [{1}]'.format(
                     os.path.basename(tosca_model.manifest_path), node_dir))
 
-            else:
-                for software in tosca_model.software:
-                    # searching the software nodes hosted on the current container
-                    if isinstance(software.host, HostedOn) and software.host.to == container.name:
-                        software_dir = os.path.join(node_dir, software.name)
-                        
-                        # copy artifacts
-                        artifacts_dir = os.path.join(software_dir, 'artifacts')
-                        os.makedirs(artifacts_dir)
-                        for artifact in software.artifacts:
-                            shutil.copy2(
-                                artifact.file_path, 
-                                os.path.join(artifacts_dir, os.path.basename(artifact.file_path)))
+            # searching the software nodes hosted on the current container
+            # note: toskose-manager node doesn't host any sw node
+            for software in container.hosted:
+                software_dir = os.path.join(node_dir, software.name)
+                
+                # copy artifacts
+                artifacts_dir = os.path.join(software_dir, 'artifacts')
+                os.makedirs(artifacts_dir)
+                for artifact in software.artifacts:
+                    shutil.copy2(
+                        artifact.file_path, 
+                        os.path.join(artifacts_dir, os.path.basename(artifact.file_path)))
 
-                        # copy scripts (lifecycle operations) 
-                        interfaces_dir = os.path.join(software_dir, 'scripts')
-                        os.makedirs(interfaces_dir)
+                # copy scripts (lifecycle operations) 
+                interfaces_dir = os.path.join(software_dir, 'scripts')
+                os.makedirs(interfaces_dir)
 
-                        # e.g.
-                        # interfaces:
-                        #   Standard:                                   # interfaces group
-                        #     create:                                   # interface
-                        #       implementation: /path/to/impl           # cmd (File Object)
-                        #       inputs:                                 # inputs -> container envs
-                        #         repo: <url_repo>
-                        #         branch: { get_input: api_branch }     # function
+                # e.g.
+                # interfaces:
+                #   Standard:                                   # interfaces group
+                #     create:                                   # interface
+                #       implementation: /path/to/impl           # cmd (File Object)
+                #       inputs:                                 # inputs -> container envs
+                #         repo: <url_repo>
+                #         branch: { get_input: api_branch }     # function
 
-                        for _, inter_group_content in software.interfaces.items():
-                            # multiple interfaces groups can co-exists, not only the "standard"
-                            for interface_name, interface_content in inter_group_content.items():
+                for _, inter_group_content in software.interfaces.items():
+                    # multiple interfaces groups can co-exists, not only the "standard"
+                    for interface_name, interface_content in inter_group_content.items():
 
-                                shutil.copy2(
-                                    interface_content['cmd'].file_path, 
-                                    os.path.join(
-                                        interfaces_dir, 
-                                        os.path.basename(interface_content['cmd'].file_path)))
+                        shutil.copy2(
+                            interface_content['cmd'].file_path, 
+                            os.path.join(
+                                interfaces_dir, 
+                                os.path.basename(interface_content['cmd'].file_path)))
 
-                                # add interface's inputs name:path as an env variable
-                                if 'inputs' in interface_content:
-                                    for k,v in interface_content['inputs'].items():
-                                        if isinstance(v, File):
-                                            logger.debug('Detected the interface [{0}] associated to the artifact [{1}]'.format(
-                                                interface_name, v.name))
-                                            
-                                            # change the path of the file according to the running container structure
-                                            v = os.path.join(
-                                                '/toskose/apps/{}/artifacts'.format(software.name),
-                                                os.path.basename(v.file_path))
-                                        
-                                        container.add_env('INPUT_{}'.format(k.upper()), v)
+                        # add interface's inputs name:path as an env variable
+                        if 'inputs' in interface_content:
+                            for k,v in interface_content['inputs'].items():
+                                if isinstance(v, File):
+                                    logger.debug('Detected the interface [{0}] associated to the artifact [{1}]'.format(
+                                        interface_name, v.name))
+                                    
+                                    # change the path of the file according to the running container structure
+                                    v = os.path.join(
+                                        '/toskose/apps/{}/artifacts'.format(software.name),
+                                        os.path.basename(v.file_path))
+                                
+                                container.add_env('INPUT_{}'.format(k.upper()), v)
 
-                        # initialize logs
-                        logger.debug('Initializing logs for component [{0}] hosted on container [{1}]'.format(
-                            software.name, container.name))
-                        logs_path = os.path.join(software_dir, 'logs')
-                        log_name ='{0}.log'.format(software.name)
-                        os.makedirs(logs_path)
-                        open(os.path.join(logs_path, log_name), 'w').close  
+                # initialize logs
+                logger.debug('Initializing logs for component [{0}] hosted on container [{1}]'.format(
+                    software.name, container.name))
+                logs_path = os.path.join(software_dir, 'logs')
+                log_name ='{0}.log'.format(software.name)
+                os.makedirs(logs_path)
+                open(os.path.join(logs_path, log_name), 'w').close  
 
-                # generate the Supervisord's configuration file
+            # generate the Supervisord's configuration file
+            # (only if a container node hosts a sw node)
+            if container.hosted:
                 build_config(
                     SupervisordTemplateType.Unit,
                     tosca_model=tosca_model,
-                    node_name=container.name,
+                    container=container,
                     output_dir=node_dir)
                 
                 logger.debug('Generated supervisord.conf for container node [{}]'.format(container.name))
