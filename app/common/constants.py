@@ -22,35 +22,36 @@ DEFAULT_TOSKOSE_UNIT_BASE_TAG = 'latest'
 
 DEFAULT_TOSKOSE_IMAGE_TAG = 'latest' 
 
-_supervisord_http_port = DEFAULT_SUPERVISORD_INIT_HTTP_PORT
-def _get_default_http_port():
-    global _supervisord_http_port
-    _supervisord_http_port += 1
-    return _supervisord_http_port
+def gen_default_http_port():
+    http_port = DEFAULT_SUPERVISORD_INIT_HTTP_PORT
+    while http_port < 65535:
+        http_port += 1
+        yield http_port
 
-def _get_default_image_name(app_name, node_name):
+def get_default_image_name(app_name, node_name):
     return '{0}-{1}-toskosed'.format(app_name, node_name)
 
 DEFAULT_NODE_API = {
-    'http_port': _get_default_http_port(),
+    'http_port': None,
     'http_user': DEFAULT_SUPERVISORD_HTTP_USER,
     'http_password': DEFAULT_SUPERVISORD_HTTP_PASSWORD,
     'log_level': DEFAULT_SUPERVISORD_LOG_LEVEL,
 }
 
 DEFAULT_NODE_DOCKER = {
-    'name': _get_default_image_name,
+    'name': None,
     'tag': DEFAULT_TOSKOSE_IMAGE_TAG,
     'registry_password': None,
 }
 
 DEFAULT_NODE = {
-    'api': DEFAULT_NODE_API,
-    'docker': DEFAULT_NODE_DOCKER,
+    **DEFAULT_NODE_API,
+    **{'docker': DEFAULT_NODE_DOCKER},
 }
 
 # Toskose Manager - default configurations
 DEFAULT_MANAGER_NAME = 'toskose-manager'
+DEFAULT_MANAGER_CONFIG_FIELD = 'manager'
 DEFAULT_MANAGER_HTTP_PORT = 10000
 DEFAULT_MANAGER_USER = 'admin'
 DEFAULT_MANAGER_PASSWORD = 'admin'
@@ -72,11 +73,12 @@ DEFAULT_MANAGER_API = {
     'secret_key': DEFAULT_MANAGER_SECRET_KEY,
 }
 
-FIXED_MANAGER_API = {
+# Fixed values (cannot be changed from the user)
+FIXED_MANAGER_ENVS = {
     'TOSKOSE_LOGS_PATH': DEFAULT_MANAGER_LOGS_PATH
 }
 
 DEFAULT_MANAGER = {
-    'api': {**FIXED_MANAGER_API, **DEFAULT_MANAGER_API},
-    'docker': DEFAULT_NODE_DOCKER,
+    **DEFAULT_MANAGER_API,
+    **{'docker': DEFAULT_NODE_DOCKER},
 }
