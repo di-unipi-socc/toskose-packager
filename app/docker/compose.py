@@ -2,6 +2,7 @@ import os
 import ruamel.yaml
 from ruamel.yaml.scalarstring import SingleQuotedScalarString, DoubleQuotedScalarString
 
+import app.common.constants as constants
 from app.common.logging import LoggingFacility
 from app.common.commons import CommonErrorMessages
 from app.common.exception import FatalError, TranslationError
@@ -11,21 +12,6 @@ from app.tosca.model.artifacts import File
 
 logger = LoggingFacility.get_instance().get_logger()
 
-_compose_supported_versions = [ '3.3' ]
-_compose_default_version = '3.3'
-
-# Toskose Manager
-_toskose_manager_image = 'diunipisocc/toskose-manager:latest'
-_toskose_manager_envs = {
-    'TOSKOSE_LOGS_PATH': '/toskose/logs',
-    'TOSKOSE_APP_MODE': 'production',
-    'TOSKOSE_MANAGER_PORT': 10000,
-    'SECRET_KEY': 'test'                  # used by the toskose-manager API (change)
-}
-_toskose_manager_ports = [DoubleQuotedScalarString('10000:10000/tcp')]
-_toskose_manager_networks = [DoubleQuotedScalarString('toskose-network')]
-_toskose_manager_volumes = [DoubleQuotedScalarString('toskose-manager-volume:/toskose/logs')]
-_toskose_manager_restart_policy = DoubleQuotedScalarString('on-failure')
 
 # Toskose Unit
 _base_service = {
@@ -37,7 +23,6 @@ _base_service = {
             "condition": DoubleQuotedScalarString('on-failure')
         },
     },
-    "environment": None,
     "networks": [DoubleQuotedScalarString('toskose-network')],
 }
 
@@ -58,32 +43,6 @@ _base_template = {
 
 def _validate(self):
     pass       
-    
-def _toskose_manager_template():
-    """ Generate the docker-compose template for the toskose-manager. """
-
-    return {
-        'services': {
-            'toskose-manager': {
-                'image': _toskose_manager_image,
-                'container_name': DoubleQuotedScalarString('toskose-manager'),
-                'environment': _toskose_manager_envs,
-                'deploy': {
-                    'mode': DoubleQuotedScalarString('replicated'),
-                    'replicas': 1,
-                    'restart_policy': { 'condition': _toskose_manager_restart_policy },
-                    'endpoint_mode': DoubleQuotedScalarString('vip')
-                },
-                'networks': _toskose_manager_networks,
-                'ports': _toskose_manager_ports,
-                'volumes': _toskose_manager_volumes
-            }
-        },
-        'volumes': {
-            'toskose-manager-volume': None
-        }
-    }
-
 
 def _volumes_template(tosca_model):
     """ Generate the docker-compose template for the TOSCA volumes. """
@@ -91,7 +50,7 @@ def _volumes_template(tosca_model):
     volumes = {}
     for volume in tosca_model.volumes:
 
-        logger.debug('Translating the volume node [{0}] in a docker-compose volume'.format(
+        logger.debug('Translating the volume node [{0}]'.format(
             volume.name))
 
         volumes[volume.name] = None
@@ -118,7 +77,7 @@ def _services_template(tosca_model):
     services = {}
     for container in tosca_model.containers:
 
-        logger.debug('Translating the container node [{0}] in a docker-compose service'.format(
+        logger.debug('Translating the container node [{0}]'.format(
             container.name))
 
         # generate volume section by exploiting volume nodes associated to the container node
@@ -142,19 +101,22 @@ def _services_template(tosca_model):
                     .format(v, container.name)) if v in container_ports else container_ports.add(v)
                 ports.append("{0}:{1}/tcp".format(k,v))
 
-        envs = ["{0}={1}".format(k,DoubleQuotedScalarString(v)) for k,v in container.env.items()]
+        envs = None        
+        if container.env is not None:
+            envs = ["{0}={1}".format(k,DoubleQuotedScalarString(v)) for k,v in container.env.items()]
 
         # generate the docker-compose service's template
         service = dict({ 
             **_base_service, 
             **{
-                "image": container.image.format,
-                "environment": envs,
+                "image": container.toskosed_image.full_name,
                 "container_name": "{0}-{1}".format(tosca_model.name, container.name),
                 "hostname": "{0}-{1}".format(tosca_model.name, container.name)
                 } 
             })
-
+        
+        if envs:
+            service['environment'] = envs
         if ports:
             service['ports'] = [DoubleQuotedScalarString(e) for e in ports]
         if vols:
@@ -200,27 +162,23 @@ def generate_compose(tosca_model, output_path, file_name=None, version=None):
     if not os.path.exists(output_path):
         raise ValueError('The output path must exists.')
     if file_name is None:
-        file_name = 'docker-compose.yml'
+        file_name = constants.DEFAULT_DOCKER_COMPOSE_FILENAME
     if version is None:
-        version = _compose_default_version
-    if not version in _compose_supported_versions:
+        version = constants.DEFAULT_DOCKER_COMPOSE_VERSION
+    if not version in constants.DOCKER_COMPOSE_SUPPORTED_VERSIONS:
         raise ValueError('The compose version {0} is not supported. Supported versions: {1}'.format(
-            version, _compose_supported_versions))
+            version, constants.DOCKER_COMPOSE_SUPPORTED_VERSIONS))
     
     logger.info('Generating the docker-compose v.{0} manifest for the [{1}] application'.format(
         version, tosca_model.name))
 
     compose = {**_base_template, **{'version': version}}
-
-    # toskose-manager
-    compose.update(_toskose_manager_template())
     
     compose['volumes'].update(_volumes_template(tosca_model))
     compose['services'].update(_services_template(tosca_model))
 
     _dump_compose(
         os.path.join(output_path, file_name),
-        compose
-    )
+        compose)
 
     logger.info('{0} successfully generated in {1}'.format(file_name, output_path))

@@ -37,6 +37,7 @@ MAX_PUSH_ATTEMPTS = 3
 class ToskosingProcessType(Enum):
     TOSKOSE_UNIT = auto()
     TOSKOSE_MANAGER = auto()
+    TOSKOSE_FREE = auto()
 
 
 def separate_full_image_name(full_name):
@@ -77,7 +78,7 @@ def separate_full_image_name(full_name):
     return result
 
 
-def generate_image_name_interactive():
+def generate_image_name_interactive(autocomplete_data=None):
     """ Generate a full name [repository]/<user>/<name><:tag> for a Docker Image interactively.
     
     Returns: 
@@ -87,35 +88,34 @@ def generate_image_name_interactive():
 
         e.g. 'myrepository/user/test:tag'
     """
-                
-    repository = input('Enter the repository URL [ENTER for the Docker Hub]: ')
-    if not repository:
-        logger.info('Using the Docker Hub as default repository.')
-        repository = None
-        
-    user = ''
-    while not user:
-        user = input('Enter the username [required]: ')
+
+    full_name = None
+    tag = None
+    registry_password = None
+
+    if autocomplete_data is not None:
+        full_name = autocomplete_data.get('name')
+        tag = autocomplete_data.get('tag')
+        registry_password = autocomplete_data.get('registry_password')
     
-    password = ''
-    while not password:
-        password = getpass.getpass(prompt='Enter the password for repository authentication [required]: ')
-    
-    name = ''
-    while not name:
-        name = input('Enter a new image name [required]: ')
-    
-    tag = input('Enter the TAG name [ENTER for latest]: ')
-    if not tag:
-        logger.info('No tag was provided. "latest" will be used.')
-        tag = None
+    if full_name is None:
+        while not full_name:
+            full_name = input('Enter the [repository/]image-name: ')
+
+    if tag is None:
+        tag = input('Enter the TAG name [ENTER for latest]: ')
+        if not tag:
+            logger.info('No tag was provided. "latest" will be used.')
+            tag = 'latest'
+
+    # if registry_password is None:
+    #     while not registry_password:
+    #         registry_password = getpass.getpass(prompt='Enter the password for repository authentication: ')
 
     return {
-        'repository': repository, 
-        'user': user,  
-        'password': password,
-        'name': name,
-        'tag': tag
+        'name': full_name,
+        'tag': tag,
+        'registry_password': registry_password,
     }
 
 
@@ -281,7 +281,7 @@ class DockerManager():
                 toskose_image, toskose_tag))
             raise DockerOperationError(
                 'The official Toskose image {0} not found. Try later.\nIf the problem persist, open an issue at {1}'.format(
-                    constants.TOSKOSE_UNIT_IMAGE, constants.APP_REPOSITORY))
+                    toskose_image, toskose_tag))
 
 
     def _remove_previous_toskosed(self, image, tag=None):
@@ -310,7 +310,7 @@ class DockerManager():
                 image, tag))
             image_found = self._client.images.get(image)
 
-            logger.info('Image [{0}] found. It\'s referenced by the following tags:\n\n{1}'.format(
+            logger.debug('Image [{0}] found. It\'s referenced by the following tags:\n\n{1}'.format(
                 image,
                 print_well(image_found.tags)))
 
@@ -321,7 +321,7 @@ class DockerManager():
                     full_name, image))
                 try:
                     image_found = self._client.images.get(image)
-                    logger.info('Image [{0}][ID: {1}] still exist'.format(
+                    logger.debug('Image [{0}][ID: {1}] still exist'.format(
                         image, image_found.id))
                 except ImageNotFound:
                     logger.info('Image [{0}][ID: {1}] doesn\'t have any references yet. Removed.'.format(
@@ -366,9 +366,9 @@ class DockerManager():
         # TODO can be enanched
         if process_type == ToskosingProcessType.TOSKOSE_UNIT:
             if toskose_image is None:
-                toskose_image = constants.TOSKOSE_UNIT_IMAGE
+                toskose_image = constants.DEFAULT_TOSKOSE_UNIT_BASE_IMAGE
             if toskose_tag is None:
-                toskose_tag = constants.TOSKOSE_UNIT_TAG
+                toskose_tag = constants.DEFAULT_TOSKOSE_UNIT_BASE_TAG
             if toskose_dockerfile is None:
                 toskose_dockerfile = os.path.join(
                     os.path.dirname(__file__),
@@ -378,20 +378,27 @@ class DockerManager():
         
         elif process_type == ToskosingProcessType.TOSKOSE_MANAGER:
             if toskose_image is None:
-                toskose_image = constants.TOSKOSE_MANAGER_IMAGE
+                toskose_image = constants.DEFAULT_MANAGER_BASE_IMAGE
             if toskose_tag is None:
-                toskose_tag = constants.TOSKOSE_MANAGER_TAG
+                toskose_tag = constants.DEFAULT_MANAGER_BASE_TAG
             if toskose_dockerfile is None:
                 toskose_dockerfile = os.path.join(
                     os.path.dirname(__file__),
                     DOCKERFILE_TEMPLATES_PATH,
                     DOCKERFILE_TOSKOSE_MANAGER_TEMPLATE
                 )
+
+            src_image = toskose_image
+            src_tag = toskose_tag
+
+        elif process_type == ToskosingProcessType.TOSKOSE_FREE:
+            pass
         
         else:
             raise ValueError('Cannot recognize the "toskosing" process {}'.format(process_type))
 
-        self._toskose_image_availability(toskose_image, toskose_tag)
+        if toskose_image is not None:
+            self._toskose_image_availability(toskose_image, toskose_tag)
 
         # Check if the original image exists and needs authentication to be fetched
         # note: docker client does not distinguish between authentication error or invalid image name (?)
@@ -402,35 +409,35 @@ class DockerManager():
             self._image_authentication(src_image, src_tag) # it should be an authentication error
 
         self._remove_previous_toskosed(dst_image, dst_tag)
+        logger.info('Toskosing [{0}:{1}] image'.format(src_image, src_tag))
         try:
-            # copy the template dockerfile into the context
-            shutil.copy2(
-                toskose_dockerfile,
-                context_path
-            )
-            
-            logger.info('Toskosing [{0}:{1}] image'.format(src_image, src_tag))
+            if process_type != ToskosingProcessType.TOSKOSE_FREE:
 
-            build_args = {
-                'TOSCA_SRC_IMAGE': '{0}:{1}'.format(src_image, src_tag),
-                'TOSKOSE_BASE_IMG': '{0}:{1}'.format(toskose_image, toskose_tag)
-            }
-            image, build_logs = self._client.images.build(
-                path=context_path,
-                tag=dst_image,
-                buildargs=build_args,
-                dockerfile=toskose_dockerfile,
-                #rm=True,    # remove intermediate containers
-            )
-            self._validate_build(build_logs)
+                # copy the template dockerfile into the context
+                shutil.copy2(
+                    toskose_dockerfile,
+                    context_path
+                )
 
-            # force the image tagging
-            #tagged = image.tag(dst_image, tag=dst_tag, force=True)
-            tagged = self._client.api.tag(image.id, dst_image, dst_tag, force=True)
-            if not tagged:
-                logger.error('Failed to tag the image [{0}:{1}] with ID [{2}]'.format(
-                    dst_image, dst_tag, image.id))
-            logger.info('[{0}:{1}] image successfully tagged.'.format(dst_image, dst_tag))
+                build_args = {
+                    'TOSCA_SRC_IMAGE': '{0}:{1}'.format(src_image, src_tag),
+                    'TOSKOSE_BASE_IMG': '{0}:{1}'.format(toskose_image, toskose_tag)
+                }
+                image, build_logs = self._client.images.build(
+                    path=context_path,
+                    tag='{0}:{1}'.format(dst_image, dst_tag),
+                    buildargs=build_args,
+                    dockerfile=toskose_dockerfile,
+                    rm=True,    # remove intermediate containers
+                )
+                self._validate_build(build_logs)
+            else:
+                # no toskose build - just tagging it
+                tagged = self._client.api.tag('{0}:{1}'.format(src_image, src_tag), dst_image, dst_tag, force=True)
+                if not tagged:
+                    logger.error('Failed to tag the image [{0}:{1}] with ID [{2}]'.format(
+                        dst_image, dst_tag, image.id))
+                logger.info('[{0}:{1}] image successfully tagged.'.format(dst_image, dst_tag))
 
             # push the "toskosed" image
             if enable_push:
