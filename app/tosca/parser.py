@@ -66,6 +66,13 @@ class ToscaParser:
         pass
 
     @staticmethod
+    def _update_hosted_nodes(tpl):
+        for container in tpl.containers:
+            for sw in tpl.software:
+                if sw.host_container == container:
+                    container.add_hosted_node(sw)
+
+    @staticmethod
     def _add_pointer(tpl):
         for node in tpl.nodes:
             for rel in node.relationships:
@@ -111,7 +118,7 @@ class ToscaParser:
                     container = con.to
                 if isinstance(con.to, Software):
                     container = con.to.host_container
-                logger.debug('mange connection of %s to %s', node, container)
+                logger.debug('manage connection of %s to %s', node, container)
                 node.host_container.add_overlay(container, con.to.name)
 
         # Manage the case whene a Container is connected to a Software
@@ -421,7 +428,7 @@ class ToscaParser:
                     if req_type == ToscaRequirementTypes.REL_DEPEND:
                         nodeObj.add_depend(target)
                     if req_type == ToscaRequirementTypes.REL_HOST:
-                        nodeObj.host = target
+                        nodeObj.host = target                        
                     if req_type == ToscaRequirementTypes.REL_ATTACH:
                         location = value['relationship']['properties']['location']
                         nodeObj.add_volume(target, location)
@@ -431,11 +438,15 @@ class ToscaParser:
 
                 template.push(nodeObj)
 
-                # ToscaParser._add_pointer(template)
-                # TODO it doesn't work - need a fix (NoneType on relationship.to)
-                # ToscaParser._add_back_links(template)
-                # TODO it doesn't work - need a fix (NoneType on host_container)
-                # ToscaParser._add_extension(template)
+            ToscaParser._add_pointer(template)
+            ToscaParser._add_back_links(template)
+            ToscaParser._add_extension(template)
+
+            # update container nodes about software nodes they are hosting
+            # this feature will be necessary to understand if a container node
+            # hosts at least one software node and then it needs to be "toskosed"
+            ToscaParser._update_hosted_nodes(template)
+
 
             return template
 
