@@ -285,7 +285,10 @@ class Toskoserizator:
         tosca_model.push(manager)
         
         # toskose-manager - volume
-        tosca_model.push(Volume(constants.DEFAULT_TOSKOSE_MANAGER_VOLUME_NAME))
+        # TODO fix? it introduces a crash of gunicorn during the
+        # toskose-manager startup?
+        # https://stackoverflow.com/questions/40553521/gunicorn-does-not-find-main-module-with-docker
+        #tosca_model.push(Volume(constants.DEFAULT_TOSKOSE_MANAGER_VOLUME_NAME))
                 
 
     def toskosed(self, csar_path, config_path=None, output_path=None, enable_push=False):
