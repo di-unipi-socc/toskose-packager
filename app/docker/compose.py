@@ -86,7 +86,10 @@ def _services_template(tosca_model):
             
             # volume is a tuple (e.g. ('/data/db', 'dbvolume'))
             # (<path/to/data>, <volume_name>)
-            vols.append('{0}:{1}'.format(volume[1], volume[0]))
+            #TODO fix format of Volume
+            vols.append('{0}:{1}'.format(
+                volume[1].split('.')[1], 
+                volume[0]))
                                                 
         # check conflicts within the container
         container_ports = set()
