@@ -277,11 +277,8 @@ class Toskoserizator:
         manager_config['TOSKOSE_MANAGER_PORT'] = manager_config.pop('http_port')
         manager_config['TOSKOSE_APP_MODE'] = manager_config.pop('mode')
         
-        manager.env = { 
-            **{ k.upper(): v for k,v in manager_config.items() if k != 'docker'}, 
-            **constants.FIXED_MANAGER_ENVS
-        }
-
+        manager.env = { k.upper(): v for k,v in manager_config.items() if k != 'docker'}
+        
         tosca_model.push(manager)
         
         # toskose-manager - volume
