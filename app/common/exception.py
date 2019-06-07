@@ -3,9 +3,9 @@ from app.common.logging import LoggingFacility
 
 class BaseToskoseException(Exception):
     
-    _message = 'An unknown exception occurred'
+    DEFAULT_MESSAGE = 'An unknown exception occurred'
 
-    def __init__(self, message=_message):
+    def __init__(self, message=DEFAULT_MESSAGE):
         self.message = message
 
     def __str__(self):

@@ -62,19 +62,25 @@
                     "description": "A representation of a container node",
                     "type": "object",
                     "properties": {
-                        "http_port": {
+                        "hostname": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 255,
+                            "description": "The hostname of the node"
+                        },
+                        "port": {
                             "type": "integer",
                             "minimum": 0,
                             "maximum": 65535,
                             "description": "The HTTP port of the node API"
                         },
-                        "http_user": {
+                        "user": {
                             "type": "string",
                             "minLength": 1,
                             "maxLength": 255,
                             "description": "The user of the node API"
                         },
-                        "http_password": {
+                        "password": {
                             "type": "string",
                             "minLength": 1,
                             "maxLength": 255,
@@ -107,19 +113,25 @@
                     "minLength": 1,
                     "description": "The secret key used by the API. (e.g. cookies generation)"
                 },
-                "http_port": {
+                "hostname": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 255,
+                    "description": "The hostname of the node"
+                },
+                "port": {
                     "type": "integer",
                     "minimum": 0,
                     "maximum": 65535,
                     "description": "The HTTP port of the node API"
                 },
-                "http_user": {
+                "user": {
                     "type": "string",
                     "minLength": 1,
                     "maxLength": 255,
                     "description": "The user of the node API"
                 },
-                "http_password": {
+                "password": {
                     "type": "string",
                     "minLength": 1,
                     "maxLength": 255,
