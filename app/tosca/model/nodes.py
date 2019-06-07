@@ -118,6 +118,7 @@ class Container(Root):
         self.env = None
         self.cmd = None
         self.ports = None
+        self.hostname = None
         self.share_data = {} 
         self.is_manager = is_manager
         self.hosted = []

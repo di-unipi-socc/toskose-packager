@@ -103,7 +103,7 @@ class Toskoserizator:
             output_path (str): The path in which the generated configuration will be dumped.
         """
 
-        http_port = constants.gen_default_http_port()
+        port = constants.gen_default_port()
 
         def _autocomplete_config(config, name, is_manager=False, is_host=False):
 
@@ -123,9 +123,16 @@ class Toskoserizator:
                             key,
                             name))
                     
-                        # special case (auto-generation of http port)
-                        if key == 'http_port':
-                            default_value = next(http_port)
+                        # note: special case defaults are generated dynamically according
+                        # to the tosca model data and they cannot be store as fixed defaults
+
+                        # special case (auto-generation of port)
+                        if key == 'port':
+                            default_value = next(port)
+                            
+                        # special case (auto-generation of hostname)
+                        if key == 'hostname':
+                            default_value = name
                     
                     config[key] = config.get(key, default_value)
 
@@ -249,6 +256,8 @@ class Toskoserizator:
             container.add_artifact(
                 ToskosedImage(**nodes_config[container.name]['docker']))
 
+            container.hostname = nodes_config[container.name]['hostname']
+
         # toskose-manager - container
         manager = Container(name='toskose-manager', is_manager=True)
 
@@ -270,11 +279,13 @@ class Toskoserizator:
             ToskosedImage(**manager_config['docker']))
         
         manager.add_port(
-            manager_config.get('http_port'),
-            constants.DEFAULT_MANAGER_HTTP_PORT)
+            manager_config.get('port'),
+            manager_config.get('port'))
+
+        manager.hostname = manager_config.get('hostname')
         
         # workaround (change config keys according to env names required by toskose-manager api)
-        manager_config['TOSKOSE_MANAGER_PORT'] = manager_config.pop('http_port')
+        manager_config['TOSKOSE_MANAGER_PORT'] = manager_config.pop('port')
         manager_config['TOSKOSE_APP_MODE'] = manager_config.pop('mode')
         
         manager.env = { k.upper(): v for k,v in manager_config.items() if k != 'docker'}

@@ -12,29 +12,30 @@ DEFAULT_DOCKER_COMPOSE_VERSION = '3.3'
 DOCKER_COMPOSE_SUPPORTED_VERSIONS = [ '3.3' ]
 
 # Toskose Unit - default configurations
-DEFAULT_SUPERVISORD_INIT_HTTP_PORT = 9000
-DEFAULT_SUPERVISORD_HTTP_USER = 'admin'
-DEFAULT_SUPERVISORD_HTTP_PASSWORD = 'admin'
+DEFAULT_SUPERVISORD_INIT_PORT = 9000
+DEFAULT_SUPERVISORD_USER = 'admin'
+DEFAULT_SUPERVISORD_PASSWORD = 'admin'
 DEFAULT_SUPERVISORD_LOG_LEVEL = 'INFO'
 
 DEFAULT_TOSKOSE_UNIT_BASE_IMAGE = 'diunipisocc/toskose-unit'
 DEFAULT_TOSKOSE_UNIT_BASE_TAG = 'latest'
 
-DEFAULT_TOSKOSE_IMAGE_TAG = 'latest' 
+DEFAULT_TOSKOSE_IMAGE_TAG = 'latest'
 
-def gen_default_http_port():
-    http_port = DEFAULT_SUPERVISORD_INIT_HTTP_PORT
-    while http_port < 65535:
-        http_port += 1
-        yield http_port
+def gen_default_port():
+    port = DEFAULT_SUPERVISORD_INIT_PORT
+    while _port < 65535:
+        port += 1
+        yield port
 
 def get_default_image_name(app_name, node_name):
     return '{0}-{1}-toskosed'.format(app_name, node_name)
 
 DEFAULT_NODE_API = {
-    'http_port': None,
-    'http_user': DEFAULT_SUPERVISORD_HTTP_USER,
-    'http_password': DEFAULT_SUPERVISORD_HTTP_PASSWORD,
+    'hostname': None,
+    'port': None,
+    'user': DEFAULT_SUPERVISORD_USER,
+    'password': DEFAULT_SUPERVISORD_PASSWORD,
     'log_level': DEFAULT_SUPERVISORD_LOG_LEVEL,
 }
 
@@ -52,7 +53,8 @@ DEFAULT_NODE = {
 # Toskose Manager - default configurations
 DEFAULT_MANAGER_NAME = 'toskose-manager'
 DEFAULT_MANAGER_CONFIG_FIELD = 'manager'
-DEFAULT_MANAGER_HTTP_PORT = 10000
+DEFAULT_MANAGER_HOSTNAME = 'toskose-manager'
+DEFAULT_MANAGER_PORT = 10000
 DEFAULT_MANAGER_USER = 'admin'
 DEFAULT_MANAGER_PASSWORD = 'admin'
 
@@ -64,10 +66,14 @@ DEFAULT_MANAGER_BASE_TAG = 'latest'
 
 DEFAULT_TOSKOSE_MANAGER_VOLUME_NAME = 'toskose-manager-volume'
 
+DEFAULT_MANAGER_CONFIG_DIR = 'config/'
+DEFAULT_MANAGER_MANIFEST_DIR = 'manifest/'
+
 DEFAULT_MANAGER_API = {
-    'http_port': DEFAULT_MANAGER_HTTP_PORT,
-    'http_user': DEFAULT_MANAGER_USER,
-    'http_password': DEFAULT_MANAGER_PASSWORD,
+    'hostname': DEFAULT_MANAGER_HOSTNAME,
+    'port': DEFAULT_MANAGER_PORT,
+    'user': DEFAULT_MANAGER_USER,
+    'password': DEFAULT_MANAGER_PASSWORD,
     'mode': DEFAULT_MANAGER_APP_MODE,
     'secret_key': DEFAULT_MANAGER_SECRET_KEY,
 }
