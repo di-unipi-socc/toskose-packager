@@ -13,3 +13,6 @@ services:
 
 script:
   - pytest
+
+after_success:
+- ./deploy.sh
