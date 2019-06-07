@@ -72,16 +72,31 @@ def build_app_context(context_path, tosca_model):
 
             # toskose-manager
             if container.is_manager:
+
+                config_dir = os.path.join(node_dir, constants.DEFAULT_MANAGER_CONFIG_DIR)
+                os.makedirs(config_dir)
                 
                 # copy the toskose configuration (in toskose-manager context)
-                shutil.copy2(tosca_model.toskose_config_path, node_dir)
+                shutil.copy2(tosca_model.toskose_config_path, config_dir)
                 logger.debug('Copied the toskose config [{0}] in [{1}]'.format(
-                    os.path.basename(tosca_model.toskose_config_path), node_dir))
+                    os.path.basename(tosca_model.toskose_config_path), config_dir))
+
+                manifest_dir = os.path.join(node_dir, constants.DEFAULT_MANAGER_MANIFEST_DIR)
+                os.makedirs(manifest_dir)
 
                 # copy the tosca manifest (in toskose-manager context)
-                shutil.copy2(tosca_model.manifest_path, node_dir)
+                shutil.copy2(tosca_model.manifest_path, manifest_dir)
                 logger.debug('Copied the tosca manifest [{0}] in [{1}]'.format(
-                    os.path.basename(tosca_model.manifest_path), node_dir))
+                    os.path.basename(tosca_model.manifest_path), manifest_dir))
+
+                # copy the tosca imports/types (in toskose-manager context)
+                imports_dir = os.path.join(manifest_dir, 'imports/')
+                os.makedirs(imports_dir)
+                for imp in tosca_model.imports:
+                    for k,v in imp.items():
+                        shutil.copy2(v, imports_dir)
+                        logger.debug('Copied the import/types [{0}] in [{1}]'.format(
+                            os.path.basename(v), imports_dir))
 
             # searching the software nodes hosted on the current container
             # note: toskose-manager node doesn't host any sw node

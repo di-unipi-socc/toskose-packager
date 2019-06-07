@@ -264,6 +264,16 @@ class ToscaParser:
                 template.outputs = tosca.outputs
             if hasattr(tosca, 'policies'):
                 pass
+            
+            # imports (types)
+            # e.g. [{'tosker': 'tosker-types.yaml'}]
+            if 'imports' in tosca.tpl:
+                for imp in tosca.tpl['imports']:
+                    for k,v in imp.items():
+                        #TODO check if it's an URL (remote file with types, DL it)
+                        #assuming local file
+                        template.add_import(k,os.path.join(base_path, v))
+                        logger.debug('Added Import: {0}:{1}'.format(k,v))
 
             template.tmp_dir = os.path.dirname(os.path.abspath(manifest_path))
             template.manifest_path = manifest_path
@@ -446,7 +456,6 @@ class ToscaParser:
             # this feature will be necessary to understand if a container node
             # hosts at least one software node and then it needs to be "toskosed"
             ToscaParser._update_hosted_nodes(template)
-
 
             return template
 

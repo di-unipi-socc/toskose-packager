@@ -2,6 +2,7 @@
 Template module
 '''
 import six
+import os
 
 from .nodes import Container, Root, Software, Volume
 
@@ -15,7 +16,15 @@ class Template:
         self._outputs = []
         self.tmp_dir = None
         self.manifest_path = None
+        self.imports = []
         self.toskose_config_path = None
+
+    def add_import(self, name, path):
+        if not os.path.exists(path):
+            raise ValueError('The file {} doesn\'t exists'.format(path))
+        entry = dict()
+        entry[name] = path
+        self.imports.append(entry)
 
     @property
     def nodes(self):
