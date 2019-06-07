@@ -24,7 +24,7 @@ DEFAULT_TOSKOSE_IMAGE_TAG = 'latest'
 
 def gen_default_port():
     port = DEFAULT_SUPERVISORD_INIT_PORT
-    while _port < 65535:
+    while port < 65535:
         port += 1
         yield port
 

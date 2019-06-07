@@ -8,6 +8,12 @@ supervisord_config_common_sections = [
 ]
 
 apps_data = [
+    # {
+    #     'base_dir': helpers.full_path('sockshop'),
+    #     'csar_path': helpers.full_path('sockshop/sockshop.csar'),
+    #     'toskose_config': helpers.full_path(
+    #         'sockshop/configurations/sockshop-toskose.yml'),
+    # },
     {
         'base_dir': helpers.full_path('thinking-app'),
         'csar_path': helpers.full_path('thinking-app/thinking.csar'),
@@ -26,9 +32,10 @@ apps_data = [
         'software': ['api', 'gui'],
         'volumes': ['dbvolume'],
         'toskose_config_manager_input': {
-            'http_port': 10001,
-            'http_user': 'admin',
-            'http_password': 'admin',
+            'hostname': 'manager',
+            'port': 10001,
+            'user': 'admin',
+            'password': 'admin',
             'mode': 'production',
             'secret_key': 'secret',
             'docker': {
@@ -39,9 +46,10 @@ apps_data = [
         },
         'toskose_config_input': {
             'maven': {
-                'http_port': 9001,
-                'http_user': 'admin',
-                'http_password': 'admin',
+                'hostname': 'maven',
+                'port': 9001,
+                'user': 'admin',
+                'password': 'admin',
                 'log_level': 'INFO',
                 'docker': {
                     'name': 'test/maven-toskosed',
@@ -50,9 +58,10 @@ apps_data = [
                 },
             },
             'node': {
-                'http_port': 9002,
-                'http_user': 'admin',
-                'http_password': 'admin',
+                'hostname': 'node',
+                'port': 9002,
+                'user': 'admin',
+                'password': 'admin',
                 'log_level': 'INFO',
                 'docker': {
                     'name': 'test/node-toskosed',
