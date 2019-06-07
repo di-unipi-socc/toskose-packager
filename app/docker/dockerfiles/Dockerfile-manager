@@ -1,6 +1,10 @@
 ARG TOSKOSE_BASE_IMG
 
-FROM ${TOSKOSE_BASE_IMG}
+FROM ${TOSKOSE_BASE_IMG} as base
 
+# copy toskose config(s) and tosca manifest(s) (merging)
+# /toskose/source /toskose/config /toskose/manifest
 WORKDIR /toskose
 COPY . .
+
+FROM base as release
