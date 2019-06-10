@@ -30,7 +30,9 @@ logger = LoggingFacility.get_instance().get_logger()
 
 DOCKERFILE_TEMPLATES_PATH = 'dockerfiles'
 DOCKERFILE_TOSKOSE_UNIT_TEMPLATE = 'Dockerfile-unit'
+INITIALIZER_TOSKOSE_UNIT = 'unit-initializer.sh'
 DOCKERFILE_TOSKOSE_MANAGER_TEMPLATE = 'Dockerfile-manager'
+INITIALIZER_TOSKOSE_MANAGER = 'unit-initializer.sh'
 MAX_PUSH_ATTEMPTS = 3
 
 
@@ -331,7 +333,8 @@ class DockerManager():
 
     
     def toskose_image(self, src_image, src_tag, dst_image, dst_tag, context_path, process_type,
-                      toskose_dockerfile=None, toskose_image=None, toskose_tag=None, enable_push=True):
+                      toskose_dockerfile=None, toskose_initializer=None, toskose_image=None, 
+                      toskose_tag=None, enable_push=True):
         """  The process of "toskosing" the component(s) of a multi-component TOSCA-defined application.
         
         The "toskosing" process consists in merging contexts (e.g. artifacts, lifecycle scripts) of TOSCA software 
@@ -361,7 +364,13 @@ class DockerManager():
 
         if toskose_dockerfile is not None:
             if not os.path.exists(toskose_dockerfile):
-                raise ValueError('The given templates path {} doesn\'t exist'.format(toskose_dockerfile))
+                raise ValueError('The given toskose template dockerfile {} doesn\'t exist'.format(toskose_dockerfile))
+
+        if toskose_initializer is not None:
+            if not os.path.exists(toskose_initializer):
+                raise ValueError('The given toskose initializer {} doesn\'t exist'.format(toskose_initializer))
+
+        template_dir = os.path.join(os.path.dirname(__file__), DOCKERFILE_TEMPLATES_PATH)
 
         # TODO can be enanched
         if process_type == ToskosingProcessType.TOSKOSE_UNIT:
@@ -371,10 +380,12 @@ class DockerManager():
                 toskose_tag = constants.DEFAULT_TOSKOSE_UNIT_BASE_TAG
             if toskose_dockerfile is None:
                 toskose_dockerfile = os.path.join(
-                    os.path.dirname(__file__),
-                    DOCKERFILE_TEMPLATES_PATH,
-                    DOCKERFILE_TOSKOSE_UNIT_TEMPLATE
-                )
+                    template_dir,
+                    DOCKERFILE_TOSKOSE_UNIT_TEMPLATE)
+            if toskose_initializer is None:
+                toskose_initializer = os.path.join(
+                    template_dir, 
+                    INITIALIZER_TOSKOSE_UNIT)
         
         elif process_type == ToskosingProcessType.TOSKOSE_MANAGER:
             if toskose_image is None:
@@ -383,10 +394,12 @@ class DockerManager():
                 toskose_tag = constants.DEFAULT_MANAGER_BASE_TAG
             if toskose_dockerfile is None:
                 toskose_dockerfile = os.path.join(
-                    os.path.dirname(__file__),
-                    DOCKERFILE_TEMPLATES_PATH,
-                    DOCKERFILE_TOSKOSE_MANAGER_TEMPLATE
-                )
+                    template_dir,
+                    DOCKERFILE_TOSKOSE_MANAGER_TEMPLATE)
+            if toskose_initializer is None:
+                toskose_initializer = os.path.join(
+                    template_dir, 
+                    INITIALIZER_TOSKOSE_MANAGER)
 
             src_image = toskose_image
             src_tag = toskose_tag
@@ -416,6 +429,12 @@ class DockerManager():
                 # copy the template dockerfile into the context
                 shutil.copy2(
                     toskose_dockerfile,
+                    context_path
+                )
+
+                # copy the initializer script into the context
+                shutil.copy2(
+                    toskose_initializer,
                     context_path
                 )
 

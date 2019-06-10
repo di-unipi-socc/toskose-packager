@@ -27,16 +27,23 @@ def build_app_context(context_path, tosca_model):
     An example of an app's context for a TOSCA-based application:
 
     /
+    --/<component_name> 
+    --/...
+    --/<component_name>
     --/toskose
-    ----/<application_name>
-    ------/<container_name>         (related to the tosca container node)
-    --------/<component_name>       (related to the tosca software node hosted on)
-    ----------/<artifacts>          (containing the artifacts associated to the component)
-    ----------/<scripts>            (containing the scripts for the lifecycle operations)
-    ----------/<logs>               (containing the logs associated to the component, managed by supervisord)
-    --------/ ...
-    --------/<component_name>        
-    --------/supervisord.conf       (the supervisord configuration)
+    ----/apps
+    ------/<component_name>
+    --------/<artifacts>          (containing the artifacts associated to the component)
+    --------/<scripts>            (containing the scripts for the lifecycle operations)
+    --------/<logs>               (containing the logs associated to the component, managed by supervisord)
+    ------/...
+    ------/<component_name>
+    ----/supervisord
+    ------/bundle                 (containing the supervisord exec + interpreter)
+    ------/config
+    --------/supervisord.conf     (the supervisord configuration)
+    ------/logs                   (supervisord logs)
+    ------/entrypoint.sh          (the entrypoint for starting supervisord)
 
     Note: the structure above will be "merged" during the docker build process with a base structure already 
             present in the toskose-unit image (see toskose-unit module). The latter contains a base logic for
@@ -102,7 +109,12 @@ def build_app_context(context_path, tosca_model):
             # note: toskose-manager node doesn't host any sw node
             for software in container.hosted:
                 software_dir = os.path.join(node_dir, software.name)
-                
+
+                # generate hosted component root dir
+                # /<component_name>
+                # /toskose
+                # in the initializer script, during the "toskoserization" of the new images
+
                 # copy artifacts
                 artifacts_dir = os.path.join(software_dir, 'artifacts')
                 os.makedirs(artifacts_dir)

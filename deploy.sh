@@ -5,6 +5,8 @@ NODE_IMAGE="giulen/thinking-node-toskosed"
 MONGODB_IMAGE="giulen/thinking-mongodb-toskosed"
 MANAGER_IMAGE="giulen/thinking-manager"
 
+# TODO Sockshop
+
 images=( $MAVEN_IMAGE $NODE_IMAGE $MONGODB_IMAGE $MANAGER_IMAGE )
 
 docker --version
