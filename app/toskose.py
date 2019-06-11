@@ -367,12 +367,13 @@ class Toskoserizator:
 
                         ctx_path = os.path.join(tmp_dir_context, model.name, container.name)
                         self._docker_manager.toskose_image(
-                            container.image.name,
-                            container.image.tag,
-                            container.toskosed_image.name,
-                            container.toskosed_image.tag,
-                            ctx_path,
-                            template,
+                            src_image=container.image.name,
+                            src_tag=container.image.tag,
+                            dst_image=container.toskosed_image.name,
+                            dst_tag=container.toskosed_image.tag,
+                            context=ctx_path,
+                            process_type=template,
+                            app_name=model.name,
                             toskose_image=container.toskosed_image.base_name,
                             toskose_tag=container.toskosed_image.base_tag,
                             enable_push=enable_push

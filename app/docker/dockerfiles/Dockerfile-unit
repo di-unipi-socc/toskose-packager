@@ -16,12 +16,6 @@ COPY --from=base /toskose/ /toskose/
 # copy lifecyle scripts and artifacts of apps hosted by this image
 COPY . /tmp/toskose/apps
 
-# the initializer
-WORKDIR /tmp/toskose/apps
-RUN set -eu \
-    && chmod +x unit-initializer.sh \
-    && ./unit-initializer.sh 
-
 # copy supervisord's config
 WORKDIR /toskose/supervisord/config
 RUN mv /tmp/toskose/apps/supervisord.conf ./supervisord.conf
@@ -45,6 +39,8 @@ RUN set -eu \
 # ### ### ###
 
 FROM toskosed as release
+ARG TOSCA_APP_NAME
+ENV TOSCA_APP_NAME=${TOSCA_APP_NAME}
 
 WORKDIR /toskose
 

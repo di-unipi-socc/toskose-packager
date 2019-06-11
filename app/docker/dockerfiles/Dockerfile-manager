@@ -2,6 +2,11 @@ ARG TOSKOSE_BASE_IMG
 
 FROM ${TOSKOSE_BASE_IMG} as base
 
+# can be used only in this build stage (ARG after FROM)
+# use ARG to set the default ENV
+ARG TOSCA_APP_NAME 
+ENV TOSCA_APP_NAME=${TOSCA_APP_NAME}
+
 # copy toskose config(s) and tosca manifest(s) (merging)
 # /toskose/source /toskose/config /toskose/manifest
 WORKDIR /toskose

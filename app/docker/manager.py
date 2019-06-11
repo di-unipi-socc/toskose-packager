@@ -30,9 +30,7 @@ logger = LoggingFacility.get_instance().get_logger()
 
 DOCKERFILE_TEMPLATES_PATH = 'dockerfiles'
 DOCKERFILE_TOSKOSE_UNIT_TEMPLATE = 'Dockerfile-unit'
-INITIALIZER_TOSKOSE_UNIT = 'unit-initializer.sh'
 DOCKERFILE_TOSKOSE_MANAGER_TEMPLATE = 'Dockerfile-manager'
-INITIALIZER_TOSKOSE_MANAGER = 'unit-initializer.sh'
 MAX_PUSH_ATTEMPTS = 3
 
 
@@ -332,9 +330,8 @@ class DockerManager():
             logger.info('No previous image found.')
 
     
-    def toskose_image(self, src_image, src_tag, dst_image, dst_tag, context_path, process_type,
-                      toskose_dockerfile=None, toskose_initializer=None, toskose_image=None, 
-                      toskose_tag=None, enable_push=True):
+    def toskose_image(self, src_image, src_tag, dst_image, dst_tag, context, process_type, app_name,
+                      toskose_dockerfile=None, toskose_image=None, toskose_tag=None, enable_push=True):
         """  The process of "toskosing" the component(s) of a multi-component TOSCA-defined application.
         
         The "toskosing" process consists in merging contexts (e.g. artifacts, lifecycle scripts) of TOSCA software 
@@ -352,11 +349,13 @@ class DockerManager():
         
         Args:
             src_image (str): The name of the image to be "toskosed".
-            dst_image (str): The name of the "toskosed" image.
-            context_path (str): The path of the application context.
             src_tag (str): The tag of the image to be "toskosed".
+            dst_image (str): The name of the "toskosed" image.
             dst_tag (str): The tag of the "toskosed" image.
-            template (str): The type of the "toskosing" process to activate.
+            context (str): The path of the application context.
+            process_type (enum): The type of "toskosing" process. [unit/manager/free]
+            app_name (str): The name of the TOSCA application.
+            toskose_dockerfile (str): The path of the template dockerfile used in the process.
             toskose_image (str): The Docker Toskose base-image used in the "toskosing" process.
             toskose_tag (str): The tag of the Docker Toskose base-image.
             enable_push (bool): enable/disable pushing of the "toskosed" image. (default: True)
@@ -366,9 +365,8 @@ class DockerManager():
             if not os.path.exists(toskose_dockerfile):
                 raise ValueError('The given toskose template dockerfile {} doesn\'t exist'.format(toskose_dockerfile))
 
-        if toskose_initializer is not None:
-            if not os.path.exists(toskose_initializer):
-                raise ValueError('The given toskose initializer {} doesn\'t exist'.format(toskose_initializer))
+        if not app_name:
+            raise ValueError('A name associated to the TOSCA application must be given')
 
         template_dir = os.path.join(os.path.dirname(__file__), DOCKERFILE_TEMPLATES_PATH)
 
@@ -382,10 +380,6 @@ class DockerManager():
                 toskose_dockerfile = os.path.join(
                     template_dir,
                     DOCKERFILE_TOSKOSE_UNIT_TEMPLATE)
-            if toskose_initializer is None:
-                toskose_initializer = os.path.join(
-                    template_dir, 
-                    INITIALIZER_TOSKOSE_UNIT)
         
         elif process_type == ToskosingProcessType.TOSKOSE_MANAGER:
             if toskose_image is None:
@@ -396,10 +390,6 @@ class DockerManager():
                 toskose_dockerfile = os.path.join(
                     template_dir,
                     DOCKERFILE_TOSKOSE_MANAGER_TEMPLATE)
-            if toskose_initializer is None:
-                toskose_initializer = os.path.join(
-                    template_dir, 
-                    INITIALIZER_TOSKOSE_MANAGER)
 
             src_image = toskose_image
             src_tag = toskose_tag
@@ -429,21 +419,16 @@ class DockerManager():
                 # copy the template dockerfile into the context
                 shutil.copy2(
                     toskose_dockerfile,
-                    context_path
-                )
-
-                # copy the initializer script into the context
-                shutil.copy2(
-                    toskose_initializer,
-                    context_path
+                    context
                 )
 
                 build_args = {
+                    'TOSCA_APP_NAME': '{}'.format(app_name),
                     'TOSCA_SRC_IMAGE': '{0}:{1}'.format(src_image, src_tag),
                     'TOSKOSE_BASE_IMG': '{0}:{1}'.format(toskose_image, toskose_tag)
                 }
                 image, build_logs = self._client.images.build(
-                    path=context_path,
+                    path=context,
                     tag='{0}:{1}'.format(dst_image, dst_tag),
                     buildargs=build_args,
                     dockerfile=toskose_dockerfile,
