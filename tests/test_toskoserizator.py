@@ -46,12 +46,15 @@ def test_toskose_images(model_fixture, data):
                 ctx_path = os.path.join(tmp_ctx, model.name, container.name)
                 
                 t._docker_manager.toskose_image(
-                    container.image.name,
-                    container.image.tag,
-                    container.toskosed_image.name,
-                    container.toskosed_image.tag,
-                    ctx_path,
-                    template,
+                    src_image=container.image.name,
+                    src_tag=container.image.tag,
+                    dst_image=container.toskosed_image.name,
+                    dst_tag=container.toskosed_image.tag,
+                    context=ctx_path,
+                    process_type=template,
+                    app_name=model.name,
+                    # toskose_image default
+                    # toskose_tag default
                     enable_push=False
                 )
 

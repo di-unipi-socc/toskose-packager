@@ -55,7 +55,7 @@ topology_template:
           create:
             implementation: scripts/api/install.sh
             inputs:
-              repo: https://github.com/jacopogiallo/thoughts-api
+              repo: https://github.com/matteobogo/thoughts-api
               branch: { get_input: api_branch }
           configure:
             implementation: scripts/api/configure.sh
@@ -87,7 +87,7 @@ topology_template:
           create:
             implementation: scripts/gui/install.sh
             inputs:
-              repo: https://github.com/jacopogiallo/thoughts-gui
+              repo: https://github.com/matteobogo/thoughts-gui
               branch: { get_input: gui_branch }
           configure:
             implementation: scripts/gui/configure.sh
