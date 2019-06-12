@@ -94,7 +94,7 @@ def _services_template(tosca_model):
         # check conflicts within the container
         container_ports = set()
 
-        # container's ports mapping (host:container)
+        # container's ports mapping (container:host, inverted if compared to Docker standard)
         ports = []
         if container.ports is not None:
             for k,v in container.ports.items():
@@ -102,7 +102,7 @@ def _services_template(tosca_model):
                     .format(k)) if k in host_ports else host_ports.add(k)
                 logger.warning('Detected possible container\'s ports conflict for port [{0}] within the container node [{1}]' \
                     .format(v, container.name)) if v in container_ports else container_ports.add(v)
-                ports.append("{0}:{1}/tcp".format(k,v))
+                ports.append("{0}:{1}/tcp".format(v,k))
 
         envs = None        
         if container.env is not None:
