@@ -1,16 +1,13 @@
-import os
 import collections
 import copy
-from enum import Enum, auto
+import os
 from configparser import ConfigParser
+from enum import Enum, auto
 
-from app.tosca.model.relationships import HostedOn
-
-from app.common.logging import LoggingFacility
-from app.common.exception import SupervisordConfigGeneratorError
-from app.common.exception import FatalError
 from app.common.commons import CommonErrorMessages
-
+from app.common.exception import FatalError, SupervisordConfigGeneratorError
+from app.common.logging import LoggingFacility
+from app.tosca.model.relationships import HostedOn
 
 logger = LoggingFacility.get_instance().get_logger()
 
@@ -87,6 +84,24 @@ def _build_unit_config(tosca_model=None, container=None, output_dir=None,
         config = ConfigParser()
         config.read(os.path.join(os.path.dirname(__file__), _SUPERVISORD_UNIT_TEMPLATE_PATH))
         
+        if not container.hosted and not container.is_manager:
+            # container has no hosted component, it's a standalone container
+            # map the cmd command of the container as the only Supervisord's program
+            # we're assuming that cmd command includes also the shell exec on head
+
+            template = dict(_SUPERVISORD_PROGRAM_TEMPLATE)
+            template.update({
+                'command': container.cmd,
+                'process_name': '{0}-{1}'.format(container.name, 'default'),
+                'stdout_logfile': os.path.join(
+                    '/toskose',
+                    '{}.log'.format(container.name)
+                ),
+                'autostart': 'true'
+            })
+
+            config['program:{0}-{1}'.format(container.name, 'default')] = template
+
         for software in container.hosted:
             for inter_group_name, inter_group_content in software.interfaces.items():
                 # multiple interfaces groups can co-exists, not only the "standard"
@@ -138,6 +153,8 @@ def build_config(type, **kwargs):
 
     if type == SupervisordTemplateType.Unit:
         _build_unit_config(**kwargs)
+    elif type == SupervisordTemplateType.Manager:
+        pass
     else:
         logger.error('Supervisord Configuration type [{}] is invalid'.format(type))
         raise SupervisordConfigGeneratorError(CommonErrorMessages._DEFAULT_SUPERVISORD_CONFIG_GEN_ERROR_MSG)

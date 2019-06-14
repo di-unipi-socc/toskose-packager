@@ -6,13 +6,12 @@ import os
 import shutil
 
 import app.common.constants as constants
-from app.common.logging import LoggingFacility
-from app.common.exception import FatalError
 from app.common.commons import CommonErrorMessages
-from app.tosca.model.relationships import HostedOn
-from app.tosca.model.artifacts import File
+from app.common.exception import FatalError
+from app.common.logging import LoggingFacility
 from app.supervisord.configurator import SupervisordTemplateType, build_config
-
+from app.tosca.model.artifacts import File
+from app.tosca.model.relationships import HostedOn
 
 logger = LoggingFacility.get_instance().get_logger()
 
@@ -77,8 +76,12 @@ def build_app_context(context_path, tosca_model):
             node_dir = os.path.join(root_dir, container.name)
             os.makedirs(node_dir)
 
+            supervisord_template = SupervisordTemplateType.Unit
+
             # toskose-manager
             if container.is_manager:
+
+                supervisord_template = SupervisordTemplateType.Manager
 
                 config_dir = os.path.join(node_dir, constants.DEFAULT_MANAGER_CONFIG_DIR)
                 os.makedirs(config_dir)
@@ -169,17 +172,16 @@ def build_app_context(context_path, tosca_model):
                 open(os.path.join(logs_path, log_name), 'w').close  
 
             # generate the Supervisord's configuration file
-            # (only if a container node hosts a sw node)
-            if container.hosted:
-                build_config(
-                    SupervisordTemplateType.Unit,
-                    tosca_model=tosca_model,
-                    container=container,
-                    output_dir=node_dir)
-                
-                logger.debug('Generated supervisord.conf for container node [{}]'.format(container.name))
+            build_config(
+                supervisord_template,
+                tosca_model=tosca_model,
+                container=container,
+                output_dir=node_dir)
+            
+            logger.debug('Generated supervisord.conf for container node [{}]'.format(container.name))
 
-                # Validate the component(s) context
+            # Validate the component(s) context
+            if not container.is_manager:
                 _validate_context(node_dir)
 
     except (TypeError, OSError) as err:

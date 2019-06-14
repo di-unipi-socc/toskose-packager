@@ -2,29 +2,25 @@
 The Docker Manager module for handling operations with the Docker Engine.
 """
 
-import os
-import shutil
 import getpass
 import json
+import os
+import shutil
 from enum import Enum, auto
 from functools import reduce
+
+from click import command
+from docker import DockerClient
+from docker.errors import APIError, BuildError, ImageNotFound
+from docker.models.images import Image
 from requests.exceptions import HTTPError
 
-from docker import DockerClient
-from docker.models.images import Image
-from docker.errors import APIError
-from docker.errors import BuildError
-from docker.errors import ImageNotFound
-
 import app.common.constants as constants
-from app.common.logging import LoggingFacility
 from app.common.commons import CommonErrorMessages, create_auth_interactive
-from app.common.exception import DockerOperationError
-from app.common.exception import ValidationError
-from app.common.exception import FatalError
-from app.common.exception import OperationAbortedByUser
-from app.common.exception import DockerAuthenticationFailedError
-
+from app.common.exception import (DockerAuthenticationFailedError,
+                                  DockerOperationError, FatalError,
+                                  OperationAbortedByUser, ValidationError)
+from app.common.logging import LoggingFacility
 
 logger = LoggingFacility.get_instance().get_logger()
 
@@ -32,6 +28,13 @@ DOCKERFILE_TEMPLATES_PATH = 'dockerfiles'
 DOCKERFILE_TOSKOSE_UNIT_TEMPLATE = 'Dockerfile-unit'
 DOCKERFILE_TOSKOSE_MANAGER_TEMPLATE = 'Dockerfile-manager'
 MAX_PUSH_ATTEMPTS = 3
+
+SUPPORTED_SHELLS = [
+    '/bin/bash', '/bin/sh', '/bin/zsh', 
+    '/bin/tcsh', '/bin/ksh','/bin/fish'
+]
+
+DEFAULT_SHELL = ['/bin/sh', '-c']
 
 
 class ToskosingProcessType(Enum):
@@ -144,7 +147,64 @@ class DockerManager():
         except APIError as err:
             logger.exception(err)
             raise DockerOperationError('Failed to retrieve the Docker Engine info')
+
+    def search_runnable_commands(self, image, tag, pull=True):
+        """ Searching for ENTRYPOINT or CMD in a given image """
+
+        def _bind_shell(cmd_list):
+            """ e.g. ["/bin/sh", "-c", "echo", "hello!"] """
+            if cmd_list[0] in SUPPORTED_SHELLS:
+                return cmd_list
+            else:
+                # add a default shell on head
+                return (DEFAULT_SHELL + cmd_list)
+
+        full_name = '{0}:{1}'.format(image, tag)
+
+        logger.info('Analyzing the [{}] image'.format(full_name))
+        image = self._pull_image_with_auth(image, tag)
+        
+        assert (image, Image)
+        
+        if image is not None:
+            output = self._client.api.inspect_image(full_name)
+            if not output or 'Config' not in output:
+                raise FatalError('Failed to inspect {} image'.format(full_name))
+            else:
+                entrypoint = output['Config']['Entrypoint']
+                cmd = output['Config']['Cmd']
+
+                commands = list()
+                if entrypoint and not cmd:
+                    logger.debug('Detected only an ENTRYPOINT: {}'.format(entrypoint))
+                    commands = _bind_shell(entrypoint)
+                elif not entrypoint and cmd:
+                    logger.debug('Detected only a CMD: {}'.format(cmd))
+                    commands = _bind_shell(cmd)
+                elif entrypoint and cmd:
+                    logger.debug('Detected both ENTRYPOINT: {0} and CMD: {1}'.format(
+                        entrypoint, cmd))
+                    # combining entrypoint (first) with cmd
+                    commands = _bind_shell(entrypoint)
+                    commands += cmd
+                else:
+                    logger.info('the {} image is not runnable. Adding an infinite sleep'.format(full_name))
+                    commands = DEFAULT_SHELL + ['sleep', 'infinity']
+
+                # add quotes
+                # [0]: /bin/bash [1]: -c
+                commands[2] = "\'" + commands[2]
+                commands[-1] = commands[-1] + "\'"
+                
+                return ' '.join(commands)
     
+    def _pull_image_with_auth(self, image, tag):
+
+        try:
+            return self._client.images.pull(image, tag)
+        except ImageNotFound as err:
+            # it should be an authentication error  
+            return self._image_authentication(image, tag)  
 
     def _image_authentication(self, src_image, src_tag=None, auth=None):
         """ Handling Docker authentication if the image is hosted on a private repository 
@@ -176,7 +236,7 @@ class DockerManager():
                         user_text='Enter the username: ', 
                         pw_text='Enter the password: '
                 )
-                self._client.images.pull(
+                return self._client.images.pull(
                     src_image,
                     tag=src_tag,
                     auth_config=auth
@@ -405,43 +465,41 @@ class DockerManager():
 
         # Check if the original image exists and needs authentication to be fetched
         # note: docker client does not distinguish between authentication error or invalid image name (?)
-        try:
-            logger.info('Pulling [{0}:{1}]'.format(src_image, src_tag))
-            self._client.images.pull(src_image, src_tag)
-        except ImageNotFound as err:
-            self._image_authentication(src_image, src_tag) # it should be an authentication error
+        logger.info('Pulling [{0}:{1}]'.format(src_image, src_tag))
+        self._pull_image_with_auth(src_image, src_tag)
 
         self._remove_previous_toskosed(dst_image, dst_tag)
         logger.info('Toskosing [{0}:{1}] image'.format(src_image, src_tag))
         try:
-            if process_type != ToskosingProcessType.TOSKOSE_FREE:
+            # if process_type != ToskosingProcessType.TOSKOSE_FREE:
 
-                # copy the template dockerfile into the context
-                shutil.copy2(
-                    toskose_dockerfile,
-                    context
-                )
+            # copy the template dockerfile into the context
+            shutil.copy2(
+                toskose_dockerfile,
+                context
+            )
 
-                build_args = {
-                    'TOSCA_APP_NAME': '{}'.format(app_name),
-                    'TOSCA_SRC_IMAGE': '{0}:{1}'.format(src_image, src_tag),
-                    'TOSKOSE_BASE_IMG': '{0}:{1}'.format(toskose_image, toskose_tag)
-                }
-                image, build_logs = self._client.images.build(
-                    path=context,
-                    tag='{0}:{1}'.format(dst_image, dst_tag),
-                    buildargs=build_args,
-                    dockerfile=toskose_dockerfile,
-                    rm=True,    # remove intermediate containers
-                )
-                self._validate_build(build_logs)
-            else:
-                # no toskose build - just tagging it
-                tagged = self._client.api.tag('{0}:{1}'.format(src_image, src_tag), dst_image, dst_tag, force=True)
-                if not tagged:
-                    logger.error('Failed to tag the image [{0}:{1}] with ID [{2}]'.format(
-                        dst_image, dst_tag, image.id))
-                logger.info('[{0}:{1}] image successfully tagged.'.format(dst_image, dst_tag))
+            build_args = {
+                'TOSCA_APP_NAME': '{}'.format(app_name),
+                'TOSCA_SRC_IMAGE': '{0}:{1}'.format(src_image, src_tag),
+                'TOSKOSE_BASE_IMG': '{0}:{1}'.format(toskose_image, toskose_tag)
+            }
+            image, build_logs = self._client.images.build(
+                path=context,
+                tag='{0}:{1}'.format(dst_image, dst_tag),
+                buildargs=build_args,
+                dockerfile=toskose_dockerfile,
+                rm=True,    # remove intermediate containers
+            )
+            self._validate_build(build_logs)
+            
+            # else:
+            #     # no toskose build - just tagging it
+            #     tagged = self._client.api.tag('{0}:{1}'.format(src_image, src_tag), dst_image, dst_tag, force=True)
+            #     if not tagged:
+            #         logger.error('Failed to tag the image [{0}:{1}] with ID [{2}]'.format(
+            #             dst_image, dst_tag, image.id))
+            #     logger.info('[{0}:{1}] image successfully tagged.'.format(dst_image, dst_tag))
 
             # push the "toskosed" image
             if enable_push:

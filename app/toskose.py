@@ -28,9 +28,9 @@ from app.docker.compose import generate_compose
 from app.loader import Loader
 from app.configuration.validation import ConfigValidator
 from app.context import build_app_context
-from app.tosca.model.artifacts import DockerImage, ToskosedImage
+from app.tosca.model.artifacts import File, DockerImage, ToskosedImage
 from app.tosca.model.relationships import HostedOn
-from app.tosca.model.nodes import Container, Volume
+from app.tosca.model.nodes import Container, Volume, Software
 
 
 logger = LoggingFacility.get_instance().get_logger()
@@ -105,7 +105,7 @@ class Toskoserizator:
 
         port = constants.gen_default_port()
 
-        def _autocomplete_config(config, name, is_manager=False, is_host=False):
+        def _autocomplete_config(config, name, is_manager=False):
 
             if is_manager:
                 defaults = copy.deepcopy(constants.DEFAULT_MANAGER_API)
@@ -115,26 +115,29 @@ class Toskoserizator:
                             key, 
                             name))
                     config[key] = config.get(key, default_value)
-            elif is_host:
-                defaults = copy.deepcopy(constants.DEFAULT_NODE_API)
-                for key, default_value in defaults.items():
-                    if key not in config:
-                        logger.info('Missing field [{0}] in node [{1}] (auto-generated)'.format(
-                            key,
-                            name))
-                    
-                        # note: special case defaults are generated dynamically according
-                        # to the tosca model data and they cannot be store as fixed defaults
+            
+            defaults = copy.deepcopy(constants.DEFAULT_NODE_API)
+            for key, default_value in defaults.items():
+                if key not in config:
+                    logger.info('Missing field [{0}] in node [{1}] (auto-generated)'.format(
+                        key,
+                        name))
+                
+                    # note: special case defaults are generated dynamically according
+                    # to the tosca model data and they cannot be store as fixed defaults
 
-                        # special case (auto-generation of port)
-                        if key == 'port':
-                            default_value = next(port)
-                            
-                        # special case (auto-generation of hostname)
-                        if key == 'hostname':
-                            default_value = name
-                    
-                    config[key] = config.get(key, default_value)
+                    # special case (auto-generation of port)
+                    # TODO fix bug: we need to check if the generated port will not conflict with
+                    # other user-defined ports of previous containers, i.e. a user can define a port
+                    # as the default generated one
+                    if key == 'port':
+                        default_value = next(port)
+                        
+                    # special case (auto-generation of hostname)
+                    if key == 'hostname':
+                        default_value = name
+                
+                config[key] = config.get(key, default_value)
 
             # note: no manager and no host => the node doesn't have any api configuration
             # (it will not be "toskosed"). However, it needs docker data for the deployment.
@@ -181,15 +184,9 @@ class Toskoserizator:
                 logger.info('Missing node [{}] - [docker] data will be asked'.format(
                     container.name))
 
-            # any hosted sw nodes?
-            is_host = False
-            if container.hosted:
-                is_host = True
-
             _autocomplete_config(
                 config['nodes'][container.name], 
-                container.name,
-                is_host=is_host)
+                container.name)
 
         # toskose-manager
         if 'manager' not in config:
@@ -233,24 +230,38 @@ class Toskoserizator:
         }
         """
 
+        def _update_free_container(container):
+            """ Update the representation of a container without hosted components.
+        
+            Adding a "default" lifecycle operation by manipulating ENTRYPOINT or CMD commands
+            within the image to be "toskosed" (that make the image runnable).
+            """
+            command = self._docker_manager.search_runnable_commands(
+                container.image.name, container.image.tag)
+            
+            container.cmd = command
+
         configuration = self._loader.load(config_path)
         tosca_model.toskose_config_path = config_path
 
         nodes_config = configuration['nodes']
         for container in tosca_model.containers:
 
-            # supervisord logic only if the container hosts sw components
-            if container.hosted:     
-                supervisord_envs = { 'SUPERVISORD_{}'.format(k.upper()): v \
-                    for k,v in nodes_config[container.name].items() if k != 'docker' }
-                container.env = supervisord_envs if container.env is None else \
-                    { **container.env, **supervisord_envs }
+            if not container.hosted:
+                logger.debug('Detected a container node [{}] without sw components hosted on'.format(
+                    container.name))
+                _update_free_container(container)
 
-                # note: base_image and base_tag are related to the official
-                # Toskose Docker base image used in the "toskosing" process
-                docker_config = nodes_config[container.name]['docker']
-                docker_config['base_name'] = docker_config.get('base_name')
-                docker_config['base_tag'] = docker_config.get('base_tag')
+            supervisord_envs = { 'SUPERVISORD_{}'.format(k.upper()): v \
+                for k,v in nodes_config[container.name].items() if k != 'docker' }
+            container.env = supervisord_envs if container.env is None else \
+                { **container.env, **supervisord_envs }
+
+            # note: base_image and base_tag are related to the official
+            # Toskose Docker base image used in the "toskosing" process
+            docker_config = nodes_config[container.name]['docker']
+            docker_config['base_name'] = docker_config.get('base_name')
+            docker_config['base_tag'] = docker_config.get('base_tag')
             
             # docker logic about the "toskosing" process
             container.add_artifact(
@@ -296,8 +307,7 @@ class Toskoserizator:
         # TODO fix? it introduces a crash of gunicorn during the
         # toskose-manager startup?
         # https://stackoverflow.com/questions/40553521/gunicorn-does-not-find-main-module-with-docker
-        #tosca_model.push(Volume(constants.DEFAULT_TOSKOSE_MANAGER_VOLUME_NAME))
-                
+        #tosca_model.push(Volume(constants.DEFAULT_TOSKOSE_MANAGER_VOLUME_NAME))            
 
     def toskosed(self, csar_path, config_path=None, output_path=None, enable_push=False):
         """ 
@@ -356,14 +366,15 @@ class Toskoserizator:
                             logger.info('Detected [{}] node [manager].'.format(
                                 container.name))
                             template = ToskosingProcessType.TOSKOSE_MANAGER
-                        elif container.hosted:
+                        # elif container.hosted:
+                        else:
                             # if the container hosts sw components then it need to be toskosed
                             logger.info('Detected [{}] node.'.format(
                                 container.name))
                             template = ToskosingProcessType.TOSKOSE_UNIT
-                        else:
-                            logger.info('Detected node without SW components hosted on. Just tagging it')
-                            template = ToskosingProcessType.TOSKOSE_FREE
+                        # else:
+                        #     logger.info('Detected node without SW components hosted on')
+                        #     template = ToskosingProcessType.TOSKOSE_FREE
 
                         ctx_path = os.path.join(tmp_dir_context, model.name, container.name)
                         self._docker_manager.toskose_image(
