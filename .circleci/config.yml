@@ -32,9 +32,9 @@ jobs:
     steps:
       - checkout
       - run:
-        name: Publish to PyPI
-        command: | # need to setup envs in CircleCI settings
-          poetry publish --build --username "${PYPI_USERNAME}" --password "${PYPI_PASSWORD}" --no-interaction
+          name: Publish to PyPI
+          command: | # need to setup envs in CircleCI settings
+            poetry publish --build --username "${PYPI_USERNAME}" --password "${PYPI_PASSWORD}" --no-interaction
 
 # when the defined job(s) is ran
 workflows:
