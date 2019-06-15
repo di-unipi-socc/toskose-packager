@@ -3,6 +3,8 @@
 [![Bintray](https://img.shields.io/badge/python-3.7-blue.svg)](https://www.python.org/downloads/release/python-370/)
 [![Bintray](https://img.shields.io/badge/python-3.7.1-blue.svg)](https://www.python.org/downloads/release/python-371/)
 [![Bintray](https://img.shields.io/badge/version-0.1.0-blue.svg)]()
+[![Codacy Badge](https://api.codacy.com/project/badge/Grade/a47cb809855b4be3a9440a2762665111)](https://www.codacy.com?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=matteobogo/toskose&amp;utm_campaign=Badge_Grade)
+[![Codacy Badge](https://api.codacy.com/project/badge/Coverage/a47cb809855b4be3a9440a2762665111)](https://www.codacy.com?utm_source=github.com&utm_medium=referral&utm_content=matteobogo/toskose&utm_campaign=Badge_Coverage)
 
 
 # toskose
