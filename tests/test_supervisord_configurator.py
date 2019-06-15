@@ -1,25 +1,28 @@
-import pytest
-
 import os
 import tempfile
 from configparser import ConfigParser
+from os import mkdir
 
-import tests.helpers as helpers
+import pytest
+from pkg_resources.py31compat import makedirs
+
 import tests.commons as commons
-
-from app.supervisord.configurator import build_config, DEFAULT_CONFIG_NAME
+import tests.helpers as helpers
+from app.supervisord.configurator import DEFAULT_CONFIG_NAME, build_config
 
 
 # indirect parametrization of the fixture in conftest.py
-@pytest.mark.parametrize('model', commons.apps_data, indirect=True)
+@pytest.mark.parametrize('configs', commons.apps_data, indirect=True)
 class TestSupervisordConfigGeneration:
 
     # https://docs.pytest.org/en/latest/unittest.html#using-autouse-fixtures-and-accessing-other-fixtures
     @pytest.fixture(autouse=True)
-    def initializer(self, model, context):
+    def initializer(self, model, tmpdir):
         """ Autoinvoked fixture for initializing test class """
+
+        root_dir = tmpdir.mkdir('supervisord_configs')
+
         self._model = model
-        self._context = context
         self._manager = None
         self._classic_containers = []
         for container in self._model.containers:
@@ -27,6 +30,9 @@ class TestSupervisordConfigGeneration:
                 self._manager = container
             else:
                 self._classic_containers.append(container)
+                root_dir.mkdir(container.name)
+        
+        self._context = root_dir
     
     def test_unit_supervisord_config_generation(self):
         """ Test the Supervisord config generation for classic containers """
@@ -46,6 +52,7 @@ class TestSupervisordConfigGeneration:
         with pytest.raises(ValueError):
             build_config(self._manager, 'abcdefg')
 
+    # https://pytest.readthedocs.io/en/2.8.7/skipping.html
     @pytest.mark.xfail(
         raises=StopIteration, 
         reason='the tosca app doesn\'t have a standalone container')

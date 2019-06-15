@@ -4,7 +4,10 @@ import app
 
 test_require = [
     'pytest',
-    'mock'
+    'mock',
+    "pytest-cov==2.7.1",
+    'coverage==4.5.3',
+    'codacy-coverage==1.3.11',
 ]
 
 install_requires = [

@@ -76,3 +76,9 @@ class OperationAbortedByUser(BaseToskoseException):
 
     def __init__(self, message):
         super().__init__(message)
+
+class AppContextGenerationError(BaseToskoseException):
+    """ Raised when the app context generation failed. """
+
+    def __init__(self, message):
+        super().__init__(message)

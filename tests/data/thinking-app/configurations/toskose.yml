@@ -21,6 +21,10 @@ nodes:
       tag: latest
   mongodb:
     hostname: mongodb
+    port: 9003
+    user: admin
+    password: admin
+    log_level: INFO
     docker:
       name: giulen/thinking-mongodb-toskosed
       tag: latest

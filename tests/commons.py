@@ -70,6 +70,11 @@ apps_data = [
                 },
             },
             'mongodb': {
+                'hostname': 'mongodb',
+                'port': 9003,
+                'user': 'admin',
+                'password': 'admin',
+                'log_level': 'INFO',
                 'docker': {
                     'name': 'test/mongodb-toskosed',
                     'tag': '2.1.1',

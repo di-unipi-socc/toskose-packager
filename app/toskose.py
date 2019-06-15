@@ -295,12 +295,13 @@ class Toskoserizator:
 
         manager.hostname = manager_config.get('hostname')
         
-        # workaround (change config keys according to env names required by toskose-manager api)
-        manager_config['TOSKOSE_MANAGER_PORT'] = manager_config.pop('port')
-        manager_config['TOSKOSE_APP_MODE'] = manager_config.pop('mode')
-        
-        manager.env = { k.upper(): v for k,v in manager_config.items() if k != 'docker'}
-        
+        # toskose-manager API required envs
+        manager.env = {
+            'TOSKOSE_MANAGER_PORT': manager_config['port'],
+            'TOSKOSE_APP_MODE': manager_config['mode'],
+            'SECRET_KEY': manager_config['secret_key']
+        }
+                
         tosca_model.push(manager)
         
         # toskose-manager - volume
