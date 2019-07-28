@@ -1,0 +1,65 @@
+title: Sockshop
+description: The Sockshop testing application
+nodes:
+  orders-db:
+    docker:
+      name: orders-db-toskosed
+      tag: latest
+  carts-db:
+    docker:
+      name: carts-db-toskosed
+      tag: latest
+  user-db:
+    docker:
+      name: user-db-toskosed
+      tag: latest
+  catalogue-db:
+    docker:
+      name: catalogue-db-toskosed
+      tag: latest
+  edge-router:
+    docker:
+      name: edge-router-toskosed
+      tag: latest
+  rabbitmq:
+    docker:
+      name: rabbitmq-toskosed
+      tag: latest
+  front-end_container:
+    docker:
+      name: front-end_container-toskosed
+      tag: latest
+  catalogue_container:
+    docker:
+      name: catalogue_container-toskosed
+      tag: latest
+  user_container:
+    docker:
+      name: user_container-toskosed
+      tag: latest
+  carts_container:
+    docker:
+      name: carts_container-toskosed
+      tag: latest
+  orders_container:
+    docker:
+      name: orders_container-toskosed
+      tag: latest
+  payment_container:
+    docker:
+      name: payment_container-toskosed
+      tag: latest
+  shipping_container:
+    docker:
+      name: shipping_container-toskosed
+      tag: latest
+manager:
+  hostname: manager
+  port: 10001
+  user: admin
+  password: admin
+  mode: production
+  secret_key: secret
+  docker:
+    name: sockshop-manager
+    tag: '1.0'
