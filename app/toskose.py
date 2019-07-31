@@ -367,15 +367,15 @@ class Toskoserizator:
                             logger.info('Detected [{}] node [manager].'.format(
                                 container.name))
                             template = ToskosingProcessType.TOSKOSE_MANAGER
-                        # elif container.hosted:
-                        else:
+                        elif container.hosted:
                             # if the container hosts sw components then it need to be toskosed
                             logger.info('Detected [{}] node.'.format(
                                 container.name))
                             template = ToskosingProcessType.TOSKOSE_UNIT
-                        # else:
-                        #     logger.info('Detected node without SW components hosted on')
-                        #     template = ToskosingProcessType.TOSKOSE_FREE
+                        else:
+                            # the container doesn't host any sw component, left untouched
+                            logger.info('Detected node without SW components hosted on')
+                            template = ToskosingProcessType.TOSKOSE_FREE
 
                         ctx_path = os.path.join(tmp_dir_context, model.name, container.name)
                         self._docker_manager.toskose_image(

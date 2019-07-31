@@ -163,9 +163,7 @@ class DockerManager():
 
         logger.info('Analyzing the [{}] image'.format(full_name))
         image = self._pull_image_with_auth(image, tag)
-        
-        assert (image, Image)
-        
+                
         if image is not None:
             output = self._client.api.inspect_image(full_name)
             if not output or 'Config' not in output:
@@ -471,35 +469,35 @@ class DockerManager():
         self._remove_previous_toskosed(dst_image, dst_tag)
         logger.info('Toskosing [{0}:{1}] image'.format(src_image, src_tag))
         try:
-            # if process_type != ToskosingProcessType.TOSKOSE_FREE:
+            if process_type != ToskosingProcessType.TOSKOSE_FREE:
 
-            # copy the template dockerfile into the context
-            shutil.copy2(
-                toskose_dockerfile,
-                context
-            )
+                # copy the template dockerfile into the context
+                shutil.copy2(
+                    toskose_dockerfile,
+                    context
+                )
 
-            build_args = {
-                'TOSCA_APP_NAME': '{}'.format(app_name),
-                'TOSCA_SRC_IMAGE': '{0}:{1}'.format(src_image, src_tag),
-                'TOSKOSE_BASE_IMG': '{0}:{1}'.format(toskose_image, toskose_tag)
-            }
-            image, build_logs = self._client.images.build(
-                path=context,
-                tag='{0}:{1}'.format(dst_image, dst_tag),
-                buildargs=build_args,
-                dockerfile=toskose_dockerfile,
-                rm=True,    # remove intermediate containers
-            )
-            self._validate_build(build_logs)
+                build_args = {
+                    'TOSCA_APP_NAME': '{}'.format(app_name),
+                    'TOSCA_SRC_IMAGE': '{0}:{1}'.format(src_image, src_tag),
+                    'TOSKOSE_BASE_IMG': '{0}:{1}'.format(toskose_image, toskose_tag)
+                }
+                image, build_logs = self._client.images.build(
+                    path=context,
+                    tag='{0}:{1}'.format(dst_image, dst_tag),
+                    buildargs=build_args,
+                    dockerfile=toskose_dockerfile,
+                    rm=True,    # remove intermediate containers
+                )
+                self._validate_build(build_logs)
             
-            # else:
-            #     # no toskose build - just tagging it
-            #     tagged = self._client.api.tag('{0}:{1}'.format(src_image, src_tag), dst_image, dst_tag, force=True)
-            #     if not tagged:
-            #         logger.error('Failed to tag the image [{0}:{1}] with ID [{2}]'.format(
-            #             dst_image, dst_tag, image.id))
-            #     logger.info('[{0}:{1}] image successfully tagged.'.format(dst_image, dst_tag))
+            else:
+                # no toskose build - just tagging it
+                tagged = self._client.api.tag('{0}:{1}'.format(src_image, src_tag), dst_image, dst_tag, force=True)
+                if not tagged:
+                    logger.error('Failed to tag the image [{0}:{1}] with ID [{2}]'.format(
+                        dst_image, dst_tag, image.id))
+                logger.info('[{0}:{1}] image successfully tagged.'.format(dst_image, dst_tag))
 
             # push the "toskosed" image
             if enable_push:
