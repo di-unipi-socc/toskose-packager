@@ -58,7 +58,11 @@ def _build_manager_context(context_path, manifests=None, configs=None, imports=N
     multi_copy(manifests, manifest_dirs)
 
     if imports_dirs is None:
-        imports_dirs = [os.path.join(context_path, constants.DEFAULT_MANAGER_MANIFEST_DIR)]
+        imports_dirs = [os.path.join(
+            context_path, 
+            constants.DEFAULT_MANAGER_MANIFEST_DIR,
+            constants.DEFAULT_MANAGER_IMPORTS_DIR,
+        )]
     multi_copy(imports, imports_dirs) 
 
 def _build_unit_context(context_path, container):
