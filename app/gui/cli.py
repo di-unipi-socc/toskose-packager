@@ -18,13 +18,12 @@ from app.toskose import Toskoserizator
 )
 @click.option(
     '--enable-push', '-p',
-    help='Enable/Disable pushing of Docker images.',
-    show_default=True
+    is_flag=True,
+    help='Enable pushing of Docker images.',
 )
 @click.option(
     '--docker-url', 
     help='The URL for the Docker Engine.',
-    default='unix:///var/run/docker.sock',
     show_default=True
 )
 @click.option('--quiet', '-q', is_flag=True, help='Give less output.')
