@@ -1,2 +1,2 @@
 #!/bin/sh
-node /thinking-gui/thought-site.js&
+node /thinking-gui/thought-site.js
