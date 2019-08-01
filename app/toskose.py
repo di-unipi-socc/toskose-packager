@@ -132,7 +132,7 @@ class Toskoserizator:
                     # as the default generated one
                     if key == 'port':
                         default_value = next(port)
-                        
+
                     # special case (auto-generation of hostname)
                     if key == 'hostname':
                         default_value = name
@@ -179,6 +179,9 @@ class Toskoserizator:
             config['nodes'] = dict()
 
         for container in tosca_model.containers:
+            if not container.hosted:
+                # no data in the toskose config for a standalone container
+                continue
             if container.name not in config['nodes'] or config['nodes'][container.name] is None:
                 config['nodes'][container.name] = dict()
                 logger.info('Missing node [{}] - [docker] data will be asked'.format(
@@ -230,17 +233,6 @@ class Toskoserizator:
         }
         """
 
-        def _update_free_container(container):
-            """ Update the representation of a container without hosted components.
-        
-            Adding a "default" lifecycle operation by manipulating ENTRYPOINT or CMD commands
-            within the image to be "toskosed" (that make the image runnable).
-            """
-            command = self._docker_manager.search_runnable_commands(
-                container.image.name, container.image.tag)
-            
-            container.cmd = command
-
         configuration = self._loader.load(config_path)
         tosca_model.toskose_config_path = config_path
 
@@ -248,9 +240,16 @@ class Toskoserizator:
         for container in tosca_model.containers:
 
             if not container.hosted:
-                logger.debug('Detected a container node [{}] without sw components hosted on'.format(
+                logger.info('Detected a container node [{}] without sw components hosted on. Skipping.'.format(
                     container.name))
-                _update_free_container(container)
+                # workaround: fake the toskosed image with the original one
+                # will be used to complete the "image" field in the final compose file
+                container.add_artifact(
+                    ToskosedImage(container.image.name, container.image.tag))
+
+                container.hostname = container.name
+
+                continue
 
             supervisord_envs = { 'SUPERVISORD_{}'.format(k.upper()): v \
                 for k,v in nodes_config[container.name].items() if k != 'docker' }
@@ -374,8 +373,9 @@ class Toskoserizator:
                             template = ToskosingProcessType.TOSKOSE_UNIT
                         else:
                             # the container doesn't host any sw component, left untouched
-                            logger.info('Detected node without SW components hosted on')
-                            template = ToskosingProcessType.TOSKOSE_FREE
+                            # logger.info('Detected node without SW components hosted on')
+                            # template = ToskosingProcessType.TOSKOSE_FREE
+                            continue
 
                         ctx_path = os.path.join(tmp_dir_context, model.name, container.name)
                         self._docker_manager.toskose_image(

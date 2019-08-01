@@ -1,8 +1,8 @@
 nodes:
   maven:
-    hostname: maven
     # missing user
     password: admin
+    hostname: maven
     port: 9001
     log_level: INFO
     docker:
@@ -17,12 +17,8 @@ nodes:
     docker:
       name: thinking-node-toskosed
       tag: '2.1'
-  mongodb:
-    docker:
-      name: thinking-mongodb-toskosed
-      tag: '0.5'
 manager:
-  hostname: manager
+  hostname: toskose-manager
   port: 10001
   user: admin
   password: admin

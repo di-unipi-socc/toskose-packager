@@ -19,17 +19,8 @@ nodes:
     docker:
       name: giulen/thinking-node-toskosed
       tag: latest
-  mongodb:
-    hostname: mongodb
-    port: 9003
-    user: admin
-    password: admin
-    log_level: INFO
-    docker:
-      name: giulen/thinking-mongodb-toskosed
-      tag: latest
 manager:
-  hostname: manager
+  hostname: toskose-manager
   port: 10001
   user: admin
   password: admin

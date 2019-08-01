@@ -9,18 +9,9 @@ nodes:
     docker:
       name: thinking-node-toskosed
       tag: "2.1"
-  mongodb:
-    hostname: mongodb
-    port: 9003
-    user: admin
-    password: admin
-    log_level: INFO
-    docker:
-      name: thinking-mongodb-toskosed
-      tag: "0.5"
     invalid_field: 2        # <= invalid field
 manager:
-  hostname: manager
+  hostname: toskose-manager
   port: 10001
   user: admin
   password: admin

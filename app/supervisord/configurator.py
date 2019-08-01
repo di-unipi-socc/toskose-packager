@@ -130,10 +130,7 @@ def build_config(container, context_path, config_name=None, template=None):
     config = ConfigParser()
     config.read(template)
 
-    # standalone container
-    if not container.hosted:
-        config = _build_standalone_config(config, container)
-    else:
+    if container.hosted:
         config = _build_hosted_config(config, container)
 
     config_path = os.path.join(context_path, config_name)

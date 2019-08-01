@@ -1,17 +1,17 @@
 nodes:
   # missing maven
   # missing node
-  mongodb:
-    hostname: mongodb
-    port: 9003
+  node:
+    hostname: node
+    port: 9002
     user: admin
     password: admin
     log_level: INFO
     docker:
-      name: thinking-mongodb-toskosed
-      tag: "0.5"
+      name: giulen/thinking-node-toskosed
+      tag: latest
 manager:
-  hostname: manager
+  hostname: toskose-manager
   port: 10001
   user: admin
   password: admin

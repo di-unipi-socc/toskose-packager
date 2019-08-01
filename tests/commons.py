@@ -69,18 +69,6 @@ apps_data = [
                     'registry_password': None,
                 },
             },
-            'mongodb': {
-                'hostname': 'mongodb',
-                'port': 9003,
-                'user': 'admin',
-                'password': 'admin',
-                'log_level': 'INFO',
-                'docker': {
-                    'name': 'test/mongodb-toskosed',
-                    'tag': '2.1.1',
-                    'registry_password': None,
-                },
-            },
         },
         'supervisord': {
             'maven': {

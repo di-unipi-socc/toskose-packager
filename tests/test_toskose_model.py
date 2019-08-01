@@ -67,7 +67,8 @@ class TestToskoseModel:
                 # no hosted software nodes
                 assert not container.hosted
 
-            else:
+            # valid host container (not standalone)
+            if container.hosted:
                 node_config = nodes_config[container.name]
                 
                 for k,v in node_config.items():
@@ -84,7 +85,3 @@ class TestToskoseModel:
                 for k,v in docker_data.items():
                     v = str(v) if v is not None else v
                     assert getattr(container.toskosed_image, k) == v
-
-                # standalone
-                if not container.hosted:
-                    assert container.cmd is not None

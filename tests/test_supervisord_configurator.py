@@ -52,20 +52,6 @@ class TestSupervisordConfigGeneration:
         with pytest.raises(ValueError):
             build_config(self._manager, 'abcdefg')
 
-    # https://pytest.readthedocs.io/en/2.8.7/skipping.html
-    @pytest.mark.xfail(
-        raises=StopIteration, 
-        reason='the tosca app doesn\'t have a standalone container')
-    def test_standalone_container_without_cmd(self):
-
-        standalone_container = next(c for c in self._classic_containers if not c.hosted)
-        standalone_container.cmd = None
-        node_context = os.path.join(self._context, standalone_container.name)
-        with pytest.raises(ValueError):
-            build_config(standalone_container, node_context)
-        
-
-
 # @pytest.mark.parametrize('model', commons.apps_data, indirect=True)
 # def test_supervisord_conf_generation(model, context):
 
