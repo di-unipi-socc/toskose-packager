@@ -113,7 +113,6 @@ def _services_template(tosca_model):
             **_base_service, 
             **{
                 "image": container.toskosed_image.full_name,
-                "container_name": "{0}-{1}".format(tosca_model.name, container.name),
                 "hostname": container.hostname
                 } 
             })
