@@ -1,0 +1,175 @@
+---
+version: '3.3'
+services:
+  orders-db:
+    image: mongo:latest
+    deploy: &id001
+      mode: replicated
+      replicas: 1
+      restart_policy:
+        condition: "on-failure"
+    networks: &id002
+    - "toskose-network"
+    hostname: orders-db
+  carts-db:
+    image: mongo:latest
+    deploy: *id001
+    networks: *id002
+    hostname: carts-db
+  user-db:
+    image: weaveworksdemos/user-db:latest
+    deploy: *id001
+    networks: *id002
+    hostname: user-db
+  catalogue-db:
+    image: weaveworksdemos/catalogue-db:latest
+    deploy: *id001
+    networks: *id002
+    hostname: catalogue-db
+    environment:
+    - MYSQL_ROOT_PASSWORD=root
+    - MYSQL_ALLOW_EMPTY_PASSWORD=True
+    - MYSQL_DATABASE=socksdb
+  edge-router:
+    image: weaveworksdemos/edge-router:latest
+    deploy: *id001
+    networks: *id002
+    hostname: edge-router
+    ports:
+    - "80:80/tcp"
+  rabbitmq:
+    image: rabbitmq:3.6.8
+    deploy: *id001
+    networks: *id002
+    hostname: rabbitmq
+  front-end_container:
+    image: giulen/sockshop-front-end_container-toskosed:latest
+    deploy: *id001
+    networks:
+      toskose-network:
+        aliases:
+        - front-end
+    hostname: front-end_container
+    environment:
+    - SUPERVISORD_HOSTNAME=front-end_container
+    - SUPERVISORD_PORT=9001
+    - SUPERVISORD_USER=admin
+    - SUPERVISORD_PASSWORD=admin
+    - SUPERVISORD_LOG_LEVEL=INFO
+    - INPUT_REPO=https://github.com/microservices-demo/front-end.git
+    - INPUT_CATALOGUE=catalogue
+    - INPUT_CARTS=carts
+    - INPUT_USER=user
+    - INPUT_ORDERS=orders
+  catalogue_container:
+    image: giulen/sockshop-catalogue_container-toskosed:latest
+    deploy: *id001
+    networks:
+      toskose-network:
+        aliases:
+        - catalogue
+    hostname: catalogue_container
+    environment:
+    - SUPERVISORD_HOSTNAME=catalogue_container
+    - SUPERVISORD_PORT=9002
+    - SUPERVISORD_USER=admin
+    - SUPERVISORD_PASSWORD=admin
+    - SUPERVISORD_LOG_LEVEL=INFO
+    - INPUT_PORT=80
+  user_container:
+    image: giulen/sockshop-user_container-toskosed:latest
+    deploy: *id001
+    networks:
+      toskose-network:
+        aliases:
+        - user
+    hostname: user_container
+    environment:
+    - SUPERVISORD_HOSTNAME=user_container
+    - SUPERVISORD_PORT=9003
+    - SUPERVISORD_USER=admin
+    - SUPERVISORD_PASSWORD=admin
+    - SUPERVISORD_LOG_LEVEL=INFO
+    - INPUT_DATABASE=mongodb
+    - INPUT_MONGOHOST=user-db
+    - INPUT_PORT=80
+  carts_container:
+    image: giulen/carts_container-toskosed:latest
+    deploy: *id001
+    networks:
+      toskose-network:
+        aliases:
+        - carts
+    hostname: carts_container
+    environment:
+    - SUPERVISORD_HOSTNAME=carts_container
+    - SUPERVISORD_PORT=9004
+    - SUPERVISORD_USER=admin
+    - SUPERVISORD_PASSWORD=admin
+    - SUPERVISORD_LOG_LEVEL=INFO
+    - INPUT_PORT=80
+    - INPUT_JAR=/toskose/apps/carts/artifacts/carts.jar
+  orders_container:
+    image: giulen/orders_container-toskosed:latest
+    deploy: *id001
+    networks:
+      toskose-network:
+        aliases:
+        - orders
+    hostname: orders_container
+    environment:
+    - SUPERVISORD_HOSTNAME=orders_container
+    - SUPERVISORD_PORT=9005
+    - SUPERVISORD_USER=admin
+    - SUPERVISORD_PASSWORD=admin
+    - SUPERVISORD_LOG_LEVEL=INFO
+    - INPUT_PAYMENT=payment
+    - INPUT_SHIPPING=shipping
+    - INPUT_PORT=80
+  payment_container:
+    image: giulen/payment_container-toskosed:latest
+    deploy: *id001
+    networks:
+      toskose-network:
+        aliases:
+        - payment
+    hostname: payment_container
+    environment:
+    - SUPERVISORD_HOSTNAME=payment_container
+    - SUPERVISORD_PORT=9006
+    - SUPERVISORD_USER=admin
+    - SUPERVISORD_PASSWORD=admin
+    - SUPERVISORD_LOG_LEVEL=INFO
+    - INPUT_PORT=80
+  shipping_container:
+    image: giulen/shipping_container-toskosed:latest
+    deploy: *id001
+    networks:
+      toskose-network:
+        aliases:
+        - shipping
+    hostname: shipping_container
+    environment:
+    - SUPERVISORD_HOSTNAME=shipping_container
+    - SUPERVISORD_PORT=9007
+    - SUPERVISORD_USER=admin
+    - SUPERVISORD_PASSWORD=admin
+    - SUPERVISORD_LOG_LEVEL=INFO
+    - INPUT_PORT=80
+    - INPUT_JAR=/toskose/apps/shipping/artifacts/shipping.jar
+  toskose-manager:
+    image: giulen/sockshop-manager:latest
+    deploy: *id001
+    networks: *id002
+    hostname: toskose-manager
+    environment:
+    - TOSKOSE_MANAGER_PORT=10000
+    - TOSKOSE_APP_MODE=production
+    - SECRET_KEY=secret
+    ports:
+    - "10000:10000/tcp"
+networks:
+  toskose-network:
+    driver: "overlay"
+    attachable: true
+volumes: {}

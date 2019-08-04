@@ -1,0 +1,31 @@
+title: Thinking Toskosed
+description: The Thinking application case study
+nodes:
+  maven:
+    hostname: maven
+    port: 9001
+    user: admin
+    password: admin
+    log_level: INFO
+    docker:
+      name: giulen/thinking-maven-toskosed
+      tag: latest
+  node:
+    hostname: node
+    port: 9002
+    user: admin
+    password: admin
+    log_level: INFO
+    docker:
+      name: giulen/thinking-node-toskosed
+      tag: latest
+manager:
+  hostname: toskose-manager
+  port: 10000
+  user: admin
+  password: admin
+  mode: production
+  secret_key: secret
+  docker:
+    name: giulen/thinking-manager
+    tag: latest
