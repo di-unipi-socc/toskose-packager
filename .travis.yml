@@ -14,8 +14,10 @@ services:
 script:
   - pytest
 
-after_success:
-# deploy to the Docker Hub the test cases "toskosed" images
-# (e.g. Thinking, Sockshop)
-# Images are built during the "toskoserizator" final test
-- ./deploy.sh
+deploy:
+  provider: pypi
+  user: $PYPI_USERNAME
+  password: $PYPI_PASSWORD
+  on:
+    tags: true
+    branch: master

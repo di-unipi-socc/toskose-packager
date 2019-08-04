@@ -33,7 +33,7 @@ apps_data = [
         'volumes': ['dbvolume'],
         'toskose_config_manager_input': {
             'hostname': 'manager',
-            'port': 10001,
+            'port': 10000,
             'user': 'admin',
             'password': 'admin',
             'mode': 'production',
