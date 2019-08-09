@@ -44,7 +44,7 @@ docker stack services <case_study>-stack
 ## Thinking
 ### Setup
 ```
-docker stack deploy --compose-file tests/docker-stack-thinking.yml
+docker stack deploy --compose-file tests/docker-stack-thinking.yml thinking-stack
 ```
 
 ### Start
