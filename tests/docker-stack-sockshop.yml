@@ -56,7 +56,7 @@ services:
     - SUPERVISORD_USER=admin
     - SUPERVISORD_PASSWORD=admin
     - SUPERVISORD_LOG_LEVEL=INFO
-    - INPUT_REPO=https://github.com/microservices-demo/front-end.git
+    - INPUT_REPO=https://github.com/matteobogo/front-end.git
     - INPUT_CATALOGUE=catalogue
     - INPUT_CARTS=carts
     - INPUT_USER=user
@@ -93,6 +93,7 @@ services:
     - INPUT_DATABASE=mongodb
     - INPUT_MONGOHOST=user-db
     - INPUT_PORT=80
+    - HATEAOS=user  # here!
   carts_container:
     image: giulen/carts_container-toskosed:latest
     deploy: *id001
