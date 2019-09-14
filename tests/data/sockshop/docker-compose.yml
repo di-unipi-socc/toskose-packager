@@ -1,0 +1,216 @@
+---
+version: '3.7'
+services:
+  orders-db:
+    deploy:
+      placement:
+        constraints:
+          - node.hostname==virtual-node-1
+    image: mongo:latest
+    networks:
+      toskose-network:
+  carts-db:
+    deploy:
+      placement:
+        constraints:
+          - node.hostname==virtual-node-3
+    image: mongo:latest
+    networks:
+      toskose-network:
+  user-db:
+    deploy:
+      placement:
+        constraints:
+          - node.hostname==virtual-node-4
+    image: weaveworksdemos/user-db:latest
+    networks:
+      toskose-network:
+  catalogue-db:
+    deploy:
+      placement:
+        constraints:
+          - node.hostname==virtual-node-2
+    image: weaveworksdemos/catalogue-db:latest
+    networks:
+      toskose-network:
+    environment:
+    - MYSQL_ROOT_PASSWORD=root
+    - MYSQL_ALLOW_EMPTY_PASSWORD=True
+    - MYSQL_DATABASE=socksdb
+  edge-router:
+    deploy:
+      placement:
+        constraints:
+          - node.hostname==virtual-node-1
+    image: weaveworksdemos/edge-router:latest
+    networks:
+      toskose-network:
+    ports:
+    - "80:80/tcp"
+  rabbitmq:
+    deploy:
+      placement:
+        constraints:
+          - node.hostname==virtual-node-2
+    image: rabbitmq:3.6.8
+    networks:
+      toskose-network:
+  front-end_container:
+    deploy:
+      placement:
+        constraints:
+          - node.hostname==virtual-node-2
+    image: giulen/sockshop-front-end_container-toskosed:latest
+    networks:
+      toskose-network:
+        aliases:
+        - front-end_container
+    init: true
+    environment:
+    - SUPERVISORD_ALIAS=front-end_container
+    - SUPERVISORD_PORT=9001
+    - SUPERVISORD_USER=admin
+    - SUPERVISORD_PASSWORD=admin
+    - SUPERVISORD_LOG_LEVEL=INFO
+    - INPUT_REPO=https://github.com/matteobogo/front-end.git
+    - INPUT_CATALOGUE=catalogue
+    - INPUT_CARTS=carts
+    - INPUT_USER=user
+    - INPUT_ORDERS=orders
+  catalogue_container:
+    deploy:
+      placement:
+        constraints:
+          - node.hostname==virtual-node-2
+    image: giulen/sockshop-catalogue_container-toskosed:latest
+    networks:
+      toskose-network:
+        aliases:
+        - catalogue_container
+    init: true
+    environment:
+    - SUPERVISORD_ALIAS=catalogue_container
+    - SUPERVISORD_PORT=9001
+    - SUPERVISORD_USER=admin
+    - SUPERVISORD_PASSWORD=admin
+    - SUPERVISORD_LOG_LEVEL=INFO
+    - INPUT_PORT=80
+  user_container:
+    deploy:
+      placement:
+        constraints:
+          - node.hostname==virtual-node-3
+    image: giulen/sockshop-user_container-toskosed:latest
+    networks:
+      toskose-network:
+        aliases:
+        - user_container
+    init: true
+    environment:
+    - SUPERVISORD_ALIAS=user_container
+    - SUPERVISORD_PORT=9001
+    - SUPERVISORD_USER=admin
+    - SUPERVISORD_PASSWORD=admin
+    - SUPERVISORD_LOG_LEVEL=INFO
+    - INPUT_DATABASE=mongodb
+    - INPUT_MONGOHOST=user-db
+    - INPUT_PORT=80
+    - INPUT_HATEAOS=user
+  carts_container:
+    deploy:
+      placement:
+        constraints:
+          - node.hostname==virtual-node-1
+    image: giulen/carts_container-toskosed:latest
+    networks:
+      toskose-network:
+        aliases:
+        - carts_container
+    init: true
+    environment:
+    - SUPERVISORD_ALIAS=carts_container
+    - SUPERVISORD_PORT=9001
+    - SUPERVISORD_USER=admin
+    - SUPERVISORD_PASSWORD=admin
+    - SUPERVISORD_LOG_LEVEL=INFO
+    - INPUT_PORT=80
+    - INPUT_JAR=/toskose/apps/carts/artifacts/carts.jar
+  orders_container:
+    deploy:
+      placement:
+        constraints:
+          - node.hostname==virtual-node-3
+    image: giulen/orders_container-toskosed:latest
+    networks:
+      toskose-network:
+        aliases:
+        - orders_container
+    init: true
+    environment:
+    - SUPERVISORD_ALIAS=orders_container
+    - SUPERVISORD_PORT=9001
+    - SUPERVISORD_USER=admin
+    - SUPERVISORD_PASSWORD=admin
+    - SUPERVISORD_LOG_LEVEL=INFO
+    - INPUT_PAYMENT=payment
+    - INPUT_SHIPPING=shipping
+    - INPUT_PORT=80
+  payment_container:
+    deploy:
+      placement:
+        constraints:
+          - node.hostname==virtual-node-1
+    image: giulen/payment_container-toskosed:latest
+    networks:
+      toskose-network:
+        aliases:
+        - payment_container
+    init: true
+    environment:
+    - SUPERVISORD_ALIAS=payment_container
+    - SUPERVISORD_PORT=9001
+    - SUPERVISORD_USER=admin
+    - SUPERVISORD_PASSWORD=admin
+    - SUPERVISORD_LOG_LEVEL=INFO
+    - INPUT_PORT=80
+  shipping_container:
+    deploy:
+      placement:
+        constraints:
+          - node.hostname==virtual-node-4
+    image: giulen/shipping_container-toskosed:latest
+    networks:
+      toskose-network:
+        aliases:
+        - shipping_container
+    init: true
+    environment:
+    - SUPERVISORD_ALIAS=shipping_container
+    - SUPERVISORD_PORT=9001
+    - SUPERVISORD_USER=admin
+    - SUPERVISORD_PASSWORD=admin
+    - SUPERVISORD_LOG_LEVEL=INFO
+    - INPUT_PORT=80
+    - INPUT_JAR=/toskose/apps/shipping/artifacts/shipping.jar
+  toskose-manager:
+    deploy:
+      placement:
+        constraints:
+          - node.hostname==virtual-node-4
+    image: giulen/sockshop-manager:latest
+    networks:
+      toskose-network:
+        aliases:
+        - toskose-manager
+    init: true
+    environment:
+    - TOSKOSE_MANAGER_PORT=10000
+    - TOSKOSE_APP_MODE=production
+    - SECRET_KEY=secret
+    ports:
+    - "10000:10000/tcp"
+networks:
+  toskose-network:
+    driver: "overlay"
+    attachable: true
+volumes: {}

@@ -3,13 +3,11 @@ import tempfile
 import zipfile
 import yaml
 
-from toscaparser.tosca_template import ToscaTemplate
 from app.common.logging import LoggingFacility
 from app.common.commons import unpack_archive
 from app.common.commons import CommonErrorMessages
 from app.common.commons import suppress_stderr
 from app.common.exception import FileNotFoundError
-from app.common.exception import ValidationError
 from app.common.exception import MalformedCsarError
 from app.common.exception import FatalError
 
@@ -28,12 +26,17 @@ _required_attrs = [
     "nodetemplates",
 ]
 
+
 def _validate_manifest(manifest_path):
     pass
 
 
 def validate_csar(csar_path):
     """ Validate a TOSCA-based application compressed in a .CSAR archive. """
+
+    # TODO
+    # AGGIUNGI VALIDAZIONE CON SOMMELIER!!!
+    # E'ANCHE IN TESI!
 
     # file existence
     if not os.path.isfile(csar_path):
@@ -61,23 +64,30 @@ def validate_csar(csar_path):
 
     # validate csar structure
     with zipfile.ZipFile(csar_path, 'r') as archive:
-        with suppress_stderr(): #TODO fix yaml error and remove it (workaround)
+        # TODO fix yaml error and remove it (workaround)
+        with suppress_stderr():
             filelist = [e.filename for e in archive.filelist]
 
             if _TOSCA_METADATA_PATH not in filelist:
-                logger.error('{0} does not contain a valid TOSCA.meta'.format(csar_path))
-                raise MalformedCsarError(CommonErrorMessages._DEFAULT_MALFORMED_CSAR_ERROR_MSG)
+                logger.error(
+                    '{0} does not contain a valid TOSCA.meta'.format(
+                        csar_path))
+                raise MalformedCsarError(
+                    CommonErrorMessages._DEFAULT_MALFORMED_CSAR_ERROR_MSG)
 
             # validate TOSCA.meta
             try:
 
-                #TODO !!!fix!!! YAMLLoadWarning: calling yaml.load() without Loader=... is deprecated, as the default Loader is unsafe. 
+                # TODO !!!fix!!! YAMLLoadWarning: calling yaml.load()
+                # without Loader=... is deprecated, as the default Loader
+                # is unsafe.
                 # Please read https://msg.pyyaml.org/load for full details.
                 csar_metadata = yaml.load(archive.read(_TOSCA_METADATA_PATH))
                 if type(csar_metadata) is not dict:
                     logger.error('{0} is not a valid dictionary'.format(
                         _TOSCA_METADATA_PATH))
-                    raise MalformedCsarError(CommonErrorMessages._DEFAULT_MALFORMED_CSAR_ERROR_MSG)
+                    raise MalformedCsarError(
+                        CommonErrorMessages._DEFAULT_MALFORMED_CSAR_ERROR_MSG)
 
             except yaml.YAMLError as err:
                 logger.exception(err)
@@ -86,15 +96,21 @@ def validate_csar(csar_path):
             # validate tosca metadata
             for key in _TOSCA_METADATA_REQUIRED_KEYS:
                 if key not in csar_metadata:
-                    logger.error('Missing {0} in {1}'.format(key, _TOSCA_METADATA_PATH))
-                    raise MalformedCsarError(CommonErrorMessages._DEFAULT_MALFORMED_CSAR_ERROR_MSG)
+                    logger.error(
+                        'Missing {0} in {1}'.format(
+                            key,
+                            _TOSCA_METADATA_PATH))
+                    raise MalformedCsarError(
+                        CommonErrorMessages._DEFAULT_MALFORMED_CSAR_ERROR_MSG)
 
             # validate tosca manifest file
             manifest = csar_metadata.get(_TOSCA_METADATA_MANIFEST_KEY)
             if manifest is None or manifest not in filelist:
-                logger.error('{0} contains an invalid manifest reference or it does not exist'.format(
+                logger.error('{0} contains an invalid manifest reference \
+                    or it does not exist'.format(
                     _TOSCA_METADATA_PATH))
-                raise MalformedCsarError(CommonErrorMessages._DEFAULT_MALFORMED_CSAR_ERROR_MSG)
+                raise MalformedCsarError(
+                    CommonErrorMessages._DEFAULT_MALFORMED_CSAR_ERROR_MSG)
 
             # validate other tosca metadata
             for option in _TOSCA_METADATA_OPTIONAL_KEYS:

@@ -1,9 +1,8 @@
 import pytest
 
 import os
-import tempfile
 
-from app.common.commons import unpack_archive
+import tests.commons as commons
 from app.tosca.validator import validate_csar
 
 
@@ -16,11 +15,11 @@ csars = [
 ]
 
 
-@pytest.mark.parametrize("archive_path",csars)
-def test_validate_tosca_manifest(archive_path):
+@pytest.mark.parametrize('data', commons.apps_data)
+def test_validate_tosca_manifest(data):
 
     try:
-        csar_metadata = validate_csar(archive_path)
+        csar_metadata = validate_csar(data['csar_path'])
         print(csar_metadata)
         assert csar_metadata['Entry-Definitions'] == 'thinking.yaml'
     except Exception as err:

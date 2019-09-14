@@ -1,13 +1,10 @@
-import os
 import shutil
-import tempfile
 
 import pytest
 
 import tests.helpers as helpers
-from app.loader import Loader
 from app.tosca.parser import ToscaParser
-from app.toskose import Toskoserizator
+from app.updater import toskose_model
 
 
 # request is a default pytest's fixture (indirect parametrization)
@@ -27,15 +24,16 @@ def configs(request, tmpdir):
     shutil.copy2(src_config_path, config_path)
 
     yield {
-        'manifest': manifest_path, 
+        'manifest': manifest_path,
         'toskose_config': config_path,
     }
+
 
 @pytest.fixture
 def model(configs, tmpdir):
     """ Build a TOSCA model representation """
 
     model = ToscaParser().build_model(configs['manifest'])
-    Toskoserizator()._toskose_model(model, configs['toskose_config'])
+    toskose_model(model, configs['toskose_config'])
 
     yield model

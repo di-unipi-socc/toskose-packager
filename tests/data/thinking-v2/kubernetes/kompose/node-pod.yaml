@@ -1,0 +1,37 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  creationTimestamp: null
+  labels:
+    io.kompose.service: node
+  name: node
+spec:
+  containers:
+  - env:
+    - name: INPUT_APIPORT
+      value: "8000"
+    - name: INPUT_APIRESOURCE
+      value: thoughts
+    - name: INPUT_APIURL
+      value: maven
+    - name: INPUT_BRANCH
+      value: master
+    - name: INPUT_REPO
+      value: https://github.com/matteobogo/thoughts-gui
+    - name: SUPERVISORD_ALIAS
+      value: node
+    - name: SUPERVISORD_LOG_LEVEL
+      value: DEBUG
+    - name: SUPERVISORD_PASSWORD
+      value: p4ssw0rd
+    - name: SUPERVISORD_PORT
+      value: "9001"
+    - name: SUPERVISORD_USER
+      value: user_a4bc2
+    image: giulen/thinking-v2-node-toskosed:2.1.5
+    name: node
+    ports:
+    - containerPort: 3000
+    resources: {}
+  restartPolicy: OnFailure
+status: {}

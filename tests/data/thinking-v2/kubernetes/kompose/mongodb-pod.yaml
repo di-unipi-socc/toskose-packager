@@ -1,0 +1,21 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  creationTimestamp: null
+  labels:
+    io.kompose.service: mongodb
+  name: mongodb
+spec:
+  containers:
+  - image: mongo:3.4
+    name: mongodb
+    resources: {}
+    volumeMounts:
+    - mountPath: /data/db
+      name: dbvolume
+  restartPolicy: OnFailure
+  volumes:
+  - name: dbvolume
+    persistentVolumeClaim:
+      claimName: dbvolume
+status: {}

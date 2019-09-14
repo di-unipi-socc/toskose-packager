@@ -10,7 +10,11 @@ def print_cli(text, color, attrs=[], font='slant', figlet=False):
         if not figlet:
             six.print_(colored(text, color, attrs=attrs))
         else:
-            six.print_(colored(figlet_format(text, font=font), color, attrs=attrs))
+            six.print_(colored(
+                figlet_format(text, font=font),
+                color,
+                attrs=attrs))
+
 
 def print_notification_cli(msg, alert_type):
 

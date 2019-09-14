@@ -1,0 +1,29 @@
+title: Thinkiskosed
+description: The thinking application toskosed
+nodes:
+  maven:
+    alias: maven
+    port: 9001
+    user: admin
+    password: admin
+    log_level: INFO
+    # missing docker section
+  node:
+    alias: node
+    port: 9002
+    user: admin
+    password: admin
+    log_level: INFO
+    docker:
+      name: thinking-node-toskosed
+      tag: '2.1'
+manager:
+  alias: toskose-manager
+  port: 10001
+  user: admin
+  password: admin
+  mode: production
+  secret_key: secret
+  docker:
+    name: test/thinking-manager
+    tag: '1.0'

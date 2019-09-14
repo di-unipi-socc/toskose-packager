@@ -1,0 +1,20 @@
+nodes:
+  # missing maven
+  # missing node
+  node:
+    alias: node
+    port: 9002
+    user: admin
+    password: admin
+    log_level: INFO
+    docker:
+      name: giulen/thinking-node-toskosed
+      tag: latest
+manager:
+  alias: toskose-manager
+  port: 10001
+  user: admin
+  password: admin
+  docker:
+    name: thinking-manager
+    tag: "1.0"

@@ -7,6 +7,88 @@ supervisord_config_common_sections = [
     'rpcinterface:supervisor',
 ]
 
+toskose_config_input = {
+    'maven': {
+        'alias': 'maven',
+        'port': 9001,
+        'user': 'admin',
+        'password': 'admin',
+        'log_level': 'INFO',
+        'docker': {
+            'name': 'test/maven-toskosed',
+            'tag': '1.0',
+            'registry_password': None,
+        },
+    },
+    'node': {
+        'alias': 'node',
+        'port': 9002,
+        'user': 'admin',
+        'password': 'admin',
+        'log_level': 'INFO',
+        'docker': {
+            'name': 'test/node-toskosed',
+            'tag': '0.4.2',
+            'registry_password': None,
+        },
+    },
+}
+
+supervisord = {
+    'maven': {
+        'api-create': {
+            'command':
+                '/bin/sh -c \'/toskose/apps/api/scripts/install.sh\'',
+            'stdout_logfile': '/toskose/apps/api/logs/api-create.log'
+        },
+        'api-configure': {
+            'command':
+                '/bin/sh -c \'/toskose/apps/api/scripts/configure.sh\'',
+            'stdout_logfile': '/toskose/apps/api/logs/api-configure.log'
+        },
+        'api-start': {
+            'command': '/bin/sh -c \'/toskose/apps/api/scripts/start.sh\'',
+            'stdout_logfile': '/toskose/apps/api/logs/api-start.log'
+        },
+        'api-stop': {
+            'command': '/bin/sh -c \'/toskose/apps/api/scripts/stop.sh\'',
+            'stdout_logfile': '/toskose/apps/api/logs/api-stop.log'
+        },
+        'api-delete': {
+            'command': '/bin/sh -c \'/toskose/apps/api/scripts/uninstall.sh\'',
+            'stdout_logfile': '/toskose/apps/api/logs/api-delete.log'
+        },
+        'api-push_default': {
+            'command':
+                '/bin/sh -c \'/toskose/apps/api/scripts/push_default.sh\'',
+            'stdout_logfile': '/toskose/apps/api/logs/api-push_default.log'
+        }
+    },
+    'node': {
+        'gui-create': {
+            'command': '/bin/sh -c \'/toskose/apps/gui/scripts/install.sh\'',
+            'stdout_logfile': '/toskose/apps/gui/logs/gui-create.log'
+        },
+        'gui-configure': {
+            'command': '/bin/sh -c \'/toskose/apps/gui/scripts/configure.sh\'',
+            'stdout_logfile': '/toskose/apps/gui/logs/gui-configure.log'
+        },
+        'gui-start': {
+            'command': '/bin/sh -c \'/toskose/apps/gui/scripts/start.sh\'',
+            'stdout_logfile': '/toskose/apps/gui/logs/gui-start.log'
+        },
+        'gui-stop': {
+            'command': '/bin/sh -c \'/toskose/apps/gui/scripts/stop.sh\'',
+            'stdout_logfile': '/toskose/apps/gui/logs/gui-stop.log'
+        },
+        'gui-delete': {
+            'command': '/bin/sh -c \'/toskose/apps/gui/scripts/uninstall.sh\'',
+            'stdout_logfile': '/toskose/apps/gui/logs/gui-delete.log'
+        }
+    },
+    'mongodb': {}
+}
+
 apps_data = [
     # {
     #     'base_dir': helpers.full_path('sockshop'),
@@ -15,24 +97,24 @@ apps_data = [
     #         'sockshop/configurations/sockshop-toskose.yml'),
     # },
     {
-        'base_dir': helpers.full_path('thinking-app'),
-        'csar_path': helpers.full_path('thinking-app/thinking.csar'),
+        'base_dir': helpers.full_path('data/thinking'),
+        'csar_path': helpers.full_path('thinking/thinking.csar'),
         'toskose_config': helpers.full_path(
-            'thinking-app/configurations/toskose.yml'),
+            'thinking/configurations/toskose.yml'),
         'uncompleted_toskose_config': helpers.full_path(
-            'thinking-app/configurations/uncompleted_toskose.yml'),
+            'thinking/configurations/uncompleted_toskose.yml'),
         'invalid_toskose_config': helpers.full_path(
-            'thinking-app/configurations/invalid_toskose.yml'),
+            'thinking/configurations/invalid_toskose.yml'),
         'missing_node_toskose_config': helpers.full_path(
-            'thinking-app/configurations/missing_node_toskose.yml'),
+            'thinking/configurations/missing_node_toskose.yml'),
         'missing_docker_toskose_config': helpers.full_path(
-            'thinking-app/configurations/missing_docker_toskose.yml'),
+            'thinking/configurations/missing_docker_toskose.yml'),
         'name': 'thinking',
-        'containers': ['maven','node', 'mongodb'],
+        'containers': ['maven', 'node', 'mongodb'],
         'software': ['api', 'gui'],
         'volumes': ['dbvolume'],
         'toskose_config_manager_input': {
-            'hostname': 'manager',
+            'alias': 'manager',
             'port': 10000,
             'user': 'admin',
             'password': 'admin',
@@ -44,83 +126,8 @@ apps_data = [
                 'registry_password': None
             }
         },
-        'toskose_config_input': {
-            'maven': {
-                'hostname': 'maven',
-                'port': 9001,
-                'user': 'admin',
-                'password': 'admin',
-                'log_level': 'INFO',
-                'docker': {
-                    'name': 'test/maven-toskosed',
-                    'tag': '1.0',
-                    'registry_password': None,
-                },
-            },
-            'node': {
-                'hostname': 'node',
-                'port': 9002,
-                'user': 'admin',
-                'password': 'admin',
-                'log_level': 'INFO',
-                'docker': {
-                    'name': 'test/node-toskosed',
-                    'tag': '0.4.2',
-                    'registry_password': None,
-                },
-            },
-        },
-        'supervisord': {
-            'maven': {
-                'api-create': {
-                    'command': '/bin/sh -c \'/toskose/apps/api/scripts/install.sh\'',
-                    'stdout_logfile': '/toskose/apps/api/logs/api-create.log'
-                },
-                'api-configure': {
-                    'command': '/bin/sh -c \'/toskose/apps/api/scripts/configure.sh\'',
-                    'stdout_logfile': '/toskose/apps/api/logs/api-configure.log'
-                },
-                'api-start': {
-                    'command': '/bin/sh -c \'/toskose/apps/api/scripts/start.sh\'',
-                    'stdout_logfile': '/toskose/apps/api/logs/api-start.log'
-                },
-                'api-stop': {
-                    'command': '/bin/sh -c \'/toskose/apps/api/scripts/stop.sh\'',
-                    'stdout_logfile': '/toskose/apps/api/logs/api-stop.log'
-                },
-                'api-delete': {
-                    'command': '/bin/sh -c \'/toskose/apps/api/scripts/uninstall.sh\'',
-                    'stdout_logfile': '/toskose/apps/api/logs/api-delete.log'
-                },
-                'api-push_default': {
-                    'command': '/bin/sh -c \'/toskose/apps/api/scripts/push_default.sh\'',
-                    'stdout_logfile': '/toskose/apps/api/logs/api-push_default.log'
-                }
-            },
-            'node': {
-                'gui-create': {
-                    'command': '/bin/sh -c \'/toskose/apps/gui/scripts/install.sh\'',
-                    'stdout_logfile': '/toskose/apps/gui/logs/gui-create.log'
-                },
-                'gui-configure': {
-                    'command': '/bin/sh -c \'/toskose/apps/gui/scripts/configure.sh\'',
-                    'stdout_logfile': '/toskose/apps/gui/logs/gui-configure.log'
-                },
-                'gui-start': {
-                    'command': '/bin/sh -c \'/toskose/apps/gui/scripts/start.sh\'',
-                    'stdout_logfile': '/toskose/apps/gui/logs/gui-start.log'
-                },
-                'gui-stop': {
-                    'command': '/bin/sh -c \'/toskose/apps/gui/scripts/stop.sh\'',
-                    'stdout_logfile': '/toskose/apps/gui/logs/gui-stop.log'
-                },
-                'gui-delete': {
-                    'command': '/bin/sh -c \'/toskose/apps/gui/scripts/uninstall.sh\'',
-                    'stdout_logfile': '/toskose/apps/gui/logs/gui-delete.log'
-                }
-            },
-            'mongodb': { }
-        }
+        'toskose_config_input': toskose_config_input,
+        'supervisord': supervisord,
     }
 ]
 output_tmp_path = '/tmp/toskose_test/'

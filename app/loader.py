@@ -1,3 +1,6 @@
+"""
+The module for loading/dumping configurations.
+"""
 import os
 import ruamel.yaml
 import collections
@@ -19,7 +22,7 @@ class Loader:
         self._setup_ordered_dict()
 
     def _setup_ordered_dict(self):
-        """ Setup a representer for OrderedDict. 
+        """ Setup a representer for OrderedDict.
         https://bitbucket.org/ruamel/yaml/issues/22/how-to-dump-collectionordereddict
         """
 
@@ -30,26 +33,27 @@ class Loader:
 
     def load(self, path, **kwargs):
         """ Load the configuration from a given file.
-        
+
         Args:
             path (str): The path to the configuration file.
 
         Returns:
-            config: A dict containing the data loaded from the configuration file.
+            config: A dict containing the data loaded
+                from the configuration file.
         """
 
         if not os.path.exists(path):
             raise ValueError('The given path {} doesn\'t exists.'.format(path))
 
         loading_function = ruamel.yaml.load
-        loading_args = { 'Loader': ruamel.yaml.Loader }
+        loading_args = {'Loader': ruamel.yaml.Loader}
 
         ordered = kwargs.get('ordered', False)
         if ordered:
             loading_args['Loader'] = ruamel.yaml.RoundTripLoader
 
         trip_load = kwargs.get('print', False)
-        if trip_load == True:
+        if trip_load is True:
             loading_function = ruamel.yaml.round_trip_load
             loading_args = {}
 
@@ -61,18 +65,18 @@ class Loader:
                 if trip_load:
                     out = ""
                     lines = ruamel.yaml.round_trip_dump(
-                        res, 
-                        indent=3, 
+                        res,
+                        indent=3,
                         block_seq_indent=3,
                         default_flow_style=None,
                     ).splitlines(True)
-                    
+
                     for line in lines:
                         out += line[3:]
                     return out
                 return res
 
-        except ruamel.yaml.error.YAMLError as err:
+        except ruamel.yaml.error.YAMLError:
             raise ParsingError('Failed to parse {}'.format(path))
 
     def dump(self, data, path, ordered=False):
@@ -89,9 +93,12 @@ class Loader:
         logger.debug('Dumping data to {}'.format(path))
         try:
             with open(path, 'w') as f:
-                ruamel.yaml.dump(data, f, Dumper=dumper, default_flow_style=False)
-        except ruamel.yaml.error.YAMLError as err:
+                ruamel.yaml.dump(
+                    data,
+                    f,
+                    Dumper=dumper,
+                    default_flow_style=False)
+        except ruamel.yaml.error.YAMLError:
             raise ParsingError('Failed to dump in {}'.format(path))
 
         return path
-        

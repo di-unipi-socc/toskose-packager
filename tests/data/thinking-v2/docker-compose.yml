@@ -1,0 +1,72 @@
+---
+version: '3.7'
+services:
+  maven:
+    image: giulen/thinking-v2-maven-toskosed:0.1.3
+    networks:
+      toskose-network:
+        aliases:
+        - maven
+    init: true
+    environment:
+    - SUPERVISORD_ALIAS=maven
+    - SUPERVISORD_PORT=9001
+    - SUPERVISORD_USER=user_21ty5
+    - SUPERVISORD_PASSWORD=1t5mYp4ss
+    - SUPERVISORD_LOG_LEVEL=INFO
+    - INPUT_REPO=https://github.com/matteobogo/thoughts-api
+    - INPUT_BRANCH=master
+    - INPUT_DBURL=mongodb
+    - INPUT_DBPORT=27017
+    - INPUT_DBNAME=thoughtsSharing
+    - INPUT_COLLECTIONNAME=thoughts
+    - INPUT_DATA=/toskose/apps/api/artifacts/default_data.csv
+    - INPUT_PORT=8080
+    ports:
+    - "8000:8080/tcp"
+    - "8082:8082/tcp"
+  node:
+    image: giulen/thinking-v2-node-toskosed:2.1.5
+    networks:
+      toskose-network:
+        aliases:
+        - node
+    init: true
+    environment:
+    - SUPERVISORD_ALIAS=node
+    - SUPERVISORD_PORT=9002
+    - SUPERVISORD_USER=user_a4bc2
+    - SUPERVISORD_PASSWORD=p4ssw0rd
+    - SUPERVISORD_LOG_LEVEL=DEBUG
+    - INPUT_REPO=https://github.com/matteobogo/thoughts-gui
+    - INPUT_BRANCH=master
+    - INPUT_APIURL=maven
+    - INPUT_APIPORT=8080
+    - INPUT_APIRESOURCE=thoughts
+    ports:
+    - "8080:3000/tcp"
+  mongodb:
+    image: mongo:3.4
+    networks:
+      toskose-network:
+    volumes:
+    - "dbvolume:/data/db"
+  toskose-manager:
+    image: giulen/thinking-v2-manager-toskosed:latest
+    networks:
+      toskose-network:
+        aliases:
+        - toskose-manager
+    init: true
+    environment:
+    - TOSKOSE_MANAGER_PORT=12000
+    - TOSKOSE_APP_MODE=production
+    - SECRET_KEY=my_secret
+    ports:
+    - "12000:12000/tcp"
+networks:
+  toskose-network:
+    driver: "overlay"
+    attachable: true
+volumes:
+  dbvolume:

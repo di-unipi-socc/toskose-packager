@@ -4,7 +4,7 @@ from app.toskose import Toskoserizator
 
 @click.command()
 @click.argument(
-    'csar_path', 
+    'csar_path',
     type=click.Path(exists=True),
 )
 @click.argument(
@@ -13,7 +13,7 @@ from app.toskose import Toskoserizator
     required=False
 )
 @click.option(
-    '--output-path', '-o', 
+    '--output-path', '-o',
     help='The path for the output.'
 )
 @click.option(
@@ -22,19 +22,21 @@ from app.toskose import Toskoserizator
     help='Enable pushing of Docker images.',
 )
 @click.option(
-    '--docker-url', 
+    '--docker-url',
     help='The URL for the Docker Engine.',
     show_default=True
 )
 @click.option('--quiet', '-q', is_flag=True, help='Give less output.')
 @click.option('--debug', is_flag=True, help='Enable debug mode.')
-def cli(csar_path, config_path, output_path, enable_push, docker_url, quiet, debug):
+def cli(csar_path, config_path, output_path,
+        enable_push, docker_url, quiet, debug):
     """
-    A tool for translating a TOSCA application into docker-compose.
+    A tool for translating a multi-component application defined
+    using the TOSCA standardization into a Docker Compose format.
     """
 
     tsk = Toskoserizator(debug=debug, quiet=quiet)
-    
+
     if docker_url:
         tsk.docker_url = docker_url
 

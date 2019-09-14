@@ -1,13 +1,8 @@
 import collections
-import copy
 import os
 from configparser import ConfigParser
-from enum import Enum, auto
 
-from app.common.commons import CommonErrorMessages
-from app.common.exception import FatalError, SupervisordConfigGeneratorError
 from app.common.logging import LoggingFacility
-from app.tosca.model.relationships import HostedOn
 
 logger = LoggingFacility.get_instance().get_logger()
 
@@ -47,11 +42,11 @@ DEFAULT_SUPERVISORD_PROGRAM_TEMPLATE = collections.OrderedDict([
 
 
 def _build_standalone_config(config, container):
-    """ 
+    """
     Container has no hosted components, it's a standalone container.
-    The CMD command of the container is mapped as the only Supervisord's program.
-    We're assuming that the CMD command is a fully runnable command that includes 
-    also the shell executable.
+    The CMD command of the container is mapped as the only Supervisord's
+    program. We're assuming that the CMD command is a fully runnable
+    command that includes also the shell executable.
     """
 
     if not container.cmd:
@@ -71,27 +66,37 @@ def _build_standalone_config(config, container):
 
     return config
 
+
 def _build_hosted_config(config, container):
-    """ Build a configuration for a container with software components hosted on. """
+    """ Build a configuration for a container
+    with software components hosted on. """
 
     for software in container.hosted:
-        for inter_group_name, inter_group_content in software.interfaces.items():
+        for inter_group_name, inter_group_content in \
+                software.interfaces.items():
             # multiple interfaces groups can co-exists, not only the "standard"
-            for interface_name, interface_content in inter_group_content.items():
-                # TODO may insert also the inter_group_name in section_name? 
+            for interface_name, interface_content in \
+                    inter_group_content.items():
+                # TODO may insert also the inter_group_name in section_name?
                 # conflicts with toskose-manager api?
-                section_name = 'program:{0}-{1}'.format(software.name, interface_name)
-                
-                # change the path of the lifecycle operation according to the container context
+                section_name = 'program:{0}-{1}'.format(
+                    software.name,
+                    interface_name)
+
+                # change the path of the lifecycle operation
+                # according to the container context
                 command = os.path.join(
-                    '/toskose/apps/{software_node}/scripts'.format(software_node=software.name), 
+                    '/toskose/apps/{software_node}/scripts'.format(
+                        software_node=software.name),
                     os.path.basename(interface_content['cmd'].file_path)
                 )
 
                 template = dict(DEFAULT_SUPERVISORD_PROGRAM_TEMPLATE)
                 template_updated = {
                     'command': DEFAULT_BASE_COMMAND + '\'' + command + '\'',
-                    'process_name': '{0}-{1}'.format(software.name, interface_name),
+                    'process_name': '{0}-{1}'.format(
+                        software.name,
+                        interface_name),
                     'stdout_logfile': os.path.join(
                         DEFAULT_BASEDIR_STDOUT_LOGFILE,
                         software.name,
@@ -105,14 +110,18 @@ def _build_hosted_config(config, container):
 
     return config
 
+
 def build_config(container, context_path, config_name=None, template=None):
-    """ 
+    """
     Build the Supervisord configuration file for managing the container.
 
     Args:
-        container (object): The container node for which the conf is generated.
-        context_path (str): The path where the Supervisord config will be writed in.
-        config_name (str): The name of the Supervisord config file generated.
+        container (object): The container node for which the conf
+            is generated.
+        context_path (str): The path where the Supervisord config
+            will be writed in.
+        config_name (str): The name of the Supervisord config file
+            generated.
             If omitted a default one is generated (e.g. 'supervisord.conf')
         template (str): The path to the Supervisord base template.
             If omitted the default path is taken.
@@ -120,13 +129,17 @@ def build_config(container, context_path, config_name=None, template=None):
 
     if context_path:
         if not os.path.exists(context_path):
-            raise ValueError('The given {} path does\'s not exist'.format(context_path))
+            raise ValueError('The given {} path does\'s not exist'.format(
+                context_path))
     if config_name is None:
         config_name = DEFAULT_CONFIG_NAME
     if template is None:
-        template = os.path.join(DEFAULT_TEMPLATE_DIR, DEFAULT_SUPERVISORD_UNIT_TEMPLATE)
+        template = os.path.join(
+            DEFAULT_TEMPLATE_DIR,
+            DEFAULT_SUPERVISORD_UNIT_TEMPLATE)
 
-    logger.debug('Building the supervisord.conf for [{0}] node'.format(container.name))
+    logger.debug('Building the supervisord.conf for [{0}] node'.format(
+        container.name))
     config = ConfigParser()
     config.read(template)
 

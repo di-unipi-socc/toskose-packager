@@ -1,0 +1,29 @@
+nodes:
+  maven:
+    alias: maven
+    port: 9456
+    user: user_21ty5
+    password: 1t5mYp4ss
+    log_level: INFO
+    docker:
+      name: giulen/thinking-maven-toskosed
+      tag: 0.1.3
+  node:
+    alias: node
+    port: 13450
+    user: user_a4bc2
+    password: p4ssw0rd
+    log_level: DEBUG
+    docker:
+      name: giulen/thinking-node-toskosed
+      tag: 2.1.5
+manager:
+  alias: toskose-manager
+  port: 12000
+  user: admin_manager
+  password: password_manager
+  mode: production
+  secret_key: my_secret
+  docker:
+    name: giulen/thinking-manager-toskosed
+    tag: latest

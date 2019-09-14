@@ -1,0 +1,74 @@
+nodes:
+  front-end_container:
+    alias: front-end
+    port: 9001
+    user: admin
+    password: admin
+    log_level: INFO
+    docker:
+      name: giulen/sockshop-front-end_container-toskosed
+      tag: latest
+  catalogue_container:
+    alias: catalogue
+    port: 9002
+    user: admin
+    password: admin
+    log_level: INFO
+    docker:
+      name: giulen/sockshop-catalogue_container-toskosed
+      tag: latest
+  user_container:
+    alias: user
+    port: 9003
+    user: admin
+    password: admin
+    log_level: INFO
+    docker:
+      name: giulen/sockshop-user_container-toskosed
+      tag: latest
+  carts_container:
+    alias: carts
+    port: 9004
+    user: admin
+    password: admin
+    log_level: INFO
+    docker:
+      name: giulen/carts_container-toskosed
+      tag: latest
+  orders_container:
+    alias: orders
+    port: 9005
+    user: admin
+    password: admin
+    log_level: INFO
+    docker:
+      name: giulen/orders_container-toskosed
+      tag: latest
+  payment_container:
+    alias: payment
+    port: 9006
+    user: admin
+    password: admin
+    log_level: INFO
+    docker:
+      name: giulen/payment_container-toskosed
+      tag: latest
+  shipping_container:
+    alias: shipping
+    port: 9007
+    user: admin
+    password: admin
+    log_level: INFO
+    docker:
+      name: giulen/shipping_container-toskosed
+      tag: latest
+manager:
+  alias: toskose-manager
+  port: 10000
+  user: admin
+  password: admin
+  mode: production
+  secret_key: secret
+  docker:
+    name: giulen/sockshop-manager
+    tag: latest

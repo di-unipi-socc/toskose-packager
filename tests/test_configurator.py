@@ -1,30 +1,29 @@
+import os
+import shutil
+import tempfile
+import unittest.mock as mock
+from builtins import print
+
 import pytest
 
-import os
-import tempfile
-import shutil
-import ruamel.yaml
 import tests.commons as commons
 import tests.helpers as helpers
-import unittest.mock as mock
-
-from app.common.exception import ParsingError
 from app.common.exception import ValidationError
-from app.common.exception import PartialValidationError
+from app.configuration.completer import generate_default_config
+from app.configuration.validation import ConfigValidator
 from app.loader import Loader
 from app.tosca.parser import ToscaParser
-from app.configuration.validation import ConfigValidator
-from app.toskose import Toskoserizator
 
-@pytest.fixture
-def config():
-    def _parser(config_path):
-        cfg = Loader()
-        return cfg.load(config_path)
-    return _parser
+# @pytest.fixture
+# def config():
+#     def _parser(config_path):
+#         cfg = Loader()
+#         return cfg.load(config_path)
+#     return _parser
+
 
 @pytest.mark.parametrize('data', commons.apps_data)
-def test_config_validation(config, data):
+def test_config_validation(data):
     """ Test a valid toskose configuration. """
 
     with tempfile.TemporaryDirectory() as tmp_dir:
@@ -32,14 +31,14 @@ def test_config_validation(config, data):
             tmp_dir,    # also un pack the csar archive
             data['csar_path'])
 
-        model = ToscaParser().build_model(manifest_path)    
+        model = ToscaParser().build_model(manifest_path)
         ConfigValidator().validate_config(
-                config(data['toskose_config']), 
+                data['toskose_config'],
                 tosca_model=model)
 
 
 @pytest.mark.parametrize('data', commons.apps_data)
-def test_validate_uncompleted_config(config, data):
+def test_validate_uncompleted_config(data):
     """ Test a valid but uncompleted toskose config. """
 
     with tempfile.TemporaryDirectory() as tmp_dir:
@@ -47,30 +46,32 @@ def test_validate_uncompleted_config(config, data):
             tmp_dir,    # also un pack the csar archive
             data['csar_path'])
 
-        model = ToscaParser().build_model(manifest_path) 
+        model = ToscaParser().build_model(manifest_path)
         ConfigValidator().validate_config(
-            config(data['uncompleted_toskose_config']),
+            data['uncompleted_toskose_config'],
             tosca_model=model)
 
+
 @pytest.mark.parametrize('data', commons.apps_data)
-def test_toskose_invalid_config_thinking(config, data):
+def test_toskose_invalid_config_thinking(data):
     """ Test an invalid toskose config. """
 
     with tempfile.TemporaryDirectory() as tmp_dir:
         manifest_path = helpers.compute_manifest_path(
             tmp_dir,    # also un pack the csar archive
             data['csar_path'])
-        
+
         model = ToscaParser().build_model(manifest_path)
-        with pytest.raises(ValidationError):  
-            ConfigValidator().validate_config(config(
-            data['invalid_toskose_config']),
-            tosca_model=model)
+        with pytest.raises(ValidationError):
+            ConfigValidator().validate_config(
+                data['invalid_toskose_config'],
+                tosca_model=model)
+
 
 @pytest.mark.parametrize('data', commons.apps_data)
-def test_toskose_config_missing_node(config, data):
-    """ Test a toskose config with a missing node. 
-    
+def test_toskose_config_missing_node(data):
+    """ Test a toskose config with a missing node.
+
     Docker data about the missing node is asked to the user.
     """
 
@@ -78,26 +79,26 @@ def test_toskose_config_missing_node(config, data):
         manifest_path = helpers.compute_manifest_path(
             tmp_dir,    # also un pack the csar archive
             data['csar_path'])
-        
-        model = ToscaParser().build_model(manifest_path) 
-        ConfigValidator().validate_config(config(
-            data['missing_node_toskose_config']),
+
+        model = ToscaParser().build_model(manifest_path)
+        ConfigValidator().validate_config(
+            data['missing_node_toskose_config'],
             tosca_model=model)
 
 
 @pytest.mark.parametrize('data', commons.apps_data)
-def test_toskose_config_missing_docker_section(config, data):
+def test_toskose_config_missing_docker_section(data):
     """ Test an invalid toskose config with a missing docker section """
 
     with tempfile.TemporaryDirectory() as tmp_dir:
         manifest_path = helpers.compute_manifest_path(
             tmp_dir,    # also un pack the csar archive
             data['csar_path'])
-        
-        model = ToscaParser().build_model(manifest_path) 
+
+        model = ToscaParser().build_model(manifest_path)
         with pytest.raises(ValidationError):
-            ConfigValidator().validate_config(config(
-                data['missing_docker_toskose_config']),
+            ConfigValidator().validate_config(
+                data['missing_docker_toskose_config'],
                 tosca_model=model)
 
 
@@ -107,7 +108,8 @@ def test_schema_metadata():
 
 def test_data_load_not_exist():
     with pytest.raises(ValueError):
-        Loader().load('abcderfgh.yml')      
+        Loader().load('abcderfgh.yml')
+
 
 @pytest.mark.parametrize('data', commons.apps_data)
 def test_toskose_uncompleted_config_thinking(data):
@@ -119,9 +121,10 @@ def test_toskose_uncompleted_config_thinking(data):
             data['csar_path'])
 
         model = ToscaParser().build_model(manifest_path)
-        tsk = Toskoserizator()
 
-        docker_inputs = [ list(data['toskose_config_input']['maven']['docker'].values()) ]
+        docker_inputs = [
+            list(data['toskose_config_input']['maven']['docker'].values())
+        ]
 
         def gen_inputs():
             for entry in docker_inputs:
@@ -132,7 +135,8 @@ def test_toskose_uncompleted_config_thinking(data):
             with mock.patch('getpass.getpass', return_value='password'):
 
                 # make a copy of the config
-                # because autocompletation will overwrite the original configuration
+                # because autocompletation will overwrite
+                # the original configuration
                 with tempfile.TemporaryDirectory() as tmp_dir:
                     tmp_path = os.path.join(tmp_dir, 'uncompleted_config.yml')
                     shutil.copy2(
@@ -140,11 +144,14 @@ def test_toskose_uncompleted_config_thinking(data):
                         tmp_path,
                     )
 
-                    config_path = tsk._generate_default_config(model, uncompleted_config=tmp_path)
+                    config_path = generate_default_config(
+                        model,
+                        config_path=tmp_path)
                     print(config_path)
 
+
 @pytest.mark.parametrize('data', commons.apps_data)
-def test_toskose_model_config_gen(data): 
+def test_toskose_model_config_gen(data):
     """ Test the auto-generation of toskose config. """
 
     with tempfile.TemporaryDirectory() as tmp_dir:
@@ -153,10 +160,12 @@ def test_toskose_model_config_gen(data):
             data['csar_path'])
 
         model = ToscaParser().build_model(manifest_path)
-        tsk = Toskoserizator()
 
-        docker_inputs = [ list(v['docker'].values()) for k, v in data['toskose_config_input'].items() ]
-        docker_manager_inputs = [ list(data['toskose_config_manager_input']['docker'].values()) ]
+        docker_inputs = [
+            list(v['docker'].values())
+            for k, v in data['toskose_config_input'].items()]
+        docker_manager_inputs = [
+            list(data['toskose_config_manager_input']['docker'].values())]
 
         docker_inputs += docker_manager_inputs
 
@@ -167,15 +176,15 @@ def test_toskose_model_config_gen(data):
 
         with mock.patch('builtins.input', side_effect=gen_inputs()):
             with mock.patch('getpass.getpass', return_value='password'):
-                config_path = tsk._generate_default_config(model)
+                config_path = generate_default_config(model)
                 cfg = Loader()
                 config = cfg.load(config_path)
 
-                if not 'nodes' in config:
+                if 'nodes' not in config:
                     assert False
 
                 test_data = {
                     'nodes': dict(data['toskose_config_input'])
                 }
-                
+
                 assert config['nodes'] == test_data['nodes']

@@ -1,13 +1,11 @@
 import pytest
-import shutil
 
-import tests.helpers as helpers
 import tests.commons as commons
 
 from app.tosca.parser import ToscaParser
 from app.tosca.model.artifacts import ToskosedImage, DockerImage
-from app.toskose import Toskoserizator
 from app.loader import Loader
+from app.updater import toskose_model
 
 
 @pytest.mark.parametrize('configs', commons.apps_data, indirect=True)
@@ -22,8 +20,7 @@ class TestToskoseModel:
     def test_toskose_model(self):
 
         model = ToscaParser().build_model(self._manifest)
-        tsk = Toskoserizator()
-        tsk._toskose_model(model, self._config)
+        toskose_model(model, self._config)
 
         # test if the model is updated with toskose-related data
         nodes_config = self._loaded_config['nodes']
@@ -36,25 +33,27 @@ class TestToskoseModel:
                 # fake base image + toskosed image
                 assert container.name == 'toskose-manager'
                 assert len(container.artifacts) == 2
-                
+
                 # fake base image
                 assert isinstance(container.image, DockerImage)
                 assert container.image.name is None
                 assert container.image.tag is None
-                
+
                 # toskosed image
                 assert isinstance(container.toskosed_image, ToskosedImage)
                 docker_data = node_config['docker']
-                for k,v in docker_data.items():
+                for k, v in docker_data.items():
                     v = str(v) if v is not None else v
                     assert getattr(container.toskosed_image, k) == v
 
                 # ports mapping
-                assert next(iter(container.ports.values())) == node_config['port']
-                assert next(iter(container.ports.keys())) == node_config['port']
+                assert next(
+                    iter(container.ports.values())) == node_config['port']
+                assert next(
+                    iter(container.ports.keys())) == node_config['port']
 
                 # hostname
-                assert container.hostname == node_config['hostname']
+                assert container.hostname == node_config['alias']
 
                 # toskose-manager envs
                 manager_envs = {
@@ -70,8 +69,8 @@ class TestToskoseModel:
             # valid host container (not standalone)
             if container.hosted:
                 node_config = nodes_config[container.name]
-                
-                for k,v in node_config.items():
+
+                for k, v in node_config.items():
                     if k != 'docker':
                         rev_key = 'SUPERVISORD_{}'.format(k.upper())
                         if rev_key in container.env:
@@ -82,6 +81,6 @@ class TestToskoseModel:
                 assert isinstance(container.toskosed_image, ToskosedImage)
 
                 docker_data = node_config['docker']
-                for k,v in docker_data.items():
+                for k, v in docker_data.items():
                     v = str(v) if v is not None else v
                     assert getattr(container.toskosed_image, k) == v

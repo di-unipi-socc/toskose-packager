@@ -19,7 +19,10 @@ class Relationship(object):
         self.capability = capability
 
     def __str__(self):
-        return 'o={0.origin},t={0.to},req={0.requirement},cap={0.capability}'.format(self)
+        return 'o={0.origin},\
+        t={0.to},\
+        req={0.requirement},\
+        cap={0.capability}'.format(self)
 
 
 def _get_str_name(obj):
@@ -64,7 +67,8 @@ class HostedOn(Relationship):
 
 class AttachesTo(Relationship):
 
-    def __init__(self, origin, node, folder=None, requirement=STORAGE, capability=ATTACHMENT):
+    def __init__(self, origin, node, folder=None, requirement=STORAGE,
+                 capability=ATTACHMENT):
         super(AttachesTo, self).__init__(origin, node, requirement, capability)
         self.location = folder
 
@@ -81,7 +85,8 @@ class AttachesTo(Relationship):
 
 class DependsOn(Relationship):
 
-    def __init__(self, origin, node, requirement=DEPENDENCY, capability=FEATURE):
+    def __init__(self, origin, node, requirement=DEPENDENCY,
+                 capability=FEATURE):
         super(DependsOn, self).__init__(origin, node, requirement, capability)
 
     @property

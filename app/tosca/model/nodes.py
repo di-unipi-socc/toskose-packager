@@ -2,9 +2,12 @@
 Nodes module
 '''
 from app.tosca.model import protocol
-from app.tosca.model.artifacts import (Artifact, Dockerfile, DockerfileExecutable,
-                        DockerImage, DockerImageExecutable, ToskosedImage, File)
-from app.tosca.model.relationships import AttachesTo, ConnectsTo, DependsOn, HostedOn
+from app.tosca.model.artifacts import (Artifact, Dockerfile,
+                                       DockerfileExecutable,
+                                       DockerImage, DockerImageExecutable,
+                                       File)
+from app.tosca.model.relationships import (AttachesTo, ConnectsTo, DependsOn,
+                                           HostedOn)
 
 
 def _add_to_map(d, k, v):
@@ -44,7 +47,7 @@ class Root(object):
 
         # reverse requirements
         self.up_requirements = []
-        
+
         # protocol
         self.protocol = None
 
@@ -119,7 +122,7 @@ class Container(Root):
         self.cmd = None
         self.ports = None
         self.hostname = None
-        self.share_data = {} 
+        self.share_data = {}
         self.is_manager = is_manager
         self.hosted = []
 
@@ -241,7 +244,13 @@ class Software(Root):
         # self.depend = None
         # self.connection = None
 
-        self.interfaces = {'Standard': {'create', 'configure', 'start', 'stop', 'delete'}}
+        self.interfaces = {'Standard': {
+            'create',
+            'configure',
+            'start',
+            'stop',
+            'delete'}
+        }
 
         self.protocol = protocol.get_software_protocol()
 

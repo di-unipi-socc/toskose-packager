@@ -2,6 +2,7 @@
 Artifacts module
 '''
 
+
 class Artifact(object):
 
     def __init__(self, name):
@@ -84,24 +85,24 @@ class DockerfileExecutable(Dockerfile):
 
 class ToskosedImage(DockerImage):
     """ Represent a "toskosed" image.
-    
+
     [repository/]user/image_name[:tag]
     """
 
-    def __init__ (self, name, tag=None, registry_password=None,
-                  base_name=None, base_tag=None):
+    def __init__(self, name, tag=None, registry_password=None,
+                 base_name=None, base_tag=None):
         self.name = name
         self.registry_password = registry_password
         self.tag = str(tag) if tag is not None else 'latest'
 
         # base toskose image
         # used by toskose for the "toskosing" process
-        self.base_name = base_name        
+        self.base_name = base_name
         self.base_tag = base_tag
 
     @staticmethod
     def _build_image_name(name, tag):
-        return '{0}:{1}'.format(name, tag) 
+        return '{0}:{1}'.format(name, tag)
 
     @property
     def full_name(self):
@@ -113,4 +114,4 @@ class ToskosedImage(DockerImage):
     def full_name_base(self):
         """ Return the Docker base Image name including the tag (if any). """
 
-        return ToskosedImage._build_image_name(self.base_name, self.base_tag) 
+        return ToskosedImage._build_image_name(self.base_name, self.base_tag)

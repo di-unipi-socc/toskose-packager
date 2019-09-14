@@ -3,6 +3,7 @@
 
 import sys
 
+
 def main():
     try:
         from .gui.cli import cli

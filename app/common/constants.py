@@ -7,9 +7,9 @@ DEFAULT_TOSKOSE_CONFIG_SCHEMA_PATH = 'config_schema.json'
 
 # Docker Compose
 DEFAULT_DOCKER_COMPOSE_FILENAME = 'docker-compose.yml'
-DEFAULT_DOCKER_COMPOSE_VERSION = '3.3'
+DEFAULT_DOCKER_COMPOSE_VERSION = '3.7'
 
-DOCKER_COMPOSE_SUPPORTED_VERSIONS = [ '3.3' ]
+DOCKER_COMPOSE_SUPPORTED_VERSIONS = [ '3.7' ]
 
 # Toskose Unit - default configurations
 DEFAULT_SUPERVISORD_INIT_PORT = 9000
@@ -22,9 +22,10 @@ DEFAULT_TOSKOSE_UNIT_BASE_TAG = 'latest'
 
 DEFAULT_TOSKOSE_IMAGE_TAG = 'latest'
 
+port = DEFAULT_SUPERVISORD_INIT_PORT
 def gen_default_port():
-    port = DEFAULT_SUPERVISORD_INIT_PORT
-    while port < 65535:
+    global port
+    if port < 65535:
         port += 1
         yield port
 
@@ -32,7 +33,7 @@ def get_default_image_name(app_name, node_name):
     return '{0}-{1}-toskosed'.format(app_name, node_name)
 
 DEFAULT_NODE_API = {
-    'hostname': None,
+    'alias': None,
     'port': None,
     'user': DEFAULT_SUPERVISORD_USER,
     'password': DEFAULT_SUPERVISORD_PASSWORD,
@@ -53,7 +54,7 @@ DEFAULT_NODE = {
 # Toskose Manager - default configurations
 DEFAULT_MANAGER_NAME = 'toskose-manager'
 DEFAULT_MANAGER_CONFIG_FIELD = 'manager'
-DEFAULT_MANAGER_HOSTNAME = 'toskose-manager'
+DEFAULT_MANAGER_ALIAS = 'toskose-manager'
 DEFAULT_MANAGER_PORT = 10000
 DEFAULT_MANAGER_USER = 'admin'
 DEFAULT_MANAGER_PASSWORD = 'admin'
@@ -71,7 +72,7 @@ DEFAULT_MANAGER_MANIFEST_DIR = 'manifest/'
 DEFAULT_MANAGER_IMPORTS_DIR = 'imports/'
 
 DEFAULT_MANAGER_API = {
-    'hostname': DEFAULT_MANAGER_HOSTNAME,
+    'alias': DEFAULT_MANAGER_ALIAS,
     'port': DEFAULT_MANAGER_PORT,
     'user': DEFAULT_MANAGER_USER,
     'password': DEFAULT_MANAGER_PASSWORD,

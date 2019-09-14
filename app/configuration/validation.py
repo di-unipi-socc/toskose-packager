@@ -1,15 +1,12 @@
 import json
 import os
 import jsonschema
-import re
-from functools import reduce
 
 import app.common.constants as constants
 from app.common.logging import LoggingFacility
-from app.common.exception import ValidationError
-from app.common.exception import PartialValidationError
-from app.common.exception import FatalError
+from app.common.exception import (ValidationError, FatalError)
 from app.common.commons import CommonErrorMessages
+from app.loader import Loader
 
 
 logger = LoggingFacility.get_instance().get_logger()
@@ -29,26 +26,32 @@ class ConfigValidator:
                 self._config_schema = json.load(f)
             except json.decoder.JSONDecodeError as err:
                 logger.error(err)
-                raise FatalError('The toskose configuration schema is corrupted. Validation cannot be done.')
+                raise FatalError(
+                    'The toskose configuration schema is corrupted. \
+                    Validation cannot be done.')
             except Exception as err:
                 logger.exception(err)
-                raise FatalError(CommonErrorMessages._DEFAULT_FATAL_ERROR_MSG)   
-
+                raise FatalError(
+                    CommonErrorMessages._DEFAULT_FATAL_ERROR_MSG)
 
     def _validate_nodes(config, tosca_model):
         for container in tosca_model.containers:
-            
+
             if container.name not in config['nodes']:
-                raise ValidationError('Missing node [{}] in the configuration.'.format(
-                    container.name))
-            
+                raise ValidationError(
+                    'Missing node [{}] in the configuration.'.format(
+                        container.name))
+
             if 'docker' not in config['nodes'][container.name]:
-                raise ValidationError('Missing docker section in the node [{}]'.format(
-                    container.name))
+                raise ValidationError(
+                    'Missing docker section in the node [{}]'.format(
+                        container.name))
 
-
-    def validate_config(self, config, tosca_model=None):
+    def validate_config(self, config_path, tosca_model=None):
         """ Validate a Toskose configuration file """
+
+        loader = Loader()
+        config = loader.load(config_path)
 
         try:
             jsonschema.validate(instance=config, schema=self._config_schema)
@@ -58,14 +61,20 @@ class ConfigValidator:
             raise ValidationError(err.message)
         except jsonschema.exceptions.SchemaError as err:
             logger.error(err)
-            raise FatalError('The toskose configuration schema is corrupted. Validation cannot be done.')
+            raise FatalError('The toskose configuration schema is corrupted. \
+            Validation cannot be done.')
 
     def get_schema_metadata(self):
         filtered = ['nodes', 'manager']
-        return list(filter(lambda x: x not in filtered, self._config_schema['properties'].keys()))
+        return list(filter(
+            lambda x: x not in filtered,
+            self._config_schema['properties'].keys()))
 
     def get_schema_node_api_data(self):
-        return list(self._config_schema['definitions']['node']['properties']['api']['properties'].keys())
+        return list(
+            self._config_schema['definitions']['node']
+            ['properties']['api']['properties'].keys())
 
     def get_schema_node_docker_data(self):
-        return list(self._config_schema['definitions']['node']['properties']['docker']['properties'].keys())
+        return list(self._config_schema['definitions']['node']
+                    ['properties']['docker']['properties'].keys())

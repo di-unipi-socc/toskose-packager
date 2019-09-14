@@ -62,11 +62,11 @@
                     "description": "A representation of a container node",
                     "type": "object",
                     "properties": {
-                        "hostname": {
+                        "alias": {
                             "type": "string",
                             "minLength": 1,
                             "maxLength": 255,
-                            "description": "The hostname of the node"
+                            "description": "The network alias of the node"
                         },
                         "port": {
                             "type": "integer",
@@ -113,11 +113,11 @@
                     "minLength": 1,
                     "description": "The secret key used by the API. (e.g. cookies generation)"
                 },
-                "hostname": {
+                "alias": {
                     "type": "string",
                     "minLength": 1,
                     "maxLength": 255,
-                    "description": "The hostname of the node"
+                    "description": "The network alias of the node"
                 },
                 "port": {
                     "type": "integer",
