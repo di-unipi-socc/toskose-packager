@@ -13,6 +13,7 @@ from app.configuration.completer import generate_default_config
 from app.configuration.validation import ConfigValidator
 from app.loader import Loader
 from app.tosca.parser import ToscaParser
+from app.common import constants
 
 # @pytest.fixture
 # def config():
@@ -20,6 +21,13 @@ from app.tosca.parser import ToscaParser
 #         cfg = Loader()
 #         return cfg.load(config_path)
 #     return _parser
+
+
+@pytest.fixture
+def reset_port():
+    """ reset the port generator for Supervisor HTTP port """
+
+    constants.port = constants.DEFAULT_SUPERVISORD_INIT_PORT
 
 
 @pytest.mark.parametrize('data', commons.apps_data)
@@ -38,7 +46,7 @@ def test_config_validation(data):
 
 
 @pytest.mark.parametrize('data', commons.apps_data)
-def test_validate_uncompleted_config(data):
+def test_validate_uncompleted_config(data, reset_port):
     """ Test a valid but uncompleted toskose config. """
 
     with tempfile.TemporaryDirectory() as tmp_dir:
@@ -53,7 +61,7 @@ def test_validate_uncompleted_config(data):
 
 
 @pytest.mark.parametrize('data', commons.apps_data)
-def test_toskose_invalid_config_thinking(data):
+def test_toskose_invalid_config_thinking(data, reset_port):
     """ Test an invalid toskose config. """
 
     with tempfile.TemporaryDirectory() as tmp_dir:
@@ -69,7 +77,7 @@ def test_toskose_invalid_config_thinking(data):
 
 
 @pytest.mark.parametrize('data', commons.apps_data)
-def test_toskose_config_missing_node(data):
+def test_toskose_config_missing_node(data, reset_port):
     """ Test a toskose config with a missing node.
 
     Docker data about the missing node is asked to the user.
@@ -87,7 +95,7 @@ def test_toskose_config_missing_node(data):
 
 
 @pytest.mark.parametrize('data', commons.apps_data)
-def test_toskose_config_missing_docker_section(data):
+def test_toskose_config_missing_docker_section(data, reset_port):
     """ Test an invalid toskose config with a missing docker section """
 
     with tempfile.TemporaryDirectory() as tmp_dir:
@@ -112,7 +120,7 @@ def test_data_load_not_exist():
 
 
 @pytest.mark.parametrize('data', commons.apps_data)
-def test_toskose_uncompleted_config_thinking(data):
+def test_toskose_uncompleted_config_thinking(data, reset_port):
     """ Test the auto-completation of toskose config. """
 
     with tempfile.TemporaryDirectory() as tmp_dir:
@@ -151,7 +159,7 @@ def test_toskose_uncompleted_config_thinking(data):
 
 
 @pytest.mark.parametrize('data', commons.apps_data)
-def test_toskose_model_config_gen(data):
+def test_toskose_model_config_gen(data, reset_port):
     """ Test the auto-generation of toskose config. """
 
     with tempfile.TemporaryDirectory() as tmp_dir:

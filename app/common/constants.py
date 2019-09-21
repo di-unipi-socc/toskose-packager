@@ -9,7 +9,7 @@ DEFAULT_TOSKOSE_CONFIG_SCHEMA_PATH = 'config_schema.json'
 DEFAULT_DOCKER_COMPOSE_FILENAME = 'docker-compose.yml'
 DEFAULT_DOCKER_COMPOSE_VERSION = '3.7'
 
-DOCKER_COMPOSE_SUPPORTED_VERSIONS = [ '3.7' ]
+DOCKER_COMPOSE_SUPPORTED_VERSIONS = ['3.7']
 
 # Toskose Unit - default configurations
 DEFAULT_SUPERVISORD_INIT_PORT = 9000
@@ -23,14 +23,18 @@ DEFAULT_TOSKOSE_UNIT_BASE_TAG = 'latest'
 DEFAULT_TOSKOSE_IMAGE_TAG = 'latest'
 
 port = DEFAULT_SUPERVISORD_INIT_PORT
+
+
 def gen_default_port():
     global port
     if port < 65535:
         port += 1
         yield port
 
+
 def get_default_image_name(app_name, node_name):
     return '{0}-{1}-toskosed'.format(app_name, node_name)
+
 
 DEFAULT_NODE_API = {
     'alias': None,
