@@ -16,7 +16,7 @@ install_requires = [
     'pyfiglet==0.8.post1',
     'six==1.12.0',
     'colorama==0.4.1',
-    'setuptools==41.0.0',
+    'setuptools==65.5.1',
     'click==7.0',
     'docker==3.7.2',
     'ruamel.yaml==0.15.94',
